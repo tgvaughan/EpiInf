@@ -64,15 +64,17 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
         eventList.clear();
         
         EpidemicState thisState = initialState.copy();
+        double t = 0.0;
 
         while (thisState.I>0) {
             
             double infProp = thisState.S*thisState.I*infectionRate;
             double recProp = thisState.I*recoveryRate;
-            double totalProp = infProp*recProp;
+
+            t += Randomizer.nextExponential(infProp + recProp);
 
             EpidemicEvent nextEvent = new EpidemicEvent();
-            nextEvent.waitingTime = Randomizer.nextExponential(totalProp);
+            nextEvent.time = t;
 
             if (Randomizer.nextDouble()<infProp) {
                 nextEvent.type = EpidemicEvent.EventType.INFECTION;
