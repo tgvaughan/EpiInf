@@ -22,9 +22,12 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
 import beast.core.parameter.RealParameter;
+import beast.util.Randomizer;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.EpidemicTrajectory;
+import epiinf.EpidemicTrajectorySimulator;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
 
@@ -43,8 +46,8 @@ public class TrajDensity extends Distribution {
             "Infection rate (per susceptible per infected).", Validate.REQUIRED);
 
     public Input<RealParameter> recoveryRateInput = new Input<RealParameter>(
-            "infectionRate",
-            "Infection rate (per susceptible per infected).", Validate.REQUIRED);
+            "recoveryRate",
+            "Recovery rate (per susceptible per infected).", Validate.REQUIRED);
 
     
     private EpidemicTrajectory trajectory;
@@ -63,19 +66,22 @@ public class TrajDensity extends Distribution {
     public double calculateLogP() {
         logP = 0.0;
         
-        EpidemicState thisState = trajectory.getInitialState();
-        double t = 0.0;
-
-        for (EpidemicEvent event : trajectory.getEventList()) {
+        List<EpidemicState> stateList = trajectory.getStateList();
+        
+        double lastEventTime = 0.0;
+                
+        for (int i=0; i<trajectory.getEventList().size(); i++) {
+            EpidemicEvent thisEvent = trajectory.getEventList().get(i);
+            EpidemicState thisState = trajectory.getStateList().get(i);
             
             double infectionProp = thisState.S*thisState.I*infectionRate.getValue();
             double recoveryProp = thisState.I*recoveryRate.getValue();
             double totalProp = infectionProp + recoveryProp;
             
-            logP += -totalProp*(event.time-t);
-            t = event.time;
+            logP += -totalProp*(thisEvent.time-lastEventTime);
+            lastEventTime = thisEvent.time;
             
-            if (event.type == EpidemicEvent.EventType.INFECTION)
+            if (thisEvent.type == EpidemicEvent.EventType.INFECTION)
                 logP += Math.log(infectionProp);
             else
                 logP += Math.log(recoveryProp);
@@ -97,5 +103,58 @@ public class TrajDensity extends Distribution {
 
     @Override
     public void sample(State state, Random random) { }
+    
+    /**
+     * Main method for debugging only.  Generates cross-sections of the
+     * parameter likelihood surface and writes these to files for further
+     * analysis.
+     * 
+     * @param args 
+     * @throws java.lang.Exception 
+     */
+    public static void main (String [] args) throws Exception {
+               Randomizer.setSeed(42);
+        
+        EpidemicTrajectorySimulator trajSim = new EpidemicTrajectorySimulator();
+        trajSim.initByName(
+                "S0", 1000,
+                "I0", 1,
+                "R0", 0,
+                "infectionRate", 0.001,
+                "recoveryRate", 0.2);
+        
+        trajSim.initStateNodes();
+        
+        PrintStream ps = new PrintStream("infectionRateLikelihood.txt");
+        ps.println("infectionRate logP");
+        
+        TrajDensity trajDensity = new TrajDensity();
+        for (int i=0; i<100; i++) {
+            double infectionRate = Math.pow(10, -4 + (i/99.0)*(-2 - -4));
+            trajDensity.initByName(
+                "epidemicTrajectory", trajSim,
+                "infectionRate", new RealParameter(String.valueOf(infectionRate)),
+                "recoveryRate", new RealParameter("0.2"));
+            
+            ps.println(infectionRate + " " + trajDensity.calculateLogP());
+        }
+        
+        ps.close();
+        
+        ps = new PrintStream("recoveryRateLikelihood.txt");
+        ps.println("recoveryRate logP");
+        
+        for (int i=0; i<100; i++) {
+            double recoveryRate = Math.pow(10, Math.log10(0.2)-1 + (i/99.0)*2.0);
+            trajDensity.initByName(
+                "epidemicTrajectory", trajSim,
+                "infectionRate", new RealParameter("0.001"),
+                "recoveryRate", new RealParameter(String.valueOf(recoveryRate)));
+            
+            ps.println(recoveryRate + " " + trajDensity.calculateLogP());
+        }
+        
+        ps.close();
+    }
     
 }
