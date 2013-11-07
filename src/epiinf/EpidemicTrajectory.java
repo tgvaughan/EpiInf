@@ -48,8 +48,10 @@ public class EpidemicTrajectory extends StateNode {
         stateList.clear();
         
         stateList.add(initialState);
+        
         for (EpidemicEvent event : eventList) {
             EpidemicState nextState = stateList.get(stateList.size()-1).copy();
+            
             if (event.type == EpidemicEvent.EventType.INFECTION) {
                 nextState.S -= 1; 
                 nextState.I += 1;
@@ -57,6 +59,8 @@ public class EpidemicTrajectory extends StateNode {
                 nextState.I -= 1;
                 nextState.R += 1;
             }
+            
+            stateList.add(nextState);
         }
     }
     

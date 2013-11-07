@@ -27,6 +27,7 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import com.google.common.collect.Lists;
 import epiinf.EpidemicEvent;
+import epiinf.EpidemicState;
 import epiinf.EpidemicTrajectory;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -88,22 +89,42 @@ public class TreeDensity extends Distribution {
         
         List<TreeEvent> revTreeEventList = Lists.reverse(treeEventList);
         List<EpidemicEvent> revEventList = Lists.reverse(trajectory.getEventList());
+        List<EpidemicState> revStateList = Lists.reverse(trajectory.getStateList());
         
-        int epidemicEventIdx = 0;
+        int idx = 0;
 
+        int k = 0;
+        
         for (TreeEvent treeEvent : revTreeEventList) {
             
-            while (epidemicEventIdx>=0 && !eventsMatch(treeEvent, revEventList.get(epidemicEventIdx)))
-                epidemicEventIdx += 1;
+            while (idx<revEventList.size()
+                    && eventsMatch(treeEvent, revEventList.get(idx))) {
+                
+                // Incoporate probability of no effect on tree
+                if (k>1) {
+                    int N = revStateList.get(idx).I;
+                    logP += Math.log(1.0 - k*(k-1)/((double)N*(N-1)));
+                }
+                
+                idx += 1;
+            }
             
-            // Abort if tree and trajectory are incompatible
-            if (epidemicEventIdx<0) {
+            // Check for incompatible tree and trajectory
+            if (idx==revEventList.size()) {
                 logP = Double.NEGATIVE_INFINITY;
                 return logP;
             }
             
-            EpidemicEvent epiEvent = revEventList.get(epidemicEventIdx);
-            
+            // Incorporate probability of effect on tree
+            if (treeEvent.type == TreeEventType.SAMPLE)
+                k += 1; // Sample
+            else {
+                if (k>1) {
+                    int N = revStateList.get(idx).I;
+                    logP += Math.log(k*(k-1)/((double)N*(N-1)));
+                }
+                k -= 1; // Coalescence            
+            }
             
         }
         
@@ -161,6 +182,7 @@ public class TreeDensity extends Distribution {
             public int compare(TreeEvent e1, TreeEvent e2) {
                 if (e1.time < e2.time)
                     return 1;
+                
                 if (e1.time > e2.time)
                     return -1;
                 
