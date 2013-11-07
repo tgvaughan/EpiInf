@@ -100,6 +100,28 @@ public class EpidemicTrajectory extends StateNode {
     public List<EpidemicEvent> getEventList() {
         return eventList;
     }
+    
+    /**
+     * Write trajectory state sequence to PrintStream.
+     * 
+     * @param ps where to send output
+     */
+    public void dumpTrajectory(PrintStream ps) {
+        ps.println("t S I R");
+        ps.format("0.0 %d %d %d\n",
+                initialState.S,
+                initialState.I,
+                initialState.R);
+        
+        for (int i=0; i<eventList.size(); i++) {
+            double t = eventList.get(i).time;
+            int S = getStateList().get(i+1).S;
+            int I = getStateList().get(i+1).I;
+            int R = getStateList().get(i+1).R;
+            
+            ps.format("%g %d %d %d\n", t, S, I, R);
+        }
+    }
 
     @Override
     public void setEverythingDirty(boolean isDirty) { }

@@ -56,8 +56,14 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
     
     @Override
     public void initAndValidate() {
+        super.initAndValidate();
         infectionRate = infectionRateInput.get();
         recoveryRate = recoveryRateInput.get();
+        
+        initialState = new EpidemicState(
+                S0Input.get(),
+                I0Input.get(),
+                R0Input.get());
     }
     
     private void simulate() {
@@ -70,13 +76,14 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
             
             double infProp = thisState.S*thisState.I*infectionRate;
             double recProp = thisState.I*recoveryRate;
+            double totalProp = infProp + recProp;
 
-            t += Randomizer.nextExponential(infProp + recProp);
+            t += Randomizer.nextExponential(totalProp);
 
             EpidemicEvent nextEvent = new EpidemicEvent();
             nextEvent.time = t;
 
-            if (Randomizer.nextDouble()<infProp) {
+            if (Randomizer.nextDouble()*totalProp < infProp) {
                 nextEvent.type = EpidemicEvent.EventType.INFECTION;
                 thisState.S -= 1;
                 thisState.I += 1;
@@ -92,8 +99,7 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
     
     @Override
     public void initStateNodes() throws Exception {
-        initialState = new EpidemicState(
-                S0Input.get(), I0Input.get(), R0Input.get());
+        simulate();
     }
 
     @Override

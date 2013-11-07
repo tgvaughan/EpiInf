@@ -39,4 +39,8 @@ public class EpidemicState {
         
         return stateCopy;
     }
+    
+    public String toString() {
+        return "S: " + S + ", I: " + I + ", R: " + R;
+    }
 }
