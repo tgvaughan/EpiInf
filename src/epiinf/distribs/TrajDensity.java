@@ -67,6 +67,16 @@ public class TrajDensity extends Distribution {
 
         for (EpidemicEvent event : trajectory.getEventList()) {
             
+            double infectionProp = thisState.S*thisState.I*infectionRate.getValue();
+            double recoveryProp = thisState.I*recoveryRate.getValue();
+            double totalProp = infectionProp + recoveryProp;
+            
+            logP += -totalProp*event.waitingTime;
+            if (event.type == EpidemicEvent.EventType.INFECTION)
+                logP += Math.log(infectionProp);
+            else
+                logP += Math.log(recoveryProp);
+            
         }
         
         return logP;

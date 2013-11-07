@@ -24,6 +24,6 @@ package epiinf;
 public class EpidemicEvent {
     public enum EventType { INFECTION, RECOVERY };
     
-    double waitingTime;
-    EventType type;
+    public double waitingTime;
+    public EventType type;
 }
