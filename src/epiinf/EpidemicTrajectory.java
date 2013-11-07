@@ -30,13 +30,7 @@ import org.w3c.dom.Node;
 @Description("StateNode representing a complete epidemic trajectory.")
 public class EpidemicTrajectory extends StateNode {
     
-    protected enum EventType { INFECTION, RECOVERY };
-    protected class Event {
-        double waitingTime;
-        EventType type;
-    }
-    
-    protected List<Event> eventList, storedEventList;
+    protected List<EpidemicEvent> eventList, storedEventList;
     protected EpidemicState initialState, storedInitialState;
     protected List<EpidemicState> stateList;
     
@@ -44,8 +38,8 @@ public class EpidemicTrajectory extends StateNode {
     
     @Override
     public void initAndValidate() {
-        eventList = new ArrayList<Event>();
-        storedEventList = new ArrayList<Event>();
+        eventList = new ArrayList<EpidemicEvent>();
+        storedEventList = new ArrayList<EpidemicEvent>();
 
         stateList = new ArrayList<EpidemicState>();
     }
@@ -54,9 +48,9 @@ public class EpidemicTrajectory extends StateNode {
         stateList.clear();
         
         stateList.add(initialState);
-        for (Event event : eventList) {
+        for (EpidemicEvent event : eventList) {
             EpidemicState nextState = stateList.get(stateList.size()-1).copy();
-            if (event.type == EventType.INFECTION) {
+            if (event.type == EpidemicEvent.EventType.INFECTION) {
                 nextState.S -= 1; 
                 nextState.I += 1;
             } else {
@@ -67,7 +61,9 @@ public class EpidemicTrajectory extends StateNode {
     }
     
     /**
-     * @return List of states corresponding to complete epidemic trajectory.
+     * Retrieve list of states corresponding to complete epidemic trajectory.
+     * 
+     * @return state list
      */
     public List<EpidemicState> getStateList() {
         updateStateList();
@@ -81,6 +77,24 @@ public class EpidemicTrajectory extends StateNode {
      */
     public void setInitialState(EpidemicState state) {
         initialState = state;
+    }
+    
+    /**
+     * Retrieve the initial state of the epidemic.
+     * 
+     * @return initial state
+     */
+    public EpidemicState getInitialState() {
+        return initialState;
+    }
+    
+    /**
+     * Retrieve list of events corresponding to complete epidemic trajectory.
+     * 
+     * @return event list
+     */
+    public List<EpidemicEvent> getEventList() {
+        return eventList;
     }
 
     @Override

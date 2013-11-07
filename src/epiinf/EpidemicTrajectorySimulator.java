@@ -71,15 +71,15 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
             double recProp = thisState.I*recoveryRate;
             double totalProp = infProp*recProp;
 
-            Event nextEvent = new Event();
+            EpidemicEvent nextEvent = new EpidemicEvent();
             nextEvent.waitingTime = Randomizer.nextExponential(totalProp);
 
             if (Randomizer.nextDouble()<infProp) {
-                nextEvent.type = EventType.INFECTION;
+                nextEvent.type = EpidemicEvent.EventType.INFECTION;
                 thisState.S -= 1;
                 thisState.I += 1;
             } else {
-                nextEvent.type = EventType.RECOVERY;
+                nextEvent.type = EpidemicEvent.EventType.RECOVERY;
                 thisState.I -= 1;
                 thisState.R += 1;
             }

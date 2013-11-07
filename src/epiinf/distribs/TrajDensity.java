@@ -22,6 +22,8 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
 import beast.core.parameter.RealParameter;
+import epiinf.EpidemicEvent;
+import epiinf.EpidemicState;
 import epiinf.EpidemicTrajectory;
 import java.util.List;
 import java.util.Random;
@@ -61,7 +63,11 @@ public class TrajDensity extends Distribution {
     public double calculateLogP() {
         logP = 0.0;
         
-        
+        EpidemicState thisState = trajectory.getInitialState();
+
+        for (EpidemicEvent event : trajectory.getEventList()) {
+            
+        }
         
         return logP;
     }
