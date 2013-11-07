@@ -22,8 +22,11 @@ import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
+import beast.core.parameter.RealParameter;
+import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import epiinf.EpidemicTrajectory;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -39,9 +42,27 @@ public class TreeDensity extends Distribution {
 
     public Input<EpidemicTrajectory> trajectoryInput = new Input<EpidemicTrajectory>(
             "epidemicTrajectory", "Epidemic trajectory object.", Validate.REQUIRED);
-
+    
+    public Input<RealParameter> treeOriginInput = new Input<RealParameter>(
+            "treeOrigin", "Time between the epidemic start and the tree MRCA.",
+            Validate.REQUIRED);
+    
     Tree tree;
     EpidemicTrajectory trajectory;
+    RealParameter treeOrigin;
+    
+    /**
+     * Tolerance for deviation between tree node ages and trajectory events.
+     */
+    public static final double tolerance = 1e-10;
+    
+    enum TreeEventType { SAMPLE, COALESCENCE };
+    class TreeEvent {
+        TreeEventType type;
+        double time;
+    }
+    
+    List<TreeEvent> treeEventList;
     
     public TreeDensity() { }
     
@@ -49,13 +70,38 @@ public class TreeDensity extends Distribution {
     public void initAndValidate() {
         tree = treeInput.get();
         trajectory = trajectoryInput.get();
+        treeOrigin = treeOriginInput.get();
+        
+        treeEventList = new ArrayList<TreeEvent>();
     }
     
     @Override
     public double calculateLogP() {
         logP = 0.0;
         
+        
         return logP;
+    }
+    
+    /**
+     * Ensure list of tree events is up to date.
+     */
+    private void updateTreeEventList() {
+        treeEventList.clear();
+
+        for (Node node : tree.getNodesAsArray()) {
+            TreeEvent event = new TreeEvent();
+            if (node.isLeaf())
+                event.type = TreeEventType.SAMPLE;
+            else
+                event.type = TreeEventType.COALESCENCE;
+            
+        }
+        
+    }
+    
+    private double getTimeFromHeight(double height) {
+        
     }
     
     @Override
