@@ -19,7 +19,11 @@ package epiinf.distribs;
 
 import beast.core.Description;
 import beast.core.Distribution;
+import beast.core.Input;
+import beast.core.Input.Validate;
 import beast.core.State;
+import beast.evolution.tree.Tree;
+import epiinf.EpidemicTrajectory;
 import java.util.List;
 import java.util.Random;
 
@@ -29,7 +33,31 @@ import java.util.Random;
  */
 @Description("Exact probability of tree given ")
 public class TreeDensity extends Distribution {
+    
+    public Input<Tree> treeInput = new Input<Tree>(
+            "tree", "Tree to calculate the density of.", Validate.REQUIRED);
 
+    public Input<EpidemicTrajectory> trajectoryInput = new Input<EpidemicTrajectory>(
+            "epidemicTrajectory", "Epidemic trajectory object.", Validate.REQUIRED);
+
+    Tree tree;
+    EpidemicTrajectory trajectory;
+    
+    public TreeDensity() { }
+    
+    @Override
+    public void initAndValidate() {
+        tree = treeInput.get();
+        trajectory = trajectoryInput.get();
+    }
+    
+    @Override
+    public double calculateLogP() {
+        logP = 0.0;
+        
+        return logP;
+    }
+    
     @Override
     public List<String> getArguments() {
         return null;
