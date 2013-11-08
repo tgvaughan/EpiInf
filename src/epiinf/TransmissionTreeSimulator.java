@@ -72,21 +72,73 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
     
     @Override
     public void initStateNodes() throws Exception {
-        Node transmissionRoot = new Node();
         
-        List<Node> leaves = Lists.newArrayList();
+        List<EpidemicEvent> leafEvents = Lists.newArrayList();
         for (EpidemicEvent event : traj.getEventList()) {
             if (event.type == EpidemicEvent.EventType.RECOVERY
                     && Randomizer.nextDouble()<samplingProb) {
-                Node leaf = new Node();
-                leaf.setHeight(event.time);
-                leaves.add(leaf);
+                leafEvents.add(event);
             }
         }
         
-        // Order leaves from most recent to oldest.
-        leaves = Lists.reverse(leaves);
+        // Order leaf events from youngest to oldest.
+        leafEvents = Lists.reverse(leafEvents);
         
+        // Record time of youngest sample:
+        double youngestSamp = leafEvents.get(0).time;
+        
+        List<Node> activeNodes = Lists.newArrayList();
+        List<EpidemicEvent> revEventList = Lists.reverse(traj.getEventList());
+        List<EpidemicState> revStateList = Lists.reverse(traj.getStateList());
+        
+        //for (EpidemicEvent event : Lists.reverse(traj.getEventList())) {
+        for (int eidx=0; eidx<revEventList.size(); eidx++) {
+            
+            EpidemicEvent event = revEventList.get(eidx);
+            EpidemicState state = revStateList.get(eidx);
+            
+            if (leafEvents.get(0).equals(event)) {
+                
+                Node leaf = new Node();
+                leaf.setHeight(youngestSamp-event.time);
+                activeNodes.add(leaf);
+                leafEvents.remove(0);
+                
+            } else {
+                
+                if (event.type == EpidemicEvent.EventType.INFECTION) {
+                    int k = activeNodes.size();
+                    int N = state.I;
+                    
+                    double pCoalesce = k*(k-1)/((double)N*(N-1));
+                    
+                    if (Randomizer.nextDouble()<pCoalesce) {
+                        int childIdx = Randomizer.nextInt(k);
+                        Node child1 = activeNodes.get(childIdx);
+                        activeNodes.remove(childIdx);
+                        
+                        childIdx = Randomizer.nextInt(k-1);
+                        Node child2 = activeNodes.get(childIdx);
+                        activeNodes.remove(childIdx);
+                        
+                        Node parent = new Node();
+                        parent.addChild(child1);
+                        parent.addChild(child2);
+                        parent.setHeight(youngestSamp-event.time);
+                        activeNodes.add(parent);
+                    }
+                }
+            }
+            
+            // Stop when we reach the MRCA of all sampled events.
+            if (leafEvents.isEmpty() && activeNodes.size()<2)
+                break;
+        }
+
+        // Initialise state nodes
+        Node root = activeNodes.get(0);
+        tree.assignFromWithoutID(new Tree(root));
+        treeOrigin.setValue(youngestSamp-root.getHeight());
         
     }
 
