@@ -178,38 +178,4 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         stateNodes.add(treeOrigin);
     }
     
-    /**
-     * Main method for debugging only.
-     * 
-     * @param args 
-     * @throws java.lang.Exception 
-     */
-    public static void main (String [] args) throws Exception {
-        
-        Randomizer.setSeed(42);
-        
-        EpidemicTrajectorySimulator trajSim = new EpidemicTrajectorySimulator();
-        trajSim.initByName(
-                "S0", 1000,
-                "I0", 1,
-                "R0", 0,
-                "infectionRate", 0.001,
-                "recoveryRate", 0.2);
-        
-        trajSim.initStateNodes();
-        
-
-        Tree tree = new Tree();
-        RealParameter treeOrigin = new RealParameter();
-        
-        TransmissionTreeSimulator treeSim = new TransmissionTreeSimulator();
-        treeSim.initByName(
-                "tree", tree,
-                "treeOrigin", treeOrigin,
-                "epidemicTrajectory", trajSim,
-                "nLeaves", 100);
-        
-        treeSim.initStateNodes();
-    }
-    
 }
