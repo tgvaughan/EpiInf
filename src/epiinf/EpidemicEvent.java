@@ -18,6 +18,7 @@
 package epiinf;
 
 /**
+ * Class representing events during an epidemic.
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
