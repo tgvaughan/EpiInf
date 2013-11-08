@@ -29,7 +29,6 @@ import com.google.common.collect.Lists;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.EpidemicTrajectory;
-import epiinf.TreeEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -62,6 +61,12 @@ public class TreeDensity extends Distribution {
      */
     public static final double tolerance = 1e-10;
    
+    public enum TreeEventType { SAMPLE, COALESCENCE }
+    public class TreeEvent {
+        Node node;
+        TreeEventType type;
+        double time;    
+    }
     
     List<TreeEvent> treeEventList;
     
@@ -111,7 +116,7 @@ public class TreeDensity extends Distribution {
             }
             
             // Incorporate probability of effect on tree
-            if (treeEvent.type == TreeEvent.EventType.SAMPLE)
+            if (treeEvent.type == TreeEventType.SAMPLE)
                 k += 1; // Sample
             else {
                 if (k>1) {
@@ -139,11 +144,11 @@ public class TreeDensity extends Distribution {
         if (Math.abs(treeEvent.time-epiEvent.time)>TreeDensity.tolerance)
             return false;
         
-        if ((treeEvent.type == TreeEvent.EventType.COALESCENCE)
+        if ((treeEvent.type == TreeEventType.COALESCENCE)
                 && (epiEvent.type != EpidemicEvent.EventType.INFECTION))
             return false;
         
-        if ((treeEvent.type == TreeEvent.EventType.SAMPLE)
+        if ((treeEvent.type == TreeEventType.SAMPLE)
                 && (epiEvent.type != EpidemicEvent.EventType.RECOVERY))
             return false;
         
@@ -160,9 +165,9 @@ public class TreeDensity extends Distribution {
         for (Node node : tree.getNodesAsArray()) {
             TreeEvent event = new TreeEvent();
             if (node.isLeaf())
-                event.type = TreeEvent.EventType.SAMPLE;
+                event.type = TreeEventType.SAMPLE;
             else
-                event.type = TreeEvent.EventType.COALESCENCE;
+                event.type = TreeEventType.COALESCENCE;
        
             event.time = getTimeFromHeight(node.getHeight());
             event.node = node;
