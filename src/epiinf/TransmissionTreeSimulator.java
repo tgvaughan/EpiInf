@@ -20,6 +20,7 @@ package epiinf;
 import beast.core.BEASTObject;
 import beast.core.Input;
 import beast.core.Input.Validate;
+import beast.core.State;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
 import beast.core.parameter.RealParameter;
@@ -27,6 +28,8 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 import com.google.common.collect.Lists;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -50,15 +53,15 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
             "Epidemic trajectory object.",
             Validate.REQUIRED);
     
-    public Input<Double> samplingProbInput = new Input<Double>(
-            "samplingProbability",
-            "Sampling probability: affects number of leaves in tree.",
+    public Input<Integer> nLeavesInput = new Input<Integer>(
+            "nLeaves",
+            "Number of leaves in tree.",
             Validate.REQUIRED);
 
     private Tree tree;
     private RealParameter treeOrigin;
     private EpidemicTrajectory traj;
-    private double samplingProb;
+    private int nLeaves;
     
     public TransmissionTreeSimulator() { }
     
@@ -67,22 +70,48 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         tree = treeInput.get();
         treeOrigin = treeOriginInput.get();
         traj = trajInput.get();
-        samplingProb = samplingProbInput.get();
+        nLeaves = nLeavesInput.get();
     }
     
     @Override
     public void initStateNodes() throws Exception {
         
         List<EpidemicEvent> leafEvents = Lists.newArrayList();
+        List<EpidemicEvent> recoveryEvents = Lists.newArrayList();
+        
         for (EpidemicEvent event : traj.getEventList()) {
-            if (event.type == EpidemicEvent.EventType.RECOVERY
-                    && Randomizer.nextDouble()<samplingProb) {
-                leafEvents.add(event);
-            }
+            if (event.type == EpidemicEvent.EventType.RECOVERY)
+                recoveryEvents.add(event);
+        }
+
+        // Check for invalid leaf count request.
+        if (recoveryEvents.size()<nLeaves)
+            throw new IllegalArgumentException("Trajectory has fewer recovery"
+                    + "events than value of nLeaves.");
+        
+        for (int i=0; i<nLeaves; i++) {
+            int idx = Randomizer.nextInt(recoveryEvents.size());
+            leafEvents.add(recoveryEvents.get(idx));
+            recoveryEvents.remove(idx);
         }
         
+        int nextLeafNr = 0;
+        int nextInternalID = leafEvents.size();
+        
         // Order leaf events from youngest to oldest.
-        leafEvents = Lists.reverse(leafEvents);
+        Collections.sort(leafEvents, new Comparator<EpidemicEvent>() {
+
+            @Override
+            public int compare(EpidemicEvent o1, EpidemicEvent o2) {
+                if (o1.time > o2.time)
+                    return -1;
+                
+                if (o1.time < o2.time)
+                    return 1;
+                
+                return 0;
+            }
+        });
         
         // Record time of youngest sample:
         double youngestSamp = leafEvents.get(0).time;
@@ -97,10 +126,11 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
             EpidemicEvent event = revEventList.get(eidx);
             EpidemicState state = revStateList.get(eidx);
             
-            if (leafEvents.get(0).equals(event)) {
+            if (!leafEvents.isEmpty() && leafEvents.get(0).equals(event)) {
                 
                 Node leaf = new Node();
                 leaf.setHeight(youngestSamp-event.time);
+                leaf.setNr(nextLeafNr++);
                 activeNodes.add(leaf);
                 leafEvents.remove(0);
                 
@@ -125,6 +155,7 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
                         parent.addChild(child1);
                         parent.addChild(child2);
                         parent.setHeight(youngestSamp-event.time);
+                        parent.setNr(nextInternalID++);
                         activeNodes.add(parent);
                     }
                 }
@@ -138,14 +169,47 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         // Initialise state nodes
         Node root = activeNodes.get(0);
         tree.assignFromWithoutID(new Tree(root));
-        treeOrigin.setValue(youngestSamp-root.getHeight());
-        
+        treeOrigin.assignFromWithoutID(new RealParameter(String.valueOf(youngestSamp-root.getHeight())));
     }
 
     @Override
     public void getInitialisedStateNodes(List<StateNode> stateNodes) {
         stateNodes.add(tree);
         stateNodes.add(treeOrigin);
+    }
+    
+    /**
+     * Main method for debugging only.
+     * 
+     * @param args 
+     * @throws java.lang.Exception 
+     */
+    public static void main (String [] args) throws Exception {
+        
+        Randomizer.setSeed(42);
+        
+        EpidemicTrajectorySimulator trajSim = new EpidemicTrajectorySimulator();
+        trajSim.initByName(
+                "S0", 1000,
+                "I0", 1,
+                "R0", 0,
+                "infectionRate", 0.001,
+                "recoveryRate", 0.2);
+        
+        trajSim.initStateNodes();
+        
+
+        Tree tree = new Tree();
+        RealParameter treeOrigin = new RealParameter();
+        
+        TransmissionTreeSimulator treeSim = new TransmissionTreeSimulator();
+        treeSim.initByName(
+                "tree", tree,
+                "treeOrigin", treeOrigin,
+                "epidemicTrajectory", trajSim,
+                "nLeaves", 100);
+        
+        treeSim.initStateNodes();
     }
     
 }
