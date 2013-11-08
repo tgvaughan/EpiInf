@@ -98,7 +98,7 @@ public class TreeDensity extends Distribution {
         for (TreeEvent treeEvent : revTreeEventList) {
             
             while (idx<revEventList.size()
-                    && eventsMatch(treeEvent, revEventList.get(idx))) {
+                    && !eventsMatch(treeEvent, revEventList.get(idx))) {
                 
                 // Incoporate probability of no effect on tree
                 if (k>1) {
