@@ -87,7 +87,7 @@ public class TreeDensity extends Distribution {
         
         updateTreeEventList();
         
-        List<TreeEvent> revTreeEventList = Lists.reverse(treeEventList);
+        //List<TreeEvent> revTreeEventList = Lists.reverse(treeEventList);
         List<EpidemicEvent> revEventList = Lists.reverse(trajectory.getEventList());
         List<EpidemicState> revStateList = Lists.reverse(trajectory.getStateList());
         
@@ -95,7 +95,7 @@ public class TreeDensity extends Distribution {
 
         int k = 0;
         
-        for (TreeEvent treeEvent : revTreeEventList) {
+        for (TreeEvent treeEvent : treeEventList) {
             
             while (idx<revEventList.size()
                     && !eventsMatch(treeEvent, revEventList.get(idx))) {
@@ -119,10 +119,8 @@ public class TreeDensity extends Distribution {
             if (treeEvent.type == TreeEventType.SAMPLE)
                 k += 1; // Sample
             else {
-                if (k>1) {
-                    int N = revStateList.get(idx).I;
-                    logP += Math.log(k*(k-1)/((double)N*(N-1)));
-                }
+                int N = revStateList.get(idx).I;
+                logP += Math.log(k*(k-1)/((double)N*(N-1)));
                 k -= 1; // Coalescence            
             }
             
