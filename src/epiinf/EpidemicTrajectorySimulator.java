@@ -37,14 +37,6 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
             "S0", "Initial susceptible count.",
             Validate.REQUIRED);
 
-    public Input<Integer> I0Input = new Input<Integer>(
-            "I0", "Initial susceptible count.",
-            Validate.REQUIRED);
-    
-    public Input<Integer> R0Input = new Input<Integer>(
-            "R0", "Initial susceptible count.",
-            Validate.REQUIRED);
-    
     public Input<Double> infectionRateInput = new Input<Double>(
             "infectionRate", "Rate of infection (per susceptible per infected)",
             Validate.REQUIRED);
@@ -63,10 +55,7 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
         infectionRate = infectionRateInput.get();
         recoveryRate = recoveryRateInput.get();
         
-        initialState = new EpidemicState(
-                S0Input.get(),
-                I0Input.get(),
-                R0Input.get());
+        initialState = new EpidemicState(S0Input.get(), 1, 0);
     }
     
     private void simulate() {

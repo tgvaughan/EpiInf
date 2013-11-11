@@ -38,8 +38,6 @@ public class EpidemicTrajectorySimulatorTest {
         EpidemicTrajectorySimulator trajSim = new EpidemicTrajectorySimulator();
         trajSim.initByName(
                 "S0", 1000,
-                "I0", 1,
-                "R0", 0,
                 "infectionRate", 0.001,
                 "recoveryRate", 0.2);
         
