@@ -23,12 +23,12 @@ import beast.core.Input.Validate;
 import beast.core.Operator;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
+import beast.util.Randomizer;
 import com.google.common.collect.Lists;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.EpidemicTrajectory;
+import epiinf.TreeEventList;
 import java.util.List;
 
 /**
@@ -38,12 +38,8 @@ import java.util.List;
         + "the transmission tree and the tree origin.")
 public class TrajectoryOperator extends Operator {
     
-    public Input<Tree> treeInput = new Input<Tree>(
-            "tree", "Transmission tree.", Validate.REQUIRED);
-    
-    public Input<RealParameter> treeOriginInput = new Input<RealParameter>(
-            "treeOrigin", "Difference between time of MRCA and start of "
-                    + "epidemic.", Validate.REQUIRED);
+    public Input<TreeEventList> treeEventListInput = new Input<TreeEventList>(
+            "treeEventList", "Tree event list.", Validate.REQUIRED);
     
     public Input<RealParameter> infectionRateInput = new Input<RealParameter>(
             "infectionRate", "Rate of infection.", Validate.REQUIRED);
@@ -63,12 +59,55 @@ public class TrajectoryOperator extends Operator {
         double logHR = 0.0;
         
         EpidemicTrajectory traj = trajInput.get();
+        double infectionRate = infectionRateInput.get().getValue();
+        double recoveryRate = recoveryRateInput.get().getValue();
+        
         List<EpidemicEvent> eventList = Lists.newArrayList();
+        List<TreeEventList.TreeEvent> treeEventList = treeEventListInput.get().getEventList();
 
-        EpidemicState state = new EpidemicState(S0Input.get().getValue(), 1, 0);
-        traj.setInitialState(state);
+        EpidemicState thisState = new EpidemicState(S0Input.get().getValue(), 1, 0);
+        traj.setInitialState(thisState);
         
-        
+        double t = 0.0;
+        for (TreeEventList.TreeEvent treeEvent : treeEventList) {
+            while (true) {
+                double infProp = infectionRate*thisState.S*thisState.I;
+                double recProp = recoveryRate*thisState.I;
+                double totalProp = infProp + recProp;
+                
+                t += Randomizer.nextExponential(totalProp);
+                if (t > treeEvent.time) {
+                    t = treeEvent.time;
+                    break;
+                }
+                
+                EpidemicEvent newEvent = new EpidemicEvent();
+                newEvent.time = t;
+                
+                if (Randomizer.nextDouble()*totalProp < infProp) {
+                    // Infection
+                    newEvent.type = EpidemicEvent.EventType.INFECTION;
+                    eventList.add(newEvent);
+                    
+                    thisState.S -= 1;
+                    thisState.I += 1;
+                } else {
+                    // Recovery
+                    newEvent.type = EpidemicEvent.EventType.RECOVERY;
+                    eventList.add(newEvent);
+                    
+                    thisState.I -= 1;
+                    thisState.R += 1;
+                }
+            }
+            
+            EpidemicEvent newEvent = new EpidemicEvent();
+            newEvent.time = treeEvent.time;
+            if (treeEvent.type == TreeEventList.TreeEventType.COALESCENCE)
+                newEvent.type = EpidemicEvent.EventType.INFECTION;
+            else
+                newEvent.type = EpidemicEvent.EventType.RECOVERY;
+        }
         
         return logHR;
     }

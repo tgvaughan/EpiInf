@@ -91,16 +91,16 @@ public class TreeEventList extends CalculationNode {
             eventList.add(event);
         }
         
-        // Sort events in time-reversed order
+        // Sort events in order of absolute time
         Collections.sort(eventList, new Comparator<TreeEvent>() {
 
             @Override
             public int compare(TreeEvent e1, TreeEvent e2) {
                 if (e1.time < e2.time)
-                    return 1;
+                    return -1;
                 
                 if (e1.time > e2.time)
-                    return -1;
+                    return 1;
                 
                 return 0;
             }

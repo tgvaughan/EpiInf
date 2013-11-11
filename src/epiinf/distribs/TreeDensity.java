@@ -64,7 +64,8 @@ public class TreeDensity extends Distribution {
     public double calculateLogP() {
         logP = 0.0;
         
-        //List<TreeEvent> revTreeEventList = Lists.reverse(treeEventList);
+        List<TreeEventList.TreeEvent> revTreeEventList =
+                Lists.reverse(treeEventList.getEventList());
         List<EpidemicEvent> revEventList = Lists.reverse(trajectory.getEventList());
         List<EpidemicState> revStateList = Lists.reverse(trajectory.getStateList());
         
@@ -72,7 +73,7 @@ public class TreeDensity extends Distribution {
 
         int k = 0;
         
-        for (TreeEventList.TreeEvent treeEvent : treeEventList.getEventList()) {
+        for (TreeEventList.TreeEvent treeEvent : revTreeEventList) {
             
             while (idx<revEventList.size()
                     && !eventsMatch(treeEvent, revEventList.get(idx))) {
