@@ -76,6 +76,7 @@ public class TrajectoryOperator extends Operator {
                 double totalProp = infProp + recProp;
                 
                 t += Randomizer.nextExponential(totalProp);
+                
                 if (t > treeEvent.time) {
                     t = treeEvent.time;
                     break;
@@ -85,28 +86,30 @@ public class TrajectoryOperator extends Operator {
                 newEvent.time = t;
                 
                 if (Randomizer.nextDouble()*totalProp < infProp) {
-                    // Infection
                     newEvent.type = EpidemicEvent.EventType.INFECTION;
-                    eventList.add(newEvent);
-                    
                     thisState.S -= 1;
                     thisState.I += 1;
                 } else {
-                    // Recovery
                     newEvent.type = EpidemicEvent.EventType.RECOVERY;
-                    eventList.add(newEvent);
-                    
                     thisState.I -= 1;
                     thisState.R += 1;
                 }
+                
+                eventList.add(newEvent);
             }
             
             EpidemicEvent newEvent = new EpidemicEvent();
             newEvent.time = treeEvent.time;
-            if (treeEvent.type == TreeEventList.TreeEventType.COALESCENCE)
+            if (treeEvent.type == TreeEventList.TreeEventType.COALESCENCE) {
                 newEvent.type = EpidemicEvent.EventType.INFECTION;
-            else
+                thisState.S -= 1;
+                thisState.I += 1;
+                
+            } else {
                 newEvent.type = EpidemicEvent.EventType.RECOVERY;
+                thisState.I -= 1;
+                thisState.R += 1;
+            }
         }
         
         return logHR;
