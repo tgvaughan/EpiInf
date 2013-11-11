@@ -91,6 +91,10 @@ public class EpidemicTrajectory extends StateNode {
     public EpidemicState getInitialState() {
         return initialState;
     }
+
+    public void setEventList(List<EpidemicEvent> eventList) {
+        this.eventList = eventList;
+    }
     
     /**
      * Retrieve list of events corresponding to complete epidemic trajectory.

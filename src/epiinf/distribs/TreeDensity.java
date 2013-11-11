@@ -23,15 +23,11 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
 import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
 import com.google.common.collect.Lists;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.EpidemicTrajectory;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import epiinf.TreeEventList;
 import java.util.List;
 import java.util.Random;
 
@@ -42,50 +38,31 @@ import java.util.Random;
 @Description("Exact probability of tree given ")
 public class TreeDensity extends Distribution {
     
-    public Input<Tree> treeInput = new Input<Tree>(
-            "tree", "Tree to calculate the density of.", Validate.REQUIRED);
+    public Input<TreeEventList> treeEventListInput = new Input<TreeEventList>(
+            "treeEventList", "Tree event list.", Validate.REQUIRED);
 
     public Input<EpidemicTrajectory> trajectoryInput = new Input<EpidemicTrajectory>(
             "epidemicTrajectory", "Epidemic trajectory object.", Validate.REQUIRED);
     
-    public Input<RealParameter> treeOriginInput = new Input<RealParameter>(
-            "treeOrigin", "Time between the epidemic start and the tree MRCA.",
-            Validate.REQUIRED);
-    
-    Tree tree;
     EpidemicTrajectory trajectory;
-    RealParameter treeOrigin;
+    TreeEventList treeEventList;
     
     /**
      * Tolerance for deviation between tree node ages and trajectory events.
      */
     public static final double tolerance = 1e-10;
-   
-    public enum TreeEventType { SAMPLE, COALESCENCE }
-    public class TreeEvent {
-        Node node;
-        TreeEventType type;
-        double time;    
-    }
-    
-    List<TreeEvent> treeEventList;
-    
+       
     public TreeDensity() { }
     
     @Override
     public void initAndValidate() {
-        tree = treeInput.get();
         trajectory = trajectoryInput.get();
-        treeOrigin = treeOriginInput.get();
-        
-        treeEventList = new ArrayList<TreeEvent>();
+        treeEventList = treeEventListInput.get();
     }
     
     @Override
     public double calculateLogP() {
         logP = 0.0;
-        
-        updateTreeEventList();
         
         //List<TreeEvent> revTreeEventList = Lists.reverse(treeEventList);
         List<EpidemicEvent> revEventList = Lists.reverse(trajectory.getEventList());
@@ -95,7 +72,7 @@ public class TreeDensity extends Distribution {
 
         int k = 0;
         
-        for (TreeEvent treeEvent : treeEventList) {
+        for (TreeEventList.TreeEvent treeEvent : treeEventList.getEventList()) {
             
             while (idx<revEventList.size()
                     && !eventsMatch(treeEvent, revEventList.get(idx))) {
@@ -116,7 +93,7 @@ public class TreeDensity extends Distribution {
             }
             
             // Incorporate probability of effect on tree
-            if (treeEvent.type == TreeEventType.SAMPLE)
+            if (treeEvent.type == TreeEventList.TreeEventType.SAMPLE)
                 k += 1; // Sample
             else {
                 int N = revStateList.get(idx).I;
@@ -137,68 +114,20 @@ public class TreeDensity extends Distribution {
      * 
      * @return true if events are compatible
      */
-    private boolean eventsMatch(TreeEvent treeEvent, EpidemicEvent epiEvent) {
+    private boolean eventsMatch(TreeEventList.TreeEvent treeEvent, EpidemicEvent epiEvent) {
         
         if (Math.abs(treeEvent.time-epiEvent.time)>TreeDensity.tolerance)
             return false;
         
-        if ((treeEvent.type == TreeEventType.COALESCENCE)
+        if ((treeEvent.type == TreeEventList.TreeEventType.COALESCENCE)
                 && (epiEvent.type != EpidemicEvent.EventType.INFECTION))
             return false;
         
-        if ((treeEvent.type == TreeEventType.SAMPLE)
+        if ((treeEvent.type == TreeEventList.TreeEventType.SAMPLE)
                 && (epiEvent.type != EpidemicEvent.EventType.RECOVERY))
             return false;
         
         return true;
-    }
-    
-    /**
-     * Ensure list of tree events is up to date.
-     */
-    private void updateTreeEventList() {
-        treeEventList.clear();
-
-        // Assemble event list
-        for (Node node : tree.getNodesAsArray()) {
-            TreeEvent event = new TreeEvent();
-            if (node.isLeaf())
-                event.type = TreeEventType.SAMPLE;
-            else
-                event.type = TreeEventType.COALESCENCE;
-       
-            event.time = getTimeFromHeight(node.getHeight());
-            event.node = node;
-            
-            treeEventList.add(event);
-        }
-        
-        // Sort events in time-reversed order
-        Collections.sort(treeEventList, new Comparator<TreeEvent>() {
-
-            @Override
-            public int compare(TreeEvent e1, TreeEvent e2) {
-                if (e1.time < e2.time)
-                    return 1;
-                
-                if (e1.time > e2.time)
-                    return -1;
-                
-                return 0;
-            }
-            
-        });
-        
-    }
-    
-    /**
-     * Obtain absolute epidemic time corresponding to height on tree.
-     * 
-     * @param height
-     * @return time
-     */
-    private double getTimeFromHeight (double height) {
-        return treeOrigin.getValue() + tree.getRoot().getHeight() - height;
     }
     
     @Override

@@ -21,8 +21,15 @@ import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.Operator;
+import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
+import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
+import com.google.common.collect.Lists;
+import epiinf.EpidemicEvent;
+import epiinf.EpidemicState;
+import epiinf.EpidemicTrajectory;
+import java.util.List;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
@@ -43,10 +50,25 @@ public class TrajectoryOperator extends Operator {
     
     public Input<RealParameter> recoveryRateInput = new Input<RealParameter>(
             "recoveryRate", "Rate of recovery.", Validate.REQUIRED);
+    
+    public Input<IntegerParameter> S0Input = new Input<IntegerParameter>(
+            "S0", "Initial number of susceptibles.", Validate.REQUIRED);
 
+    public Input<EpidemicTrajectory> trajInput = new Input<EpidemicTrajectory>(
+            "epidemicTrajectory", "Epidemic trajectory.", Validate.REQUIRED);
+
+    
     @Override
     public double proposal() {
         double logHR = 0.0;
+        
+        EpidemicTrajectory traj = trajInput.get();
+        List<EpidemicEvent> eventList = Lists.newArrayList();
+
+        EpidemicState state = new EpidemicState(S0Input.get().getValue(), 1, 0);
+        traj.setInitialState(state);
+        
+        
         
         return logHR;
     }
