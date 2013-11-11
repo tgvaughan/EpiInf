@@ -101,7 +101,7 @@ public class TreeDensity extends Distribution {
                     && !eventsMatch(treeEvent, revEventList.get(idx))) {
                 
                 // Incoporate probability of no effect on tree
-                if (k>1) {
+                if (revEventList.get(idx).type == EpidemicEvent.EventType.INFECTION && k>1) {
                     int N = revStateList.get(idx).I;
                     logP += Math.log(1.0 - k*(k-1)/((double)N*(N-1)));
                 }
@@ -121,7 +121,7 @@ public class TreeDensity extends Distribution {
             else {
                 int N = revStateList.get(idx).I;
                 logP += Math.log(k*(k-1)/((double)N*(N-1)));
-                k -= 1; // Coalescence            
+                k -= 1; // Coalescence
             }
             
         }
