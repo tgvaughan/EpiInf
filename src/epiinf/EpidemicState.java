@@ -18,6 +18,8 @@
 package epiinf;
 
 /**
+ * A state of an SIR epidemic trajectory.
+ * 
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class EpidemicState {

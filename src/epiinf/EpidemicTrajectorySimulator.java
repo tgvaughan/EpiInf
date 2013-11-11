@@ -17,6 +17,7 @@
 
 package epiinf;
 
+import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.StateNode;
@@ -25,9 +26,11 @@ import beast.util.Randomizer;
 import java.util.List;
 
 /**
+ * Simulate an epidemic trajectory under a stochastic SIR model.
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
+@Description("Simulate an epidemic trajectory under a stochastic SIR model.")
 public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements StateNodeInitialiser {
     
     public Input<Integer> S0Input = new Input<Integer>(

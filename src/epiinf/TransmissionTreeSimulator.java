@@ -18,9 +18,9 @@
 package epiinf;
 
 import beast.core.BEASTObject;
+import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
-import beast.core.State;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
 import beast.core.parameter.RealParameter;
@@ -33,9 +33,12 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
+ * State node initializer which simulates a transmission tree compatible with
+ * the given epidemic trajectory.  The tree origin parameter is also initialized.
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
+@Description("Simulate transmission tree conditional on epidemic trajectory.")
 public class TransmissionTreeSimulator extends BEASTObject implements StateNodeInitialiser {
 
     public Input<Tree> treeInput = new Input<Tree>(

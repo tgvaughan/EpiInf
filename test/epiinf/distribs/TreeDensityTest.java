@@ -22,6 +22,7 @@ import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 import epiinf.EpidemicTrajectorySimulator;
 import epiinf.TransmissionTreeSimulator;
+import java.io.PrintStream;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -58,15 +59,16 @@ public class TreeDensityTest {
                 "epidemicTrajectory", trajSim,
                 "nLeaves", 100);
         
-        treeSim.initStateNodes();
-        
         TreeDensity treeDensity = new TreeDensity();
         treeDensity.initByName(
                 "tree", tree,
                 "epidemicTrajectory", trajSim,
                 "treeOrigin", treeOrigin);
-        
+
+        treeSim.initStateNodes();
         double logP = treeDensity.calculateLogP();
+        double logPtruth = -284.84151224202884;
         
+        assertTrue(2.0*Math.abs(logP-logPtruth)/(logP+logPtruth)<1e-10);
     }
 }

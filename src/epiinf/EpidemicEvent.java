@@ -18,7 +18,7 @@
 package epiinf;
 
 /**
- * Class representing events during an epidemic.
+ * Class representing events during an SIR epidemic.
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
