@@ -56,6 +56,9 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
         recoveryRate = recoveryRateInput.get();
         
         initialState = new EpidemicState(S0Input.get(), 1, 0);
+        stateListDirty = true;
+        
+        simulate();
     }
     
     private void simulate() {
@@ -87,11 +90,13 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
             
             eventList.add(nextEvent);
         }
+        
+        stateListDirty = true;
     }
     
     @Override
     public void initStateNodes() throws Exception {
-        simulate();
+        //simulate();
     }
 
     @Override

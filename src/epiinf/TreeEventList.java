@@ -73,7 +73,7 @@ public class TreeEventList extends CalculationNode {
         eventList = Lists.newArrayList();
         eventListStored = Lists.newArrayList();
         
-        updateEventList();
+        dirty = true;
     }
     
     /**

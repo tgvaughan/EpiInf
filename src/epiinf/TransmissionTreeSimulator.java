@@ -90,7 +90,7 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         // Check for invalid leaf count request.
         if (recoveryEvents.size()<nLeaves)
             throw new IllegalArgumentException("Trajectory has fewer recovery"
-                    + "events than value of nLeaves.");
+                    + " events than value of nLeaves.");
         
         for (int i=0; i<nLeaves; i++) {
             int idx = Randomizer.nextInt(recoveryEvents.size());

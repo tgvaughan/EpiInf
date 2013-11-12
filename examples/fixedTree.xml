@@ -19,10 +19,10 @@
 
     <state>
       <stateNode idref="traj"/>
-      <stateNode idref="tree"/>
       <stateNode idref="infectionRate"/>
       <stateNode idref="recoveryRate"/>
       <stateNode idref="S0"/>
+<!--  <stateNode idref="tree"/>-->
     </state>
 
     <distribution spec='CompoundDistribution' id='posterior'>

@@ -34,6 +34,8 @@ public class EpidemicTrajectory extends StateNode {
     protected EpidemicState initialState, storedInitialState;
     protected List<EpidemicState> stateList;
     
+    protected boolean stateListDirty;
+    
     public EpidemicTrajectory () { };
     
     @Override
@@ -42,9 +44,13 @@ public class EpidemicTrajectory extends StateNode {
         storedEventList = new ArrayList<EpidemicEvent>();
 
         stateList = new ArrayList<EpidemicState>();
+        stateListDirty = false;
     }
     
     private void updateStateList() {
+        if (!stateListDirty)
+            return;
+        
         stateList.clear();
         
         stateList.add(initialState);
@@ -81,6 +87,7 @@ public class EpidemicTrajectory extends StateNode {
      */
     public void setInitialState(EpidemicState state) {
         initialState = state;
+        stateListDirty = true;
     }
     
     /**
@@ -94,6 +101,7 @@ public class EpidemicTrajectory extends StateNode {
 
     public void setEventList(List<EpidemicEvent> eventList) {
         this.eventList = eventList;
+        stateListDirty = true;
     }
     
     /**
@@ -128,11 +136,21 @@ public class EpidemicTrajectory extends StateNode {
     }
 
     @Override
-    public void setEverythingDirty(boolean isDirty) { }
+    public void setEverythingDirty(boolean isDirty) {
+        stateListDirty = true;
+    }
 
     @Override
     public StateNode copy() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        EpidemicTrajectory trajCopy = new EpidemicTrajectory();
+        
+        trajCopy.initAndValidate();
+        trajCopy.initialState = initialState.copy();
+        trajCopy.eventList.addAll(eventList);
+        trajCopy.storedEventList.addAll(storedEventList);
+        trajCopy.stateListDirty = true;
+        
+        return trajCopy;
     }
 
     @Override
@@ -172,6 +190,7 @@ public class EpidemicTrajectory extends StateNode {
         initialState = storedInitialState.copy();
         eventList.clear();
         eventList.addAll(storedEventList);
+        stateListDirty = true;
     }
 
     @Override
