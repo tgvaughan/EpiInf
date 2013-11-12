@@ -56,7 +56,9 @@ public class TrajectoryOperator extends Operator {
     
     @Override
     public double proposal() {
-        double logHR = 0.0;
+        
+        // Initialize HR with reverse move density
+        double logHR = getReverseMoveDensity();
         
         EpidemicTrajectory traj = trajInput.get();
         double infectionRate = infectionRateInput.get().getValue();
@@ -70,12 +72,16 @@ public class TrajectoryOperator extends Operator {
         
         double t = 0.0;
         for (TreeEventList.TreeEvent treeEvent : treeEventList) {
+            
             while (true) {
                 double infProp = infectionRate*thisState.S*thisState.I;
                 double recProp = recoveryRate*thisState.I;
                 double totalProp = infProp + recProp;
                 
-                t += Randomizer.nextExponential(totalProp);
+                double dt = Randomizer.nextExponential(totalProp);
+                logHR -= -totalProp*(Math.min(t+dt, treeEvent.time)-t);
+                
+                t += dt;
                 
                 if (t > treeEvent.time) {
                     t = treeEvent.time;
@@ -89,10 +95,14 @@ public class TrajectoryOperator extends Operator {
                     newEvent.type = EpidemicEvent.EventType.INFECTION;
                     thisState.S -= 1;
                     thisState.I += 1;
+                    
+                    logHR -= Math.log(infProp);
                 } else {
                     newEvent.type = EpidemicEvent.EventType.RECOVERY;
                     thisState.I -= 1;
                     thisState.R += 1;
+                    
+                    logHR -= Math.log(recProp);
                 }
                 
                 eventList.add(newEvent);
