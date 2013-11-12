@@ -122,7 +122,11 @@ public class TrajectoryOperator extends Operator {
                 thisState.I -= 1;
                 thisState.R += 1;
             }
+            
+            eventList.add(newEvent);
         }
+        
+        traj.setEventList(eventList);
         
         return logHR;
     }
