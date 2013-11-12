@@ -147,7 +147,7 @@ public class EpidemicTrajectory extends StateNode {
 
     @Override
     public void setEverythingDirty(boolean isDirty) {
-        stateListDirty = true;
+        setSomethingIsDirty(isDirty);
     }
 
     @Override
@@ -207,11 +207,28 @@ public class EpidemicTrajectory extends StateNode {
     @Override
     public void init(PrintStream out) throws Exception {
         out.print(getID() + ".duration\t");
+        out.print(getID() + ".timeAtPeak\t");
+        out.print(getID() + ".infected\t");
     }
 
     @Override
     public void log(int nSample, PrintStream out) {
         out.print(eventList.get(eventList.size()-1).time + "\t");
+        
+        double tpeak = 0.0;
+        int Ipeak = 0;
+        for (int idx=0; idx<getEventList().size(); idx++) {
+            EpidemicEvent epiEvent = getEventList().get(idx);
+            EpidemicState epiState = getStateList().get(idx);
+            if (epiState.I>Ipeak) {
+                Ipeak = epiState.I;
+                tpeak = epiEvent.time;
+            }
+        }
+        out.print(tpeak + "\t");
+        
+        EpidemicState finalState = getStateList().get(getStateList().size()-1);
+        out.print((finalState.I+finalState.R) + "\t");
     }
 
     @Override
