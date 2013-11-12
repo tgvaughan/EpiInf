@@ -99,7 +99,12 @@ public class TreeDensity extends Distribution {
         
         return logP;
     }
-    
+
+    @Override
+    public boolean requiresRecalculation() {
+        return true;
+    }
+
     @Override
     public List<String> getArguments() {
         return null;

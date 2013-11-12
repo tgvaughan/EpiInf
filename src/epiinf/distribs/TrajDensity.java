@@ -90,6 +90,11 @@ public class TrajDensity extends Distribution {
         
         return logP;
     }
+
+    @Override
+    public boolean requiresRecalculation() {
+        return super.requiresRecalculation(); //To change body of generated methods, choose Tools | Templates.
+    }
     
     @Override
     public List<String> getArguments() {
@@ -103,7 +108,7 @@ public class TrajDensity extends Distribution {
 
     @Override
     public void sample(State state, Random random) { }
-    
+
     /**
      * Main method for debugging only.  Generates cross-sections of the
      * parameter likelihood surface and writes these to files for further

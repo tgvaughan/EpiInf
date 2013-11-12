@@ -86,6 +86,7 @@ public class EpidemicTrajectory extends StateNode {
      * @param state 
      */
     public void setInitialState(EpidemicState state) {
+        startEditing();
         initialState = state;
         stateListDirty = true;
     }
@@ -100,6 +101,7 @@ public class EpidemicTrajectory extends StateNode {
     }
 
     public void setEventList(List<EpidemicEvent> eventList) {
+        startEditing();
         this.eventList = eventList;
         stateListDirty = true;
     }
@@ -133,6 +135,14 @@ public class EpidemicTrajectory extends StateNode {
             
             ps.format("%g %d %d %d\n", t, S, I, R);
         }
+    }
+
+    /**
+     * If state exists, notify that state that this statenode has changed.
+     */
+    protected void startEditing() {
+        if (getState() != null)
+            startEditing(null);
     }
 
     @Override
@@ -191,6 +201,7 @@ public class EpidemicTrajectory extends StateNode {
         eventList.clear();
         eventList.addAll(storedEventList);
         stateListDirty = true;
+        hasStartedEditing = false;
     }
 
     @Override

@@ -49,13 +49,14 @@
       <epidemicTrajectory idref="traj"/>
     </operator>
 
-    <logger logEvery="1">
+    <logger logEvery="1" fileName="fixedTree.log">
       <model idref="posterior"/>
       <log idref="posterior"/>
       <log idref="treeDensity"/>
       <log idref="trajDensity"/>
       <log idref="traj"/>
     </logger>
+
 
   </run>
 
