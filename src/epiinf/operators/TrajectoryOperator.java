@@ -70,7 +70,7 @@ public class TrajectoryOperator extends Operator {
         List<TreeEventList.TreeEvent> treeEventList = treeEventListInput.get().getEventList();
 
         EpidemicState thisState = new EpidemicState(S0Input.get().getValue(), 1, 0);
-        traj.setInitialState(thisState);
+        traj.setInitialState(thisState.copy());
         
         double t = 0.0;
         for (TreeEventList.TreeEvent treeEvent : treeEventList) {
