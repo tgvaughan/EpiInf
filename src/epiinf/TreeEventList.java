@@ -53,6 +53,11 @@ public class TreeEventList extends CalculationNode {
     private RealParameter treeOrigin;
     private List<TreeEvent> eventList, eventListStored;
     
+    /**
+     * Tolerance for deviation between tree node ages and trajectory events.
+     */
+    public static final double tolerance = 1e-10;
+    
     private boolean dirty;
     
     /**
@@ -74,7 +79,7 @@ public class TreeEventList extends CalculationNode {
     /**
      * Ensure list of tree events is up to date.
      */
-    private void updateEventList() {
+    public void updateEventList() {
         eventList.clear();
 
         // Assemble event list
@@ -116,8 +121,32 @@ public class TreeEventList extends CalculationNode {
      * @param height
      * @return time
      */
-    private double getTimeFromHeight (double height) {
+    public double getTimeFromHeight (double height) {
         return treeOrigin.getValue() + tree.getRoot().getHeight() - height;
+    }
+    
+        /**
+     * Determine whether given tree event and epidemic event are compatible.
+     * 
+     * @param treeEvent
+     * @param epiEvent
+     * 
+     * @return true if events are compatible
+     */
+    public static boolean eventsMatch(TreeEventList.TreeEvent treeEvent, EpidemicEvent epiEvent) {
+        
+        if (Math.abs(treeEvent.time-epiEvent.time)>tolerance)
+            return false;
+        
+        if ((treeEvent.type == TreeEventList.TreeEventType.COALESCENCE)
+                && (epiEvent.type != EpidemicEvent.EventType.INFECTION))
+            return false;
+        
+        if ((treeEvent.type == TreeEventList.TreeEventType.SAMPLE)
+                && (epiEvent.type != EpidemicEvent.EventType.RECOVERY))
+            return false;
+        
+        return true;
     }
 
     /**

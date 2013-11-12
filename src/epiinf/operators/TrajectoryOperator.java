@@ -115,4 +115,22 @@ public class TrajectoryOperator extends Operator {
         return logHR;
     }
     
+    double getTrajectoryProbability(List<EpidemicEvent> eventList,
+            List<TreeEventList.TreeEvent> treeEventList) {
+        
+        double logP = 0.0;
+        
+        int idx=0;
+        for (TreeEventList.TreeEvent treeEvent : treeEventList) {
+            
+            while (idx<eventList.size() &&
+                    !TreeEventList.eventsMatch(treeEvent, eventList.get(idx))) {
+                
+            }
+            
+        }
+        
+        return logP;
+    }
+    
 }

@@ -47,11 +47,6 @@ public class TreeDensity extends Distribution {
     EpidemicTrajectory trajectory;
     TreeEventList treeEventList;
     
-    /**
-     * Tolerance for deviation between tree node ages and trajectory events.
-     */
-    public static final double tolerance = 1e-10;
-       
     public TreeDensity() { }
     
     @Override
@@ -75,8 +70,8 @@ public class TreeDensity extends Distribution {
         
         for (TreeEventList.TreeEvent treeEvent : revTreeEventList) {
             
-            while (idx<revEventList.size()
-                    && !eventsMatch(treeEvent, revEventList.get(idx))) {
+            while (idx<revEventList.size() &&
+                    !TreeEventList.eventsMatch(treeEvent, revEventList.get(idx))) {
                 
                 // Incoporate probability of no effect on tree
                 if (revEventList.get(idx).type == EpidemicEvent.EventType.INFECTION && k>1) {
@@ -105,30 +100,6 @@ public class TreeDensity extends Distribution {
         }
         
         return logP;
-    }
-
-    /**
-     * Determine whether given tree event and epidemic event are compatible.
-     * 
-     * @param treeEvent
-     * @param epiEvent
-     * 
-     * @return true if events are compatible
-     */
-    private boolean eventsMatch(TreeEventList.TreeEvent treeEvent, EpidemicEvent epiEvent) {
-        
-        if (Math.abs(treeEvent.time-epiEvent.time)>TreeDensity.tolerance)
-            return false;
-        
-        if ((treeEvent.type == TreeEventList.TreeEventType.COALESCENCE)
-                && (epiEvent.type != EpidemicEvent.EventType.INFECTION))
-            return false;
-        
-        if ((treeEvent.type == TreeEventList.TreeEventType.SAMPLE)
-                && (epiEvent.type != EpidemicEvent.EventType.RECOVERY))
-            return false;
-        
-        return true;
     }
     
     @Override
