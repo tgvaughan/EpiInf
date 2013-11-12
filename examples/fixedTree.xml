@@ -1,0 +1,62 @@
+<beast version='2.0' namespace='beast.core:beast.core.util:beast.core.parameter:beast.evolution.tree:beast.evolution.operators:beast.math.distributions:epiinf:epiinf.distribs:epiinf.operators'>
+
+  <input spec='EpidemicTrajectorySimulator' id="traj"
+	 S0="999" infectionRate="0.001" recoveryRate="0.2"/>
+
+  <input spec='Tree' id="tree"/>
+  <input spec="RealParameter" id="treeOrigin" value="1.0"/>
+  <input spec='RealParameter' id="infectionRate" value="0.001" lower="0"/>
+  <input spec='RealParameter' id="recoveryRate" value="0.2" lower="0"/>
+  <input spec='IntegerParameter' id="S0" value="999" lower="0"/>
+
+  <run spec="MCMC" id="mcmc" chainLength="1000">
+
+    <init spec='TransmissionTreeSimulator' nLeaves="20">
+      <tree idref="tree"/>
+      <treeOrigin idref="treeOrigin"/>
+      <epidemicTrajectory idref="traj"/>
+    </init>
+
+    <state>
+      <stateNode idref="traj"/>
+      <stateNode idref="tree"/>
+      <stateNode idref="infectionRate"/>
+      <stateNode idref="recoveryRate"/>
+      <stateNode idref="S0"/>
+    </state>
+
+    <distribution spec='CompoundDistribution' id='posterior'>
+      <distribution spec="TrajDensity" id="trajDensity">
+	<epidemicTrajectory idref="traj"/>
+	<infectionRate idref="infectionRate"/>
+	<recoveryRate idref="recoveryRate"/>
+      </distribution>
+
+      <distribution spec="TreeDensity" id="treeDensity">
+	<treeEventList spec="TreeEventList" id="treeEventList">
+	  <tree idref="tree"/>
+	  <treeOrigin idref="treeOrigin"/>
+	</treeEventList>
+	<epidemicTrajectory idref="traj"/>
+      </distribution>
+    </distribution>
+
+    <operator spec="TrajectoryOperator" weight="1">
+      <treeEventList idref="treeEventList"/>
+      <infectionRate idref="infectionRate"/>
+      <recoveryRate idref="recoveryRate"/>
+      <S0 idref="S0"/>
+      <epidemicTrajectory idref="traj"/>
+    </operator>
+
+    <logger logEvery="1">
+      <model idref="posterior"/>
+      <log idref="posterior"/>
+      <log idref="treeDensity"/>
+      <log idref="trajDensity"/>
+      <log idref="traj"/>
+    </logger>
+
+  </run>
+
+</beast>

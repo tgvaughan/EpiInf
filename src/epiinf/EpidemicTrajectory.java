@@ -175,27 +175,31 @@ public class EpidemicTrajectory extends StateNode {
     }
 
     @Override
-    public void init(PrintStream out) throws Exception { }
+    public void init(PrintStream out) throws Exception {
+        out.print(getID() + ".duration\t");
+    }
 
     @Override
-    public void log(int nSample, PrintStream out) { }
+    public void log(int nSample, PrintStream out) {
+        out.print(eventList.get(eventList.size()-1).time + "\t");
+    }
 
     @Override
     public void close(PrintStream out) { }
 
     @Override
     public int getDimension() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return 1;
     }
 
     @Override
     public double getArrayValue() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return 0.0;
     }
 
     @Override
     public double getArrayValue(int iDim) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return 0.0;
     }
     
 }

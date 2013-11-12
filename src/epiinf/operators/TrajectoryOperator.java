@@ -53,6 +53,8 @@ public class TrajectoryOperator extends Operator {
     public Input<EpidemicTrajectory> trajInput = new Input<EpidemicTrajectory>(
             "epidemicTrajectory", "Epidemic trajectory.", Validate.REQUIRED);
 
+    @Override
+    public void initAndValidate() { }
     
     @Override
     public double proposal() {

@@ -22,7 +22,6 @@ import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
-import beast.core.parameter.RealParameter;
 import com.google.common.collect.Lists;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
@@ -32,10 +31,9 @@ import java.util.List;
 import java.util.Random;
 
 /**
- *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-@Description("Exact probability of tree given ")
+@Description("Exact probability of tree given epidemic trajectory.")
 public class TreeDensity extends Distribution {
     
     public Input<TreeEventList> treeEventListInput = new Input<TreeEventList>(
