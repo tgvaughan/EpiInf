@@ -115,19 +115,60 @@ public class TrajectoryOperator extends Operator {
         return logHR;
     }
     
-    double getTrajectoryProbability(List<EpidemicEvent> eventList,
-            List<TreeEventList.TreeEvent> treeEventList) {
+    /**
+     * Obtain probability density of proposing existing trajectory given
+     * current tree.
+     * 
+     * @return log probability density
+     */
+    private double getReverseMoveDensity() {
+        
+        List<TreeEventList.TreeEvent> treeEventList = treeEventListInput.get().getEventList();
+        List<EpidemicEvent> eventList = trajInput.get().getEventList();
+        List<EpidemicState> stateList = trajInput.get().getStateList();
+        
+        double infRate = infectionRateInput.get().getValue();
+        double recRate = recoveryRateInput.get().getValue();
         
         double logP = 0.0;
         
         int idx=0;
+        double lastTime = 0.0;
         for (TreeEventList.TreeEvent treeEvent : treeEventList) {
             
             while (idx<eventList.size() &&
                     !TreeEventList.eventsMatch(treeEvent, eventList.get(idx))) {
+
+                EpidemicState thisState = stateList.get(idx);
+                EpidemicEvent thisEvent = eventList.get(idx);
                 
+                double infProp = infRate*thisState.S*thisState.I;
+                double recProp = recRate*thisState.I;
+                double totalProp = infProp + recProp;
+                
+                logP += -totalProp*(thisEvent.time - lastTime);
+                
+                if (thisEvent.type == EpidemicEvent.EventType.INFECTION)
+                    logP += Math.log(infProp);
+                else
+                    logP += Math.log(recProp);
+
+                lastTime = thisEvent.time;
+                idx += 1;
             }
             
+            if (idx>=eventList.size())
+                return Double.NEGATIVE_INFINITY;
+            
+            EpidemicState thisState = stateList.get(idx);
+            double infProp = infRate*thisState.S*thisState.I;
+            double recProp = recRate*thisState.I;
+            double totalProp = infProp + recProp;
+            
+            logP += -totalProp*(treeEvent.time - lastTime);
+            
+            lastTime = treeEvent.time;
+            idx += 1;
         }
         
         return logP;
