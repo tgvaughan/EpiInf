@@ -68,6 +68,8 @@ public class EpidemicTrajectory extends StateNode {
             
             stateList.add(nextState);
         }
+        
+        stateListDirty = false;
     }
     
     /**
@@ -129,9 +131,9 @@ public class EpidemicTrajectory extends StateNode {
         
         for (int i=0; i<eventList.size(); i++) {
             double t = eventList.get(i).time;
-            int S = getStateList().get(i+1).S;
-            int I = getStateList().get(i+1).I;
-            int R = getStateList().get(i+1).R;
+            long S = (long)getStateList().get(i+1).S;
+            long I = (long)getStateList().get(i+1).I;
+            long R = (long)getStateList().get(i+1).R;
             
             ps.format("%g %d %d %d\n", t, S, I, R);
         }
@@ -216,7 +218,7 @@ public class EpidemicTrajectory extends StateNode {
         out.print(eventList.get(eventList.size()-1).time + "\t");
         
         double tpeak = 0.0;
-        int Ipeak = 0;
+        double Ipeak = 0;
         for (int idx=0; idx<getEventList().size(); idx++) {
             EpidemicEvent epiEvent = getEventList().get(idx);
             EpidemicState epiState = getStateList().get(idx);

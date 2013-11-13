@@ -23,11 +23,11 @@ package epiinf;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class EpidemicState {
-    public int S, I, R;
+    public double S, I, R;
     
     public EpidemicState() { }
     
-    public EpidemicState(int S, int I, int R) {
+    public EpidemicState(double S, double I, double R) {
         this.S = S;
         this.I = I;
         this.R = R;
@@ -43,6 +43,6 @@ public class EpidemicState {
     }
     
     public String toString() {
-        return "S: " + S + ", I: " + I + ", R: " + R;
+        return "S: " + (long)S + ", I: " + (long)I + ", R: " + R;
     }
 }

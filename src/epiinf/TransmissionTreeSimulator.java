@@ -28,6 +28,7 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 import com.google.common.collect.Lists;
+import java.io.PrintStream;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -123,7 +124,6 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         List<EpidemicEvent> revEventList = Lists.reverse(traj.getEventList());
         List<EpidemicState> revStateList = Lists.reverse(traj.getStateList());
         
-        //for (EpidemicEvent event : Lists.reverse(traj.getEventList())) {
         for (int eidx=0; eidx<revEventList.size(); eidx++) {
             
             EpidemicEvent event = revEventList.get(eidx);
@@ -141,9 +141,9 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
                 
                 if (event.type == EpidemicEvent.EventType.INFECTION) {
                     int k = activeNodes.size();
-                    int N = state.I;
+                    double N = state.I;
                     
-                    double pCoalesce = k*(k-1)/((double)N*(N-1));
+                    double pCoalesce = k*(k-1)/(N*(N-1));
                     
                     if (Randomizer.nextDouble()<pCoalesce) {
                         int childIdx = Randomizer.nextInt(k);

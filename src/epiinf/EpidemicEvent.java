@@ -27,4 +27,5 @@ public class EpidemicEvent {
     
     public double time;
     public EventType type;
+
 }

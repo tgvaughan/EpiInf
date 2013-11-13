@@ -23,7 +23,11 @@ import beast.core.Input.Validate;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
 import beast.util.Randomizer;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Simulate an epidemic trajectory under a stochastic SIR model.
@@ -33,7 +37,7 @@ import java.util.List;
 @Description("Simulate an epidemic trajectory under a stochastic SIR model.")
 public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements StateNodeInitialiser {
     
-    public Input<Integer> S0Input = new Input<Integer>(
+    public Input<Long> S0Input = new Input<Long>(
             "S0", "Initial susceptible count.",
             Validate.REQUIRED);
 
@@ -44,6 +48,10 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
     public Input<Double> recoveryRateInput = new Input<Double>(
             "recoveryRate", "Rate of recovery (per infected)",
             Validate.REQUIRED);
+    
+    public Input<String> fileNameInput = new Input<String>(
+            "fileName",
+            "Optional name of file to write simulated trajectory to.");
     
     double infectionRate, recoveryRate;
     
@@ -59,6 +67,16 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
         stateListDirty = true;
         
         simulate();
+        
+        if (fileNameInput.get() != null) {
+            try {
+                PrintStream ps = new PrintStream(fileNameInput.get());
+                dumpTrajectory(ps);
+                ps.close();
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(EpidemicTrajectorySimulator.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
     
     private void simulate() {
@@ -74,7 +92,7 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
             double totalProp = infProp + recProp;
 
             t += Randomizer.nextExponential(totalProp);
-
+            
             EpidemicEvent nextEvent = new EpidemicEvent();
             nextEvent.time = t;
 
