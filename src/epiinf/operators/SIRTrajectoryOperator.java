@@ -108,6 +108,9 @@ public class SIRTrajectoryOperator extends Operator {
                     logHR -= Math.log(recProp);
                 }
                 
+                if (!thisState.isValid())
+                    return Double.NEGATIVE_INFINITY;
+                
                 eventList.add(newEvent);
                 stateList.add(thisState.copy());
             }
@@ -124,6 +127,9 @@ public class SIRTrajectoryOperator extends Operator {
                 thisState.I -= 1;
                 thisState.R += 1;
             }
+            
+            if (!thisState.isValid())
+                return Double.NEGATIVE_INFINITY;
             
             eventList.add(newEvent);
             stateList.add(thisState.copy());

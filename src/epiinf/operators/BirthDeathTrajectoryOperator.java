@@ -101,6 +101,9 @@ public class BirthDeathTrajectoryOperator extends Operator {
                     logHR -= Math.log(deathProp);
                 }
                 
+                if (!thisState.isValid())
+                    return Double.NEGATIVE_INFINITY;
+                
                 eventList.add(newEvent);
                 stateList.add(thisState.copy());
             }
@@ -109,14 +112,15 @@ public class BirthDeathTrajectoryOperator extends Operator {
             newEvent.time = treeEvent.time;
             if (treeEvent.type == TreeEventList.TreeEventType.COALESCENCE) {
                 newEvent.type = EpidemicEvent.EventType.INFECTION;
-                thisState.S -= 1;
                 thisState.I += 1;
                 
             } else {
                 newEvent.type = EpidemicEvent.EventType.RECOVERY;
                 thisState.I -= 1;
-                thisState.R += 1;
             }
+            
+            if (!thisState.isValid())
+                return Double.NEGATIVE_INFINITY;
             
             eventList.add(newEvent);
             stateList.add(thisState.copy());

@@ -1,0 +1,76 @@
+<beast version='2.0' namespace='beast.core:beast.core.util:beast.core.parameter:beast.evolution.tree:beast.evolution.operators:beast.math.distributions:epiinf:epiinf.distribs:epiinf.operators'>
+
+  <input spec='BirthDeathTrajectorySimulator' id="traj"
+	 birthRate="1.0" deathRate="0.5" duration="10"/>
+
+  <input spec='Tree' id="tree"/>
+  <input spec="RealParameter" id="treeOrigin" value="1.0"/>
+  <input spec='RealParameter' id="birthRate" value="1.0" lower="0"/>
+  <input spec='RealParameter' id="deathRate" value="0.5" lower="0"/>
+
+  <run spec="MCMC" id="mcmc" chainLength="1000000">
+
+    <init spec='TransmissionTreeSimulator' nLeaves="20">
+      <tree idref="tree"/>
+      <treeOrigin idref="treeOrigin"/>
+      <epidemicTrajectory idref="traj"/>
+    </init>
+
+    <state>
+      <stateNode idref="traj"/>
+      <stateNode idref="birthRate"/>
+      <stateNode idref="deathRate"/>
+<!--  <stateNode idref="tree"/>-->
+    </state>
+
+    <distribution spec='CompoundDistribution' id='posterior'>
+      <distribution spec="BirthDeathTrajDensity" id="trajDensity">
+	<epidemicTrajectory idref="traj"/>
+	<birthRate idref="birthRate"/>
+	<deathRate idref="deathRate"/>
+      </distribution>
+
+      <distribution spec="TreeDensity" id="treeDensity">
+	<treeEventList spec="TreeEventList" id="treeEventList">
+	  <tree idref="tree"/>
+	  <treeOrigin idref="treeOrigin"/>
+	</treeEventList>
+	<epidemicTrajectory idref="traj"/>
+      </distribution>
+    </distribution>
+
+    <operator spec="BirthDeathTrajectoryOperator" weight="1" id="trajOp">
+      <treeEventList idref="treeEventList"/>
+      <birthRate idref="birthRate"/>
+      <deathRate idref="deathRate"/>
+      <epidemicTrajectory idref="traj"/>
+    </operator>
+
+    <operator spec='ScaleOperator' weight="1" id="birthRateScale"
+	      parameter="@birthRate" scaleFactor="0.9"/>
+    <operator spec='ScaleOperator' weight="1" id="deathRateScale"
+	      parameter="@deathRate" scaleFactor="0.9"/>
+
+    <logger logEvery="1" fileName="fixedTreeBirthDeath.log">
+      <model idref="posterior"/>
+      <log idref="posterior"/>
+      <log idref="treeDensity"/>
+      <log idref="trajDensity"/>
+      <log idref="traj"/>
+      <log idref="birthRate"/>
+      <log idref="deathRate"/>
+    </logger>
+
+    <logger logEvery="100">
+      <model idref="posterior"/>
+      <log idref="posterior"/>
+      <log idref="treeDensity"/>
+      <log idref="trajDensity"/>
+      <log idref="traj"/>
+      <log idref="birthRate"/>
+      <log idref="deathRate"/>
+    </logger>
+
+  </run>
+
+</beast>

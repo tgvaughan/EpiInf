@@ -33,6 +33,15 @@ public class EpidemicState {
         this.R = R;
     }
     
+    /**
+     * Test whether state is valid or not.
+     * 
+     * @return true if state is valid.
+     */
+    public boolean isValid() {
+        return (this.S>=0 && this.I>=0 && this.R>=0);
+    }
+    
     public EpidemicState copy() {
         EpidemicState stateCopy = new EpidemicState();
         stateCopy.S = S;
