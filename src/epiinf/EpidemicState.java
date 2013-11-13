@@ -42,7 +42,27 @@ public class EpidemicState {
         return stateCopy;
     }
     
+    @Override
     public String toString() {
         return "S: " + (long)S + ", I: " + (long)I + ", R: " + R;
+    }
+    
+    /**
+     * Retrieve header suitable for dumping rows of states to an R-compatible
+     * file.
+     * 
+     * @return R input file header
+     */
+    public static String getHeader() {
+        return "S I R";
+    }
+    
+    /**
+     * Obtain this state as a record in an R-compatible text file.
+     * 
+     * @return R input file record.
+     */
+    public String getRecord() {
+        return (long)S + " " + (long)I + " " + (long)R;
     }
 }

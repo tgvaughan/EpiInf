@@ -35,9 +35,9 @@ import java.util.logging.Logger;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 @Description("Simulate an epidemic trajectory under a stochastic SIR model.")
-public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements StateNodeInitialiser {
+public class SIRTrajectorySimulator extends EpidemicTrajectory implements StateNodeInitialiser {
     
-    public Input<Long> S0Input = new Input<Long>(
+    public Input<Integer> S0Input = new Input<Integer>(
             "S0", "Initial susceptible count.",
             Validate.REQUIRED);
 
@@ -55,16 +55,13 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
     
     double infectionRate, recoveryRate;
     
-    public EpidemicTrajectorySimulator() { }
+    public SIRTrajectorySimulator() { }
     
     @Override
     public void initAndValidate() {
         super.initAndValidate();
         infectionRate = infectionRateInput.get();
         recoveryRate = recoveryRateInput.get();
-        
-        initialState = new EpidemicState(S0Input.get(), 1, 0);
-        stateListDirty = true;
         
         simulate();
         
@@ -74,15 +71,18 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
                 dumpTrajectory(ps);
                 ps.close();
             } catch (FileNotFoundException ex) {
-                Logger.getLogger(EpidemicTrajectorySimulator.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(SIRTrajectorySimulator.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
     
     private void simulate() {
         eventList.clear();
+        stateList.clear();
         
-        EpidemicState thisState = initialState.copy();
+        EpidemicState thisState = new EpidemicState(S0Input.get(), 1, 0);
+        stateList.add(thisState.copy());
+        
         double t = 0.0;
 
         while (thisState.I>0) {
@@ -107,9 +107,9 @@ public class EpidemicTrajectorySimulator extends EpidemicTrajectory implements S
             }
             
             eventList.add(nextEvent);
+            stateList.add(thisState.copy());
         }
         
-        stateListDirty = true;
     }
     
     @Override

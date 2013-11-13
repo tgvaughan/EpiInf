@@ -20,7 +20,7 @@ package epiinf.distribs;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
-import epiinf.EpidemicTrajectorySimulator;
+import epiinf.SIRTrajectorySimulator;
 import epiinf.TransmissionTreeSimulator;
 import epiinf.TreeEventList;
 import java.io.PrintStream;
@@ -40,7 +40,7 @@ public class TreeDensityTest {
     public void test() throws Exception {
         Randomizer.setSeed(42);
         
-        EpidemicTrajectorySimulator trajSim = new EpidemicTrajectorySimulator();
+        SIRTrajectorySimulator trajSim = new SIRTrajectorySimulator();
         trajSim.initByName(
                 "S0", 1000,
                 "infectionRate", 0.001,

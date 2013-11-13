@@ -67,10 +67,11 @@ public class TrajectoryOperator extends Operator {
         double recoveryRate = recoveryRateInput.get().getValue();
         
         List<EpidemicEvent> eventList = Lists.newArrayList();
+        List<EpidemicState> stateList = Lists.newArrayList();
         List<TreeEventList.TreeEvent> treeEventList = treeEventListInput.get().getEventList();
 
         EpidemicState thisState = new EpidemicState(S0Input.get().getValue(), 1, 0);
-        traj.setInitialState(thisState.copy());
+        stateList.add(thisState.copy());
         
         double t = 0.0;
         for (TreeEventList.TreeEvent treeEvent : treeEventList) {
@@ -108,6 +109,7 @@ public class TrajectoryOperator extends Operator {
                 }
                 
                 eventList.add(newEvent);
+                stateList.add(thisState.copy());
             }
             
             EpidemicEvent newEvent = new EpidemicEvent();
@@ -124,9 +126,10 @@ public class TrajectoryOperator extends Operator {
             }
             
             eventList.add(newEvent);
+            stateList.add(thisState.copy());
         }
         
-        traj.setEventList(eventList);
+        traj.setEventAndStateList(eventList, stateList);
         
         return logHR;
     }

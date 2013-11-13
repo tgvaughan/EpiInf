@@ -19,6 +19,7 @@ package epiinf;
 
 import beast.core.Description;
 import beast.core.StateNode;
+import com.google.common.collect.Lists;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,45 +32,18 @@ import org.w3c.dom.Node;
 public class EpidemicTrajectory extends StateNode {
     
     protected List<EpidemicEvent> eventList, storedEventList;
-    protected EpidemicState initialState, storedInitialState;
-    protected List<EpidemicState> stateList;
+    protected List<EpidemicState> stateList, storedStateList;
     
-    protected boolean stateListDirty;
     
     public EpidemicTrajectory () { };
     
     @Override
     public void initAndValidate() {
-        eventList = new ArrayList<EpidemicEvent>();
-        storedEventList = new ArrayList<EpidemicEvent>();
+        eventList = Lists.newArrayList();
+        storedEventList = Lists.newArrayList();
 
-        stateList = new ArrayList<EpidemicState>();
-        stateListDirty = false;
-    }
-    
-    private void updateStateList() {
-        if (!stateListDirty)
-            return;
-        
-        stateList.clear();
-        
-        stateList.add(initialState);
-        
-        for (EpidemicEvent event : eventList) {
-            EpidemicState nextState = stateList.get(stateList.size()-1).copy();
-            
-            if (event.type == EpidemicEvent.EventType.INFECTION) {
-                nextState.S -= 1; 
-                nextState.I += 1;
-            } else {
-                nextState.I -= 1;
-                nextState.R += 1;
-            }
-            
-            stateList.add(nextState);
-        }
-        
-        stateListDirty = false;
+        stateList = Lists.newArrayList();
+        storedStateList = Lists.newArrayList();
     }
     
     /**
@@ -78,19 +52,7 @@ public class EpidemicTrajectory extends StateNode {
      * @return state list
      */
     public List<EpidemicState> getStateList() {
-        updateStateList();
         return stateList;
-    }
-    
-    /**
-     * Set the initial state of the epidemic.
-     * 
-     * @param state 
-     */
-    public void setInitialState(EpidemicState state) {
-        startEditing();
-        initialState = state;
-        stateListDirty = true;
     }
     
     /**
@@ -99,13 +61,14 @@ public class EpidemicTrajectory extends StateNode {
      * @return initial state
      */
     public EpidemicState getInitialState() {
-        return initialState;
+        return stateList.get(0);
     }
 
-    public void setEventList(List<EpidemicEvent> eventList) {
+    public void setEventAndStateList(List<EpidemicEvent> eventList,
+            List<EpidemicState> stateList) {
         startEditing();
         this.eventList = eventList;
-        stateListDirty = true;
+        this.stateList = stateList;
     }
     
     /**
@@ -123,19 +86,11 @@ public class EpidemicTrajectory extends StateNode {
      * @param ps where to send output
      */
     public void dumpTrajectory(PrintStream ps) {
-        ps.println("t S I R");
-        ps.format("0.0 %d %d %d\n",
-                initialState.S,
-                initialState.I,
-                initialState.R);
-        
+        ps.println("t " + EpidemicState.getHeader());
+        ps.println("0.0 " + getStateList().get(0).getRecord());
         for (int i=0; i<eventList.size(); i++) {
             double t = eventList.get(i).time;
-            long S = (long)getStateList().get(i+1).S;
-            long I = (long)getStateList().get(i+1).I;
-            long R = (long)getStateList().get(i+1).R;
-            
-            ps.format("%g %d %d %d\n", t, S, I, R);
+            ps.format("%g %s\n", t, getStateList().get(i+1).getRecord());
         }
     }
 
@@ -157,10 +112,10 @@ public class EpidemicTrajectory extends StateNode {
         EpidemicTrajectory trajCopy = new EpidemicTrajectory();
         
         trajCopy.initAndValidate();
-        trajCopy.initialState = initialState.copy();
         trajCopy.eventList.addAll(eventList);
         trajCopy.storedEventList.addAll(storedEventList);
-        trajCopy.stateListDirty = true;
+        trajCopy.stateList.addAll(stateList);
+        trajCopy.storedStateList.addAll(storedStateList);
         
         return trajCopy;
     }
@@ -192,17 +147,19 @@ public class EpidemicTrajectory extends StateNode {
 
     @Override
     protected void store() {
-        storedInitialState = initialState.copy();
         storedEventList.clear();
         storedEventList.addAll(eventList);
+        storedStateList.clear();
+        storedStateList.addAll(stateList);
     }
 
     @Override
     public void restore() {
-        initialState = storedInitialState.copy();
         eventList.clear();
         eventList.addAll(storedEventList);
-        stateListDirty = true;
+        stateList.clear();
+        stateList.addAll(storedStateList);
+
         hasStartedEditing = false;
     }
 

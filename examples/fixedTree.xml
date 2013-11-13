@@ -1,6 +1,6 @@
 <beast version='2.0' namespace='beast.core:beast.core.util:beast.core.parameter:beast.evolution.tree:beast.evolution.operators:beast.math.distributions:epiinf:epiinf.distribs:epiinf.operators'>
 
-  <input spec='EpidemicTrajectorySimulator' id="traj"
+  <input spec='SIRTrajectorySimulator' id="traj"
 	 S0="999" infectionRate="0.001" recoveryRate="0.2"/>
 
   <input spec='Tree' id="tree"/>
@@ -55,7 +55,7 @@
     <operator spec='ScaleOperator' weight="1" id="recoveryRateScale"
 	      parameter="@recoveryRate" scaleFactor="0.9"/>
 
-    <logger logEvery="10" fileName="fixedTree.log">
+    <logger logEvery="100" fileName="fixedTree.log">
       <model idref="posterior"/>
       <log idref="posterior"/>
       <log idref="treeDensity"/>
@@ -65,7 +65,7 @@
       <log idref="recoveryRate"/>
     </logger>
 
-    <logger logEvery="100">
+    <logger logEvery="1000">
       <model idref="posterior"/>
       <log idref="posterior"/>
       <log idref="treeDensity"/>

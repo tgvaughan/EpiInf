@@ -36,7 +36,7 @@ public class TransmissionTreeSimulatorTest {
     public void test() throws Exception {
         Randomizer.setSeed(42);
         
-        EpidemicTrajectorySimulator trajSim = new EpidemicTrajectorySimulator();
+        SIRTrajectorySimulator trajSim = new SIRTrajectorySimulator();
         trajSim.initByName(
                 "S0", 1000,
                 "infectionRate", 0.001,

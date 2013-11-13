@@ -25,9 +25,9 @@ import static org.junit.Assert.*;
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class EpidemicTrajectorySimulatorTest {
+public class BirthDeathTrajectorySimulatorTest {
     
-    public EpidemicTrajectorySimulatorTest() {
+    public BirthDeathTrajectorySimulatorTest() {
     }
     
     @Test
@@ -35,24 +35,17 @@ public class EpidemicTrajectorySimulatorTest {
         
         Randomizer.setSeed(42);
         
-        EpidemicTrajectorySimulator trajSim = new EpidemicTrajectorySimulator();
+        BirthDeathTrajectorySimulator trajSim = new BirthDeathTrajectorySimulator();
         trajSim.initByName(
-                "S0", 1000,
-                "infectionRate", 0.001,
-                "recoveryRate", 0.2);
+                "birthRate", 1.0,
+                "deathRate", 0.1,
+                "duration", 5.0);
         
         trajSim.initStateNodes();
         
-        // Assert some arbitary features of trajectory:
-        assertEquals(trajSim.getEventList().size(), 1983);
-        assertEquals(trajSim.getStateList().get(0).S, 1000);
-        assertEquals(trajSim.getStateList().get(0).I, 1);
-        assertEquals(trajSim.getStateList().get(0).R, 0);
-        
-        EpidemicState finalState = trajSim.getStateList()
-                .get(trajSim.getStateList().size()-1);
-        
-        assertEquals(finalState.I, 0);
-        assertEquals(finalState.R, 1001-finalState.S);
+        assertEquals(trajSim.getEventList().size(), 34);
+        assertEquals((long)trajSim.getStateList().get(0).I, 1);
+        assertEquals((long)trajSim.getStateList().get(34).I, 27);
+
     }
 }

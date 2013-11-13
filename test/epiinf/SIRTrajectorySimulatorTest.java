@@ -15,11 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package epiinf.distribs;
+package epiinf;
 
-import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
-import epiinf.SIRTrajectorySimulator;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -27,14 +25,14 @@ import static org.junit.Assert.*;
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class TrajDensityTest {
+public class SIRTrajectorySimulatorTest {
     
-    public TrajDensityTest() {
+    public SIRTrajectorySimulatorTest() {
     }
     
     @Test
     public void test() throws Exception {
-
+        
         Randomizer.setSeed(42);
         
         SIRTrajectorySimulator trajSim = new SIRTrajectorySimulator();
@@ -45,16 +43,16 @@ public class TrajDensityTest {
         
         trajSim.initStateNodes();
         
-        TrajDensity trajDensity = new TrajDensity();
-        trajDensity.initByName(
-                "epidemicTrajectory", trajSim,
-                "infectionRate", new RealParameter("0.001"),
-                "recoveryRate", new RealParameter("0.2"));
+        // Assert some arbitary features of trajectory:
+        assertEquals(trajSim.getEventList().size(), 1983);
+        assertEquals((long)trajSim.getStateList().get(0).S, 1000);
+        assertEquals((long)trajSim.getStateList().get(0).I, 1);
+        assertEquals((long)trajSim.getStateList().get(0).R, 0);
         
-        double logP = trajDensity.calculateLogP();
-        double logPtruth = 6160.84731543222;
+        EpidemicState finalState = trajSim.getStateList()
+                .get(trajSim.getStateList().size()-1);
         
-        assertTrue(0.5*Math.abs(logP-logPtruth)/(logP+logPtruth)<1e-10);
+        assertEquals((long)finalState.I, 0);
+        assertEquals((long)finalState.R, 1001-(long)finalState.S);
     }
-
 }

@@ -26,7 +26,7 @@ import beast.util.Randomizer;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.EpidemicTrajectory;
-import epiinf.EpidemicTrajectorySimulator;
+import epiinf.SIRTrajectorySimulator;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
@@ -120,7 +120,7 @@ public class TrajDensity extends Distribution {
     public static void main (String [] args) throws Exception {
                Randomizer.setSeed(42);
         
-        EpidemicTrajectorySimulator trajSim = new EpidemicTrajectorySimulator();
+        SIRTrajectorySimulator trajSim = new SIRTrajectorySimulator();
         trajSim.initByName(
                 "S0", 1000,
                 "I0", 1,
