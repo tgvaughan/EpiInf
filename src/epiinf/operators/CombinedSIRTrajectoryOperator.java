@@ -30,7 +30,7 @@ import java.util.List;
         + "operators (e.g. tree or treeOrigin operators).  This is necessary in"
         + "the exact sampler, as modifying the tree will inevitibly result in"
         + "a tree which is incompatible with the existing epidemic trajectory.")
-public class CombinedTrajectoryOperator extends TrajectoryOperator {
+public class CombinedSIRTrajectoryOperator extends SIRTrajectoryOperator {
 
     public Input<List<Operator>> operatorsInput = new Input<List<Operator>>(
             "operator",

@@ -36,7 +36,7 @@ import java.util.List;
  */
 @Description("Operator which proposes new trajectories conditional on "
         + "the transmission tree and the tree origin.")
-public class TrajectoryOperator extends Operator {
+public class SIRTrajectoryOperator extends Operator {
     
     public Input<TreeEventList> treeEventListInput = new Input<TreeEventList>(
             "treeEventList", "Tree event list.", Validate.REQUIRED);

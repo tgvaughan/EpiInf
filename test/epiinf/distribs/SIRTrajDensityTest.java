@@ -27,9 +27,9 @@ import static org.junit.Assert.*;
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class TrajDensityTest {
+public class SIRTrajDensityTest {
     
-    public TrajDensityTest() {
+    public SIRTrajDensityTest() {
     }
     
     @Test
@@ -45,7 +45,7 @@ public class TrajDensityTest {
         
         trajSim.initStateNodes();
         
-        TrajDensity trajDensity = new TrajDensity();
+        SIRTrajDensity trajDensity = new SIRTrajDensity();
         trajDensity.initByName(
                 "epidemicTrajectory", trajSim,
                 "infectionRate", new RealParameter("0.001"),
