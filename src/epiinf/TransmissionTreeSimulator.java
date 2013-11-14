@@ -61,11 +61,23 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
             "nLeaves",
             "Number of leaves in tree.",
             Validate.REQUIRED);
+    
+    public Input<Double> sampleBeforeTimeInput = new Input<Double>(
+            "sampleBeforeTime", "Sample leaves before this time.");
+    
+    public Input<String> fileNameInput = new Input<String>(
+            "fileName", "Name of file to save Newick representation of tree to.");
+    
+    public Input<Boolean> truncateTrajectoryInput = new Input<Boolean>(
+            "truncateTrajectory",
+            "Truncate trajectory at most recent sample. (Default true.)", true);
 
     private Tree tree;
     private RealParameter treeOrigin;
     private EpidemicTrajectory traj;
     private int nLeaves;
+    private double sampleBeforeTime;
+    private boolean truncateTrajectory;
     
     public TransmissionTreeSimulator() { }
     
@@ -75,6 +87,13 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         treeOrigin = treeOriginInput.get();
         traj = trajInput.get();
         nLeaves = nLeavesInput.get();
+        
+        if (sampleBeforeTimeInput.get() != null)
+            sampleBeforeTime = sampleBeforeTimeInput.get();
+        else
+            sampleBeforeTime = Double.POSITIVE_INFINITY;
+        
+        truncateTrajectory = truncateTrajectoryInput.get();
     }
     
     @Override
@@ -84,7 +103,8 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         List<EpidemicEvent> recoveryEvents = Lists.newArrayList();
         
         for (EpidemicEvent event : traj.getEventList()) {
-            if (event.type == EpidemicEvent.EventType.RECOVERY)
+            if (event.type == EpidemicEvent.EventType.RECOVERY
+                    && event.time<sampleBeforeTime)
                 recoveryEvents.add(event);
         }
 
@@ -168,17 +188,34 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
             if (leafEvents.isEmpty() && activeNodes.size()<2)
                 break;
         }
+        
+        // Truncate trajectory at most recent sample if requested:
+        if (truncateTrajectory) {
+            while (revEventList.get(0).time>youngestSamp) {
+                revEventList.remove(0);
+                revStateList.remove(0);
+            }
+        }
 
         // Initialise state nodes
         Node root = activeNodes.get(0);
         tree.assignFromWithoutID(new Tree(root));
         treeOrigin.assignFromWithoutID(new RealParameter(String.valueOf(youngestSamp-root.getHeight())));
+        
+        // Write tree to disk if requested:
+        if (fileNameInput.get() != null) {
+            PrintStream ps = new PrintStream(fileNameInput.get());
+            String newick = tree.toString().concat(";");
+            ps.println(newick.replace(":0.0;", ":" + treeOrigin.getValue() + ";"));
+            ps.close();
+        }
     }
 
     @Override
     public void getInitialisedStateNodes(List<StateNode> stateNodes) {
         stateNodes.add(tree);
         stateNodes.add(treeOrigin);
+        stateNodes.add(traj);
     }
     
 }
