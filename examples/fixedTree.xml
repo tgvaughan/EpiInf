@@ -26,7 +26,7 @@
     </state>
 
     <distribution spec='CompoundDistribution' id='posterior'>
-      <distribution spec="TrajDensity" id="trajDensity">
+      <distribution spec="SIRTrajDensity" id="trajDensity">
 	<epidemicTrajectory idref="traj"/>
 	<infectionRate idref="infectionRate"/>
 	<recoveryRate idref="recoveryRate"/>
@@ -41,7 +41,7 @@
       </distribution>
     </distribution>
 
-    <operator spec="TrajectoryOperator" weight="1" id="trajOp">
+    <operator spec="SIRTrajectoryOperator" weight="1" id="trajOp">
       <treeEventList idref="treeEventList"/>
       <infectionRate idref="infectionRate"/>
       <recoveryRate idref="recoveryRate"/>
