@@ -74,8 +74,8 @@ public class BirthDeathTrajDensity extends Distribution {
             EpidemicEvent thisEvent = trajectory.getEventList().get(i);
             EpidemicState thisState = trajectory.getStateList().get(i);
             
-            double birthProp = thisState.I*birthRate.getValue();
-            double deathProp = thisState.I*deathRate.getValue();
+            double birthProp = thisState.I[0]*birthRate.getValue();
+            double deathProp = thisState.I[0]*deathRate.getValue();
             double totalProp = birthProp + deathProp;
             
             logP += -totalProp*(thisEvent.time-lastEventTime);

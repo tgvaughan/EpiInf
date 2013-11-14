@@ -74,8 +74,8 @@ public class BirthDeathTrajectoryOperator extends Operator {
         for (TreeEventList.TreeEvent treeEvent : treeEventList) {
             
             while (true) {
-                double birthProp = birthRate*thisState.I;
-                double deathProp = deathRate*thisState.I;
+                double birthProp = birthRate*thisState.I[0];
+                double deathProp = deathRate*thisState.I[0];
                 double totalProp = birthProp + deathProp;
                 
                 double dt = Randomizer.nextExponential(totalProp);
@@ -93,11 +93,11 @@ public class BirthDeathTrajectoryOperator extends Operator {
                 
                 if (Randomizer.nextDouble()*totalProp < birthProp) {
                     newEvent.type = EpidemicEvent.EventType.INFECTION;
-                    thisState.I += 1;
+                    thisState.I[0] += 1;
                     logHR -= Math.log(birthProp);
                 } else {
                     newEvent.type = EpidemicEvent.EventType.RECOVERY;
-                    thisState.I -= 1;
+                    thisState.I[0] -= 1;
                     logHR -= Math.log(deathProp);
                 }
                 
@@ -112,11 +112,11 @@ public class BirthDeathTrajectoryOperator extends Operator {
             newEvent.time = treeEvent.time;
             if (treeEvent.type == TreeEventList.TreeEventType.COALESCENCE) {
                 newEvent.type = EpidemicEvent.EventType.INFECTION;
-                thisState.I += 1;
+                thisState.I[0] += 1;
                 
             } else {
                 newEvent.type = EpidemicEvent.EventType.RECOVERY;
-                thisState.I -= 1;
+                thisState.I[0] -= 1;
             }
             
             if (!thisState.isValid())
@@ -158,8 +158,8 @@ public class BirthDeathTrajectoryOperator extends Operator {
                 EpidemicState thisState = stateList.get(idx);
                 EpidemicEvent thisEvent = eventList.get(idx);
                 
-                double birthProp = birthRate*thisState.I;
-                double deathProp = deathRate*thisState.I;
+                double birthProp = birthRate*thisState.I[0];
+                double deathProp = deathRate*thisState.I[0];
                 double totalProp = birthProp + deathProp;
                 
                 logP += -totalProp*(thisEvent.time - lastTime);
@@ -177,8 +177,8 @@ public class BirthDeathTrajectoryOperator extends Operator {
                 return Double.NEGATIVE_INFINITY;
             
             EpidemicState thisState = stateList.get(idx);
-            double birthProp = birthRate*thisState.I;
-            double deathProp = deathRate*thisState.I;
+            double birthProp = birthRate*thisState.I[0];
+            double deathProp = deathRate*thisState.I[0];
             double totalProp = birthProp + deathProp;
             
             logP += -totalProp*(treeEvent.time - lastTime);

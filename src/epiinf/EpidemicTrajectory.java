@@ -86,7 +86,7 @@ public class EpidemicTrajectory extends StateNode {
      * @param ps where to send output
      */
     public void dumpTrajectory(PrintStream ps) {
-        ps.println("t " + EpidemicState.getHeader());
+        ps.println("t " + getStateList().get(0).getHeader());
         ps.println("0.0 " + getStateList().get(0).getRecord());
         for (int i=0; i<eventList.size(); i++) {
             double t = eventList.get(i).time;
@@ -179,15 +179,15 @@ public class EpidemicTrajectory extends StateNode {
         for (int idx=0; idx<getEventList().size(); idx++) {
             EpidemicEvent epiEvent = getEventList().get(idx);
             EpidemicState epiState = getStateList().get(idx);
-            if (epiState.I>Ipeak) {
-                Ipeak = epiState.I;
+            if (epiState.I[0]>Ipeak) {
+                Ipeak = epiState.I[0];
                 tpeak = epiEvent.time;
             }
         }
         out.print(tpeak + "\t");
         
         EpidemicState finalState = getStateList().get(getStateList().size()-1);
-        out.print((finalState.I+finalState.R) + "\t");
+        out.print((finalState.I[0]+finalState.R[0]) + "\t");
     }
 
     @Override

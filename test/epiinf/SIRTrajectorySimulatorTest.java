@@ -45,14 +45,14 @@ public class SIRTrajectorySimulatorTest {
         
         // Assert some arbitary features of trajectory:
         assertEquals(trajSim.getEventList().size(), 1983);
-        assertEquals((long)trajSim.getStateList().get(0).S, 1000);
-        assertEquals((long)trajSim.getStateList().get(0).I, 1);
-        assertEquals((long)trajSim.getStateList().get(0).R, 0);
+        assertEquals((long)trajSim.getStateList().get(0).S[0], 1000);
+        assertEquals((long)trajSim.getStateList().get(0).I[0], 1);
+        assertEquals((long)trajSim.getStateList().get(0).R[0], 0);
         
         EpidemicState finalState = trajSim.getStateList()
                 .get(trajSim.getStateList().size()-1);
         
-        assertEquals((long)finalState.I, 0);
-        assertEquals((long)finalState.R, 1001-(long)finalState.S);
+        assertEquals((long)finalState.I[0], 0);
+        assertEquals((long)finalState.R[0], 1001-(long)finalState.S[0]);
     }
 }

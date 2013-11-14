@@ -23,14 +23,23 @@ package epiinf;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class EpidemicState {
-    public double S, I, R;
+    public double[] S, I, R;
+    int dim;
     
-    public EpidemicState() { }
+    public EpidemicState() {
+        dim = 1;
+        S = new double[1];
+        I = new double[1];
+        R = new double[1];
+    }
     
     public EpidemicState(double S, double I, double R) {
-        this.S = S;
-        this.I = I;
-        this.R = R;
+        this.S = new double[1];
+        this.S[0] = S;
+        this.I = new double[1];
+        this.I[0] = I;
+        this.R = new double[1];
+        this.R[0] = R;
     }
     
     /**
@@ -39,21 +48,42 @@ public class EpidemicState {
      * @return true if state is valid.
      */
     public boolean isValid() {
-        return (this.S>=0 && this.I>=0 && this.R>=0);
+        for (int i=0; i<dim; i++) 
+            if (this.S[i]>=0 && this.I[i]>=0 && this.R[i]>=0)
+                return false;
+        
+        return true;
     }
     
     public EpidemicState copy() {
         EpidemicState stateCopy = new EpidemicState();
-        stateCopy.S = S;
-        stateCopy.I = I;
-        stateCopy.R = R;
+        stateCopy.dim = dim;
+        stateCopy.S = new double[dim];
+        stateCopy.I = new double[dim];
+        stateCopy.R = new double[dim];
+        
+        for (int i=0; i<dim; i++) {
+            stateCopy.S[i] = S[i];
+            stateCopy.I[i] = I[i];
+            stateCopy.R[i] = R[i];
+        }
         
         return stateCopy;
     }
     
     @Override
     public String toString() {
-        return "S: " + (long)S + ", I: " + (long)I + ", R: " + R;
+        StringBuilder sb = new StringBuilder();
+        
+        for (int i=0; i<dim; i++) {
+            if (i>0)
+                sb.append(", ");
+            sb.append("S[").append(i).append("]:").append(S[i])
+                    .append("I[").append(i).append("]:").append(I[i])
+                    .append("R[").append(i).append("]:").append(R[i]);
+        }
+
+        return sb.toString();
     }
     
     /**
@@ -62,8 +92,18 @@ public class EpidemicState {
      * 
      * @return R input file header
      */
-    public static String getHeader() {
-        return "S I R";
+    public String getHeader() {
+        StringBuilder sb = new StringBuilder();
+        
+        for (int i=0; i<dim; i++) {
+            if (i>0)
+                sb.append(" ");
+            sb.append("S").append(i)
+                    .append(" I").append(i)
+                    .append(" R").append(i);
+        }
+        
+        return sb.toString();
     }
     
     /**
@@ -72,6 +112,16 @@ public class EpidemicState {
      * @return R input file record.
      */
     public String getRecord() {
-        return (long)S + " " + (long)I + " " + (long)R;
+        StringBuilder sb = new StringBuilder();
+        
+        for (int i=0; i<dim; i++) {
+            if (i>0)
+                sb.append(" ");
+            sb.append(S[i])
+                    .append(" ").append(I[i])
+                    .append(" ").append(R[i]);
+        }
+        
+        return sb.toString();
     }
 }

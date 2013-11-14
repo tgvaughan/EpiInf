@@ -141,7 +141,7 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
                 
                 if (event.type == EpidemicEvent.EventType.INFECTION) {
                     int k = activeNodes.size();
-                    double N = state.I;
+                    double N = state.I[0];
                     
                     double pCoalesce = k*(k-1)/(N*(N-1));
                     

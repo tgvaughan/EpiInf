@@ -74,8 +74,8 @@ public class SIRTrajDensity extends Distribution {
             EpidemicEvent thisEvent = trajectory.getEventList().get(i);
             EpidemicState thisState = trajectory.getStateList().get(i);
             
-            double infectionProp = thisState.S*thisState.I*infectionRate.getValue();
-            double recoveryProp = thisState.I*recoveryRate.getValue();
+            double infectionProp = thisState.S[0]*thisState.I[0]*infectionRate.getValue();
+            double recoveryProp = thisState.I[0]*recoveryRate.getValue();
             double totalProp = infectionProp + recoveryProp;
             
             logP += -totalProp*(thisEvent.time-lastEventTime);

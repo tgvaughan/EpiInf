@@ -85,10 +85,10 @@ public class SIRTrajectorySimulator extends EpidemicTrajectory implements StateN
         
         double t = 0.0;
 
-        while (thisState.I>0) {
+        while (thisState.I[0]>0) {
             
-            double infProp = thisState.S*thisState.I*infectionRate;
-            double recProp = thisState.I*recoveryRate;
+            double infProp = thisState.S[0]*thisState.I[0]*infectionRate;
+            double recProp = thisState.I[0]*recoveryRate;
             double totalProp = infProp + recProp;
 
             t += Randomizer.nextExponential(totalProp);
@@ -98,12 +98,12 @@ public class SIRTrajectorySimulator extends EpidemicTrajectory implements StateN
 
             if (Randomizer.nextDouble()*totalProp < infProp) {
                 nextEvent.type = EpidemicEvent.EventType.INFECTION;
-                thisState.S -= 1;
-                thisState.I += 1;
+                thisState.S[0] -= 1;
+                thisState.I[0] += 1;
             } else {
                 nextEvent.type = EpidemicEvent.EventType.RECOVERY;
-                thisState.I -= 1;
-                thisState.R += 1;
+                thisState.I[0] -= 1;
+                thisState.R[0] += 1;
             }
             
             eventList.add(nextEvent);

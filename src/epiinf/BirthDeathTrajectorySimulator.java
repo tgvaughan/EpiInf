@@ -89,25 +89,23 @@ public class BirthDeathTrajectorySimulator extends EpidemicTrajectory implements
 
         while (true) {
             
-            double infProp = thisState.I*birthRate;
-            double recProp = thisState.I*deathRate;
+            double infProp = thisState.I[0]*birthRate;
+            double recProp = thisState.I[0]*deathRate;
             double totalProp = infProp + recProp;
 
             t += Randomizer.nextExponential(totalProp);
-            if (t>duration) {
-                t = duration;
+            if (t>duration)
                 break;
-            }
             
             EpidemicEvent nextEvent = new EpidemicEvent();
             nextEvent.time = t;
 
             if (Randomizer.nextDouble()*totalProp < infProp) {
                 nextEvent.type = EpidemicEvent.EventType.INFECTION;
-                thisState.I += 1;
+                thisState.I[0] += 1;
             } else {
                 nextEvent.type = EpidemicEvent.EventType.RECOVERY;
-                thisState.I -= 1;
+                thisState.I[0] -= 1;
             }
             
             eventList.add(nextEvent);

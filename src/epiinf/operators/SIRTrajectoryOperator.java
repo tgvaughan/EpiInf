@@ -77,8 +77,8 @@ public class SIRTrajectoryOperator extends Operator {
         for (TreeEventList.TreeEvent treeEvent : treeEventList) {
             
             while (true) {
-                double infProp = infectionRate*thisState.S*thisState.I;
-                double recProp = recoveryRate*thisState.I;
+                double infProp = infectionRate*thisState.S[0]*thisState.I[0];
+                double recProp = recoveryRate*thisState.I[0];
                 double totalProp = infProp + recProp;
                 
                 double dt = Randomizer.nextExponential(totalProp);
@@ -96,14 +96,14 @@ public class SIRTrajectoryOperator extends Operator {
                 
                 if (Randomizer.nextDouble()*totalProp < infProp) {
                     newEvent.type = EpidemicEvent.EventType.INFECTION;
-                    thisState.S -= 1;
-                    thisState.I += 1;
+                    thisState.S[0] -= 1;
+                    thisState.I[0] += 1;
                     
                     logHR -= Math.log(infProp);
                 } else {
                     newEvent.type = EpidemicEvent.EventType.RECOVERY;
-                    thisState.I -= 1;
-                    thisState.R += 1;
+                    thisState.I[0] -= 1;
+                    thisState.R[0] += 1;
                     
                     logHR -= Math.log(recProp);
                 }
@@ -119,13 +119,13 @@ public class SIRTrajectoryOperator extends Operator {
             newEvent.time = treeEvent.time;
             if (treeEvent.type == TreeEventList.TreeEventType.COALESCENCE) {
                 newEvent.type = EpidemicEvent.EventType.INFECTION;
-                thisState.S -= 1;
-                thisState.I += 1;
+                thisState.S[0] -= 1;
+                thisState.I[0] += 1;
                 
             } else {
                 newEvent.type = EpidemicEvent.EventType.RECOVERY;
-                thisState.I -= 1;
-                thisState.R += 1;
+                thisState.I[0] -= 1;
+                thisState.R[0] += 1;
             }
             
             if (!thisState.isValid())
@@ -167,8 +167,8 @@ public class SIRTrajectoryOperator extends Operator {
                 EpidemicState thisState = stateList.get(idx);
                 EpidemicEvent thisEvent = eventList.get(idx);
                 
-                double infProp = infRate*thisState.S*thisState.I;
-                double recProp = recRate*thisState.I;
+                double infProp = infRate*thisState.S[0]*thisState.I[0];
+                double recProp = recRate*thisState.I[0];
                 double totalProp = infProp + recProp;
                 
                 logP += -totalProp*(thisEvent.time - lastTime);
@@ -186,8 +186,8 @@ public class SIRTrajectoryOperator extends Operator {
                 return Double.NEGATIVE_INFINITY;
             
             EpidemicState thisState = stateList.get(idx);
-            double infProp = infRate*thisState.S*thisState.I;
-            double recProp = recRate*thisState.I;
+            double infProp = infRate*thisState.S[0]*thisState.I[0];
+            double recProp = recRate*thisState.I[0];
             double totalProp = infProp + recProp;
             
             logP += -totalProp*(treeEvent.time - lastTime);
