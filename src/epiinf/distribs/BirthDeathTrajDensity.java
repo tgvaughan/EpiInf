@@ -22,12 +22,9 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
 import beast.core.parameter.RealParameter;
-import beast.util.Randomizer;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.EpidemicTrajectory;
-import epiinf.SIRTrajectorySimulator;
-import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
 

@@ -60,7 +60,68 @@
 \begin_body
 
 \begin_layout Title
-Probability density for transmission tree under SIR model
+Exact probability density for transmission tree and epidemic trajectory
+ under SIR model
+\end_layout
+
+\begin_layout Section
+Nomenclature
+\end_layout
+
+\begin_layout Standard
+We define the an epidemic 
+\begin_inset Formula $E=(J,B)$
+\end_inset
+
+ where 
+\begin_inset Formula $J=(V_{1},\ldots,V_{M})$
+\end_inset
+
+ is a vector of 
+\begin_inset Formula $M$
+\end_inset
+
+ events 
+\begin_inset Formula $V_{i}$
+\end_inset
+
+.
+ Each event has an associated type 
+\begin_inset Formula $Y_{V_{i}}\in\{e_{I},e_{R}\}$
+\end_inset
+
+ where 
+\begin_inset Formula $e_{I}$
+\end_inset
+
+ represents an infection event and 
+\begin_inset Formula $e_{R}$
+\end_inset
+
+ represents a recovery/removal.
+ Each event also has an associated time 
+\begin_inset Formula $t_{V_{i}}$
+\end_inset
+
+, which is measured relative to the start of the epidemic.
+ The other component of the epidemic, 
+\begin_inset Formula $B=(S_{0},I_{0},R_{0})$
+\end_inset
+
+, is the begining state.
+ In what follows we always have 
+\begin_inset Formula $I_{0}=1$
+\end_inset
+
+ and 
+\begin_inset Formula $R_{0}=0$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+Trajectory density
 \end_layout
 
 \begin_layout Standard
