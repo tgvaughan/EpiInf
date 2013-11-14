@@ -63,7 +63,9 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
             Validate.REQUIRED);
     
     public Input<Double> sampleBeforeTimeInput = new Input<Double>(
-            "sampleBeforeTime", "Sample leaves before this time.");
+            "sampleBeforeTime",
+            "Sample leaves before this time, specified as a fraction of the "
+                    + "total epidemic time.");
     
     public Input<String> fileNameInput = new Input<String>(
             "fileName", "Name of file to save Newick representation of tree to.");
@@ -102,9 +104,12 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         List<EpidemicEvent> leafEvents = Lists.newArrayList();
         List<EpidemicEvent> recoveryEvents = Lists.newArrayList();
         
+        double epidemicDuration = traj.getEventList()
+                .get(traj.getEventList().size()-1).time;
+        
         for (EpidemicEvent event : traj.getEventList()) {
             if (event.type == EpidemicEvent.EventType.RECOVERY
-                    && event.time<sampleBeforeTime)
+                    && event.time<sampleBeforeTime*epidemicDuration)
                 recoveryEvents.add(event);
         }
 
