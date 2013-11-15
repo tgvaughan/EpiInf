@@ -1,0 +1,84 @@
+<beast version='2.0' namespace='beast.core:beast.core.util:beast.core.parameter:beast.evolution.tree:beast.evolution.operators:beast.math.distributions:epiinf:epiinf.distribs:epiinf.operators'>
+
+  <input spec='SIRModel' id='model'>
+    <S0 spec='IntegerParameter' id="S0" value="999"/>
+    <infectionRate spec='RealParameter' id="infectionRate" value="0.001"/>
+    <recoveryRate spec='RealParameter' id="recoveryRate" value="0.2"/>
+  </input>
+
+  <input spec='TrajectorySimulator' id="traj">
+    <model spec='SIRModel'>
+      <S0 spec='IntegerParameter' value="999"/>
+      <infectionRate spec='RealParameter' value="0.001"/>
+      <recoveryRate spec='RealParameter' value="0.2"/>
+    </model>
+  </input>
+  <input spec='Tree' id="tree"/>
+  <input spec="RealParameter" id="treeOrigin" value="1.0"/>
+
+  <run spec="MCMC" id="mcmc" chainLength="1000000">
+
+    <init spec='TransmissionTreeSimulator' nLeaves="20">
+      <tree idref="tree"/>
+      <treeOrigin idref="treeOrigin"/>
+      <epidemicTrajectory idref="traj"/>
+    </init>
+
+    <state>
+      <stateNode idref="traj"/>
+      <stateNode idref="infectionRate"/>
+      <stateNode idref="recoveryRate"/>
+      <stateNode idref="S0"/>
+<!--  <stateNode idref="tree"/>-->
+    </state>
+
+    <distribution spec='CompoundDistribution' id='posterior'>
+      <distribution spec="TrajDensity" id="trajDensity">
+	<model idref="model"/>
+	<epidemicTrajectory idref="traj"/>
+      </distribution>
+
+      <distribution spec="TreeDensity" id="treeDensity">
+	<treeEventList spec="TreeEventList" id="treeEventList">
+	  <tree idref="tree"/>
+	  <treeOrigin idref="treeOrigin"/>
+	</treeEventList>
+	<epidemicTrajectory idref="traj"/>
+      </distribution>
+    </distribution>
+
+    <operator spec="TrajectoryOperator" weight="1" id="trajOp">
+      <treeEventList idref="treeEventList"/>
+      <epidemicTrajectory idref="traj"/>
+      <model idref="model" />
+    </operator>
+
+
+    <operator spec='ScaleOperator' weight="1" id="infectRateScale"
+	      parameter="@infectionRate" scaleFactor="0.9"/>
+    <operator spec='ScaleOperator' weight="1" id="recoveryRateScale"
+	      parameter="@recoveryRate" scaleFactor="0.9"/>
+
+    <logger logEvery="100" fileName="fixedTreeNew.log">
+      <model idref="posterior"/>
+      <log idref="posterior"/>
+      <log idref="treeDensity"/>
+      <log idref="trajDensity"/>
+      <log idref="traj"/>
+      <log idref="infectionRate"/>
+      <log idref="recoveryRate"/>
+    </logger>
+
+    <logger logEvery="1">
+      <model idref="posterior"/>
+      <log idref="posterior"/>
+      <log idref="treeDensity"/>
+      <log idref="trajDensity"/>
+      <log idref="traj"/>
+      <log idref="infectionRate"/>
+      <log idref="recoveryRate"/>
+    </logger>
+
+  </run>
+
+</beast>
