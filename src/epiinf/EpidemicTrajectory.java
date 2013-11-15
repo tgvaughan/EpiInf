@@ -81,6 +81,16 @@ public class EpidemicTrajectory extends StateNode {
     }
     
     /**
+     * Retrieve length of time between start of epidemic and last recorded
+     * event.
+     * 
+     * @return duration of recorded epidemic
+     */
+    public double getDuration() {
+        return eventList.get(eventList.size()-1).time;
+    }
+    
+    /**
      * Write trajectory state sequence to PrintStream.
      * 
      * @param ps where to send output
