@@ -56,9 +56,10 @@ public class TrajDensity extends Distribution {
     
     @Override
     public double calculateLogP() {
-        
-        return model.getPathProbability(0, trajectory.getDuration(),
+        logP = model.getPathProbability(0, trajectory.getDuration(),
                 model.getInitialState(), trajectory.getEventList());
+        
+        return logP;
     }
 
     @Override
