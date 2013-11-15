@@ -17,9 +17,11 @@
 
 package epiinf.distribs;
 
+import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
-import epiinf.SIRTrajectorySimulator;
+import epiinf.SIRModel;
+import epiinf.TrajectorySimulator;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -35,24 +37,24 @@ public class SIRTrajDensityTest {
     @Test
     public void test() throws Exception {
 
-        Randomizer.setSeed(42);
+        Randomizer.setSeed(2785);
         
-        SIRTrajectorySimulator trajSim = new SIRTrajectorySimulator();
-        trajSim.initByName(
-                "S0", 1000,
-                "infectionRate", 0.001,
-                "recoveryRate", 0.2);
-        
-        trajSim.initStateNodes();
-        
-        SIRTrajDensity trajDensity = new SIRTrajDensity();
-        trajDensity.initByName(
-                "epidemicTrajectory", trajSim,
+        SIRModel model = new SIRModel();
+        model.initByName(
+                "S0", new IntegerParameter("999"),
                 "infectionRate", new RealParameter("0.001"),
                 "recoveryRate", new RealParameter("0.2"));
         
+        TrajectorySimulator trajSim = new TrajectorySimulator();
+        trajSim.initByName("model", model);
+        
+        TrajDensity trajDensity = new TrajDensity();
+        trajDensity.initByName(
+                "model", model,
+                "epidemicTrajectory", trajSim);
+        
         double logP = trajDensity.calculateLogP();
-        double logPtruth = 6160.84731543222;
+        double logPtruth = 6278.084332916109;
         
         assertTrue(0.5*Math.abs(logP-logPtruth)/(logP+logPtruth)<1e-10);
     }

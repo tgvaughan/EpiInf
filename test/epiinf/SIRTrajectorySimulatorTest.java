@@ -35,7 +35,7 @@ public class SIRTrajectorySimulatorTest {
     @Test
     public void test() throws Exception {
         
-        //Randomizer.setSeed(42);
+        Randomizer.setSeed(2785);
         
         SIRModel model = new SIRModel();
         model.initByName(
@@ -47,8 +47,8 @@ public class SIRTrajectorySimulatorTest {
         trajSim.initByName("model", model);
         
         // Assert some arbitary features of trajectory:
-        assertEquals(trajSim.getEventList().size(), 1983);
-        assertEquals((long)trajSim.getStateList().get(0).S, 1000);
+        assertEquals(trajSim.getEventList().size(), 1979);
+        assertEquals((long)trajSim.getStateList().get(0).S, 999);
         assertEquals((long)trajSim.getStateList().get(0).I, 1);
         assertEquals((long)trajSim.getStateList().get(0).R, 0);
         
@@ -56,6 +56,6 @@ public class SIRTrajectorySimulatorTest {
                 .get(trajSim.getStateList().size()-1);
         
         assertEquals((long)finalState.I, 0);
-        assertEquals((long)finalState.R, 1001-(long)finalState.S);
+        assertEquals((long)finalState.R, 1000-(long)finalState.S);
     }
 }

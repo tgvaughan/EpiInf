@@ -53,7 +53,7 @@ public class EpidemicState {
     
     @Override
     public String toString() {
-        return "S: " + (long)S + ", I: " + (long)I + ", R: " + R;
+        return "S: " + S + ", I: " + I + ", R: " + R;
     }
     
     /**

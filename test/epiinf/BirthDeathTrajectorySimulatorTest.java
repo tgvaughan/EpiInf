@@ -17,6 +17,7 @@
 
 package epiinf;
 
+import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -33,19 +34,23 @@ public class BirthDeathTrajectorySimulatorTest {
     @Test
     public void test() throws Exception {
         
-        Randomizer.setSeed(42);
+        Randomizer.setSeed(1);
         
-        BirthDeathTrajectorySimulator trajSim = new BirthDeathTrajectorySimulator();
+        BirthDeathModel model = new BirthDeathModel();
+        model.initByName(
+                "birthRate", new RealParameter("2.0"),
+                "deathRate", new RealParameter("1.0"));
+        
+        TrajectorySimulator trajSim = new TrajectorySimulator();
         trajSim.initByName(
-                "birthRate", 1.0,
-                "deathRate", 0.1,
-                "duration", 5.0);
+                "model", model,
+                "maxDuration", 5.0);
         
         trajSim.initStateNodes();
         
-        assertEquals(trajSim.getEventList().size(), 34);
+        assertEquals(trajSim.getEventList().size(), 151);
         assertEquals((long)trajSim.getStateList().get(0).I, 1);
-        assertEquals((long)trajSim.getStateList().get(34).I, 27);
+        assertEquals((long)trajSim.getStateList().get(151).I, 48);
 
     }
 }

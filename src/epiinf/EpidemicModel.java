@@ -82,7 +82,12 @@ public abstract class EpidemicModel extends CalculationNode {
         while (true) {
             calculatePropensities(thisState);
             
-            double dt = Randomizer.nextExponential(totalPropensity);
+            double dt;
+            if (totalPropensity>0.0)
+                dt = Randomizer.nextExponential(totalPropensity);
+            else
+                dt = Double.POSITIVE_INFINITY;
+            
             logP += -Math.min(dt, endTime-t)*totalPropensity;
             
             t += dt;
@@ -94,14 +99,16 @@ public abstract class EpidemicModel extends CalculationNode {
             nextEvent.time = t;
             
             double u = totalPropensity*Randomizer.nextDouble();
+            
             for (EpidemicEvent.EventType type : propensities.keySet()) {
                 u -= propensities.get(type);
-                if (u>=0)
-                    continue;
                 
-                nextEvent.type = type;
-                incrementState(thisState, type);
-                logP += Math.log(propensities.get(type));
+                if (u<0) {
+                    nextEvent.type = type;
+                    incrementState(thisState, type);
+                    logP += Math.log(propensities.get(type));
+                    break;
+                }
             }
             
             eventList.add(nextEvent);

@@ -32,6 +32,10 @@ public class BirthDeathModel extends EpidemicModel {
     
     public Input<RealParameter> deathRateInput = new Input<RealParameter>(
             "deathRate", "Lineage death rate.", Validate.REQUIRED);
+    
+    public Input<RealParameter> durationInput = new Input<RealParameter>(
+            "duration", "Parameter specifying duration of process.  Usually"
+            + "set to the origin of the tree.", Validate.REQUIRED);
 
     @Override
     public EpidemicState getInitialState() {

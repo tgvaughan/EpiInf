@@ -39,11 +39,16 @@ public class TrajectorySimulator extends EpidemicTrajectory implements StateNode
     public Input<EpidemicModel> modelInput = new Input<EpidemicModel>(
             "model", "Epidemic model.", Validate.REQUIRED);
     
+    public Input<Double> durationInput = new Input<Double>(
+            "maxDuration", "Maximum duration of epidemic to simulate. "
+                    + "Defaults to infinity.", Double.POSITIVE_INFINITY);
+    
     public Input<String> fileNameInput = new Input<String>(
             "fileName",
             "Optional name of file to write simulated trajectory to.");
     
     EpidemicModel model;
+    double duration;
     
     public TrajectorySimulator() { }
     
@@ -52,6 +57,7 @@ public class TrajectorySimulator extends EpidemicTrajectory implements StateNode
         super.initAndValidate();
         
         model = modelInput.get();
+        duration = durationInput.get();
         
         simulate();
         
@@ -72,7 +78,7 @@ public class TrajectorySimulator extends EpidemicTrajectory implements StateNode
         
         stateList.add(model.getInitialState());
         
-        model.generateTrajectory(model.getInitialState(), 0, Double.POSITIVE_INFINITY);
+        model.generateTrajectory(model.getInitialState(), 0, duration);
         eventList.addAll(model.getEventList());
         stateList.addAll(model.getStateList());
     }

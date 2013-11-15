@@ -17,13 +17,14 @@
 
 package epiinf.distribs;
 
+import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
-import epiinf.SIRTrajectorySimulator;
+import epiinf.SIRModel;
+import epiinf.TrajectorySimulator;
 import epiinf.TransmissionTreeSimulator;
 import epiinf.TreeEventList;
-import java.io.PrintStream;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -38,15 +39,16 @@ public class TreeDensityTest {
 
     @Test
     public void test() throws Exception {
-        Randomizer.setSeed(42);
+        Randomizer.setSeed(2785);
         
-        SIRTrajectorySimulator trajSim = new SIRTrajectorySimulator();
-        trajSim.initByName(
-                "S0", 1000,
-                "infectionRate", 0.001,
-                "recoveryRate", 0.2);
+        SIRModel model = new SIRModel();
+        model.initByName(
+                "S0", new IntegerParameter("999"),
+                "infectionRate", new RealParameter("0.001"),
+                "recoveryRate", new RealParameter("0.2"));
         
-        trajSim.initStateNodes();
+        TrajectorySimulator trajSim = new TrajectorySimulator();
+        trajSim.initByName("model", model);
         
         Tree tree = new Tree();
         RealParameter treeOrigin = new RealParameter();
@@ -70,8 +72,8 @@ public class TreeDensityTest {
                 "epidemicTrajectory", trajSim);
 
         double logP = treeDensity.calculateLogP();
-        double logPtruth = -284.84151224202884;
+        double logPtruth = -281.686741693071;
         
-        assertTrue(2.0*Math.abs(logP-logPtruth)/(logP+logPtruth)<1e-10);
+        assertTrue(Math.abs(logP-logPtruth)<1e-10);
     }
 }

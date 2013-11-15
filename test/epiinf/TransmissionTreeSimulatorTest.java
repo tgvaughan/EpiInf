@@ -17,6 +17,7 @@
 
 package epiinf;
 
+import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
@@ -34,17 +35,17 @@ public class TransmissionTreeSimulatorTest {
 
     @Test
     public void test() throws Exception {
-        Randomizer.setSeed(42);
+        Randomizer.setSeed(53);
         
-        SIRTrajectorySimulator trajSim = new SIRTrajectorySimulator();
-        trajSim.initByName(
-                "S0", 1000,
-                "infectionRate", 0.001,
-                "recoveryRate", 0.2);
+        SIRModel model = new SIRModel();
+        model.initByName(
+                "S0", new IntegerParameter("999"),
+                "infectionRate", new RealParameter("0.001"),
+                "recoveryRate", new RealParameter("0.2"));
         
-        trajSim.initStateNodes();
+        TrajectorySimulator trajSim = new TrajectorySimulator();
+        trajSim.initByName("model", model);
         
-
         Tree tree = new Tree();
         RealParameter treeOrigin = new RealParameter();
         
