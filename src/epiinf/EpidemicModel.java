@@ -17,7 +17,7 @@
 
 package epiinf;
 
-import beast.core.BEASTObject;
+import beast.core.CalculationNode;
 import beast.util.Randomizer;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -31,7 +31,7 @@ import java.util.Map;
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public abstract class EpidemicModel extends BEASTObject {
+public abstract class EpidemicModel extends CalculationNode {
     
     protected List<EpidemicEvent> eventList;
     protected List<EpidemicState> stateList;
@@ -44,6 +44,9 @@ public abstract class EpidemicModel extends BEASTObject {
         stateList = Lists.newArrayList();
         propensities = Maps.newHashMap();
     }
+    
+    @Override
+    public void initAndValidate() { };
     
     public abstract EpidemicState getInitialState();
     
@@ -62,9 +65,13 @@ public abstract class EpidemicModel extends BEASTObject {
      * @param startState Starting state of trajectory
      * @param startTime Starting time of trajectory
      * @param endTime End time of trajectory
+     * 
+     * @return log of path probability
      */
-    public void generateTrajectory(EpidemicState startState,
+    public double generateTrajectory(EpidemicState startState,
             double startTime, double endTime) {
+        
+        double logP = 0.0;
         
         eventList.clear();
         stateList.clear();
@@ -75,9 +82,12 @@ public abstract class EpidemicModel extends BEASTObject {
         while (true) {
             calculatePropensities(thisState);
             
-            t += Randomizer.nextExponential(totalPropensity);
+            double dt = Randomizer.nextExponential(totalPropensity);
+            logP += -Math.min(dt, endTime-t)*totalPropensity;
             
-            if (t>endTime)
+            t += dt;
+                    
+            if (t>=endTime)
                 break;
             
             EpidemicEvent nextEvent = new EpidemicEvent();
@@ -91,11 +101,14 @@ public abstract class EpidemicModel extends BEASTObject {
                 
                 nextEvent.type = type;
                 incrementState(thisState, type);
+                logP += Math.log(propensities.get(type));
             }
             
             eventList.add(nextEvent);
             stateList.add(thisState.copy());
         }
+        
+        return logP;
     }
     
     public List<EpidemicEvent> getEventList() {
@@ -146,4 +159,5 @@ public abstract class EpidemicModel extends BEASTObject {
         
         return logP;
     }
+
 }

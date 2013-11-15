@@ -23,11 +23,8 @@ import beast.core.Input.Validate;
 import beast.core.State;
 import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
-import epiinf.EpidemicEvent;
 import epiinf.EpidemicModel;
-import epiinf.EpidemicState;
 import epiinf.EpidemicTrajectory;
-import epiinf.SIRTrajectorySimulator;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
@@ -90,47 +87,47 @@ public class TrajDensity extends Distribution {
      * @param args 
      * @throws java.lang.Exception 
      */
-    public static void main (String [] args) throws Exception {
-               Randomizer.setSeed(42);
-        
-        SIRTrajectorySimulator trajSim = new SIRTrajectorySimulator();
-        trajSim.initByName(
-                "S0", 1000,
-                "infectionRate", 0.001,
-                "recoveryRate", 0.2);
-        
-        trajSim.initStateNodes();
-        
-        PrintStream ps = new PrintStream("infectionRateLikelihood.txt");
-        ps.println("infectionRate logP");
-        
-        TrajDensity trajDensity = new TrajDensity();
-        for (int i=0; i<100; i++) {
-            double infectionRate = Math.pow(10, -4 + (i/99.0)*(-2 - -4));
-            trajDensity.initByName(
-                "epidemicTrajectory", trajSim,
-                "infectionRate", new RealParameter(String.valueOf(infectionRate)),
-                "recoveryRate", new RealParameter("0.2"));
-            
-            ps.println(infectionRate + " " + trajDensity.calculateLogP());
-        }
-        
-        ps.close();
-        
-        ps = new PrintStream("recoveryRateLikelihood.txt");
-        ps.println("recoveryRate logP");
-        
-        for (int i=0; i<100; i++) {
-            double recoveryRate = Math.pow(10, Math.log10(0.2)-1 + (i/99.0)*2.0);
-            trajDensity.initByName(
-                "epidemicTrajectory", trajSim,
-                "infectionRate", new RealParameter("0.001"),
-                "recoveryRate", new RealParameter(String.valueOf(recoveryRate)));
-            
-            ps.println(recoveryRate + " " + trajDensity.calculateLogP());
-        }
-        
-        ps.close();
-    }
+//    public static void main (String [] args) throws Exception {
+//               Randomizer.setSeed(42);
+//        
+//        SIRTrajectorySimulator trajSim = new SIRTrajectorySimulator();
+//        trajSim.initByName(
+//                "S0", 1000,
+//                "infectionRate", 0.001,
+//                "recoveryRate", 0.2);
+//        
+//        trajSim.initStateNodes();
+//        
+//        PrintStream ps = new PrintStream("infectionRateLikelihood.txt");
+//        ps.println("infectionRate logP");
+//        
+//        TrajDensity trajDensity = new TrajDensity();
+//        for (int i=0; i<100; i++) {
+//            double infectionRate = Math.pow(10, -4 + (i/99.0)*(-2 - -4));
+//            trajDensity.initByName(
+//                "epidemicTrajectory", trajSim,
+//                "infectionRate", new RealParameter(String.valueOf(infectionRate)),
+//                "recoveryRate", new RealParameter("0.2"));
+//            
+//            ps.println(infectionRate + " " + trajDensity.calculateLogP());
+//        }
+//        
+//        ps.close();
+//        
+//        ps = new PrintStream("recoveryRateLikelihood.txt");
+//        ps.println("recoveryRate logP");
+//        
+//        for (int i=0; i<100; i++) {
+//            double recoveryRate = Math.pow(10, Math.log10(0.2)-1 + (i/99.0)*2.0);
+//            trajDensity.initByName(
+//                "epidemicTrajectory", trajSim,
+//                "infectionRate", new RealParameter("0.001"),
+//                "recoveryRate", new RealParameter(String.valueOf(recoveryRate)));
+//            
+//            ps.println(recoveryRate + " " + trajDensity.calculateLogP());
+//        }
+//        
+//        ps.close();
+//    }
     
 }

@@ -71,7 +71,7 @@ public class TrajectoryOperator extends Operator {
         double t = 0.0;
         for (TreeEventList.TreeEvent treeEvent : treeEventList) {
             
-            model.generateTrajectory(thisState, t, treeEvent.time);
+            logHR -= model.generateTrajectory(thisState, t, treeEvent.time);
             eventList.addAll(model.getEventList());
             stateList.addAll(model.getStateList());
             
@@ -108,52 +108,32 @@ public class TrajectoryOperator extends Operator {
      */
     private double getReverseMoveDensity() {
         
+        EpidemicModel model = modelInput.get();
+        
         List<TreeEventList.TreeEvent> treeEventList = treeEventListInput.get().getEventList();
         List<EpidemicEvent> eventList = trajInput.get().getEventList();
         List<EpidemicState> stateList = trajInput.get().getStateList();
-        
-        double infRate = infectionRateInput.get().getValue();
-        double recRate = recoveryRateInput.get().getValue();
         
         double logP = 0.0;
         
         int idx=0;
         double lastTime = 0.0;
         for (TreeEventList.TreeEvent treeEvent : treeEventList) {
-            
-            while (idx<eventList.size() &&
-                    !TreeEventList.eventsMatch(treeEvent, eventList.get(idx))) {
 
-                EpidemicState thisState = stateList.get(idx);
-                EpidemicEvent thisEvent = eventList.get(idx);
-                
-                double infProp = infRate*thisState.S*thisState.I;
-                double recProp = recRate*thisState.I;
-                double totalProp = infProp + recProp;
-                
-                logP += -totalProp*(thisEvent.time - lastTime);
-                
-                if (thisEvent.type == EpidemicEvent.EventType.INFECTION)
-                    logP += Math.log(infProp);
-                else
-                    logP += Math.log(recProp);
-
-                lastTime = thisEvent.time;
-                idx += 1;
-            }
+            int nextIdx = idx;
+            while (nextIdx<eventList.size() &&
+                    !TreeEventList.eventsMatch(treeEvent, eventList.get(idx)))
+                nextIdx += 1;
             
-            if (idx>=eventList.size())
+            if (nextIdx>=eventList.size())
                 return Double.NEGATIVE_INFINITY;
             
-            EpidemicState thisState = stateList.get(idx);
-            double infProp = infRate*thisState.S*thisState.I;
-            double recProp = recRate*thisState.I;
-            double totalProp = infProp + recProp;
-            
-            logP += -totalProp*(treeEvent.time - lastTime);
+            logP += model.getPathProbability(lastTime, treeEvent.time,
+                    stateList.get(idx),
+                    eventList.subList(idx, nextIdx-1));
             
             lastTime = treeEvent.time;
-            idx += 1;
+            idx = nextIdx + 1;
         }
         
         return logP;

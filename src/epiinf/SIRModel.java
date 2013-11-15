@@ -37,6 +37,7 @@ public class SIRModel extends EpidemicModel {
     public Input<RealParameter> recoveryRateInput = new Input<RealParameter>(
             "recoveryRate", "Recovery rate.", Validate.REQUIRED);
 
+    
     @Override
     public EpidemicState getInitialState() {
         return new EpidemicState(S0Input.get().getValue(), 1, 0);
@@ -69,4 +70,6 @@ public class SIRModel extends EpidemicModel {
                 break;
         }
     }
+
+
 }
