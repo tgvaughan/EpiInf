@@ -6,7 +6,7 @@
     <recoveryRate spec='RealParameter' id="recoveryRate" value="0.2"/>
   </input>
 
-  <input spec='TrajectorySimulator' id="traj">
+  <input spec='TrajectorySimulator' fileName="trajectory.txt" id="traj">
     <model spec='SIRModel'>
       <S0 spec='IntegerParameter' value="999"/>
       <infectionRate spec='RealParameter' value="0.001"/>
@@ -18,7 +18,7 @@
 
   <run spec="MCMC" id="mcmc" chainLength="1000000">
 
-    <init spec='TransmissionTreeSimulator' nLeaves="20">
+    <init spec='TransmissionTreeSimulator' nLeaves="20" fileName="tree.newick">
       <tree idref="tree"/>
       <treeOrigin idref="treeOrigin"/>
       <epidemicTrajectory idref="traj"/>

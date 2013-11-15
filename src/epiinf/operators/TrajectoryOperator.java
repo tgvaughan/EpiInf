@@ -119,15 +119,20 @@ public class TrajectoryOperator extends Operator {
 
             int nextIdx = idx;
             while (nextIdx<eventList.size() &&
-                    !TreeEventList.eventsMatch(treeEvent, eventList.get(idx)))
+                    !TreeEventList.eventsMatch(treeEvent, eventList.get(nextIdx)))
                 nextIdx += 1;
             
             if (nextIdx>=eventList.size())
                 return Double.NEGATIVE_INFINITY;
-            
-            logP += model.getPathProbability(lastTime, treeEvent.time,
-                    stateList.get(idx),
-                    eventList.subList(idx, nextIdx-1));
+           
+            if (nextIdx>idx) {
+                logP += model.getPathProbability(lastTime, treeEvent.time,
+                        stateList.get(idx),
+                        eventList.subList(idx, nextIdx-1));
+            } else {
+                logP += model.getIntervalProbability(stateList.get(idx),
+                        treeEvent.time - lastTime);
+            }
             
             lastTime = treeEvent.time;
             idx = nextIdx + 1;
