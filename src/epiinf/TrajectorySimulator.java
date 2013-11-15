@@ -22,7 +22,6 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
-import beast.util.Randomizer;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.List;

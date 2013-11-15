@@ -17,6 +17,8 @@
 
 package epiinf;
 
+import beast.core.parameter.IntegerParameter;
+import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -33,15 +35,16 @@ public class SIRTrajectorySimulatorTest {
     @Test
     public void test() throws Exception {
         
-        Randomizer.setSeed(42);
+        //Randomizer.setSeed(42);
         
-        SIRTrajectorySimulator trajSim = new SIRTrajectorySimulator();
-        trajSim.initByName(
-                "S0", 1000,
-                "infectionRate", 0.001,
-                "recoveryRate", 0.2);
+        SIRModel model = new SIRModel();
+        model.initByName(
+                "S0", new IntegerParameter("999"),
+                "infectionRate", new RealParameter("0.001"),
+                "recoveryRate", new RealParameter("0.2"));
         
-        trajSim.initStateNodes();
+        TrajectorySimulator trajSim = new TrajectorySimulator();
+        trajSim.initByName("model", model);
         
         // Assert some arbitary features of trajectory:
         assertEquals(trajSim.getEventList().size(), 1983);

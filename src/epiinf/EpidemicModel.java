@@ -96,7 +96,7 @@ public abstract class EpidemicModel extends CalculationNode {
             double u = totalPropensity*Randomizer.nextDouble();
             for (EpidemicEvent.EventType type : propensities.keySet()) {
                 u -= propensities.get(type);
-                if (u<0)
+                if (u>=0)
                     continue;
                 
                 nextEvent.type = type;
