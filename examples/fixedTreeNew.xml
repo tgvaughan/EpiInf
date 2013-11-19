@@ -2,8 +2,8 @@
 
   <input spec='SIRModel' id='model'>
     <S0 spec='IntegerParameter' id="S0" value="999"/>
-    <infectionRate spec='RealParameter' id="infectionRate" value="0.001"/>
-    <recoveryRate spec='RealParameter' id="recoveryRate" value="0.2"/>
+    <infectionRate spec='RealParameter' id="infectionRate" value="0.005"/>
+    <recoveryRate spec='RealParameter' id="recoveryRate" value="0.1"/>
   </input>
 
   <input spec='TrajectorySimulator' fileName="trajectory.txt" id="traj">

@@ -92,6 +92,8 @@ public class TrajectoryOperator extends Operator {
             
             eventList.add(newEvent);
             stateList.add(thisState.copy());
+            
+            t = treeEvent.time;
         }
         
         traj.setEventAndStateList(eventList, stateList);
