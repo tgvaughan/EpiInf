@@ -48,10 +48,24 @@ public abstract class EpidemicModel extends CalculationNode {
     @Override
     public void initAndValidate() { };
     
+    /**
+     * @return initial state of epidemic
+     */
     public abstract EpidemicState getInitialState();
     
+    /**
+     * Calculate propensities of all possible reactions contained in
+     * this model.
+     * @param state state used to calculate propensities
+     */
     public abstract void calculatePropensities(EpidemicState state);
     
+    /**
+     * Increment state according to reaction of chosen type.
+     * 
+     * @param state state to update
+     * @param type type of reaction to implement
+     */
     public abstract void incrementState(EpidemicState state,
             EpidemicEvent.EventType type);
 
@@ -118,14 +132,30 @@ public abstract class EpidemicModel extends CalculationNode {
         return logP;
     }
     
+    /**
+     * @return last simulated event list
+     */
     public List<EpidemicEvent> getEventList() {
         return eventList;
     }
     
+    /**
+     * @return last simulated state list
+     */
     public List<EpidemicState> getStateList() {
         return stateList;
     }
     
+    /**
+     * Probability density of a path under this model, where the path is
+     * defined by the parameters.
+     * 
+     * @param startTime start time of the path
+     * @param endTime end time of the path
+     * @param startState state at the beginning of the path
+     * @param eventList list of events along the path
+     * @return log of probability density
+     */
     public double getPathProbability(double startTime, double endTime,
             EpidemicState startState, List<EpidemicEvent> eventList) {
         double logP = 0.0;
@@ -150,6 +180,13 @@ public abstract class EpidemicModel extends CalculationNode {
         return logP;
     }
     
+    /**
+     * Probability of a given interval length under model.
+     * 
+     * @param state state of the system within interval
+     * @param waitingTime length of interval
+     * @return log of probability density
+     */
     public double getIntervalProbability(EpidemicState state,
             double waitingTime) {
 
@@ -158,6 +195,14 @@ public abstract class EpidemicModel extends CalculationNode {
         
     }
     
+    /**
+     * Joint probability of an interval followed by an event.
+     * 
+     * @param startState state at start of interval
+     * @param startTime time at start of interval
+     * @param epidemicEvent object describing time and type of event
+     * @return log of probability density
+     */
     public double getJointReactionProbability(EpidemicState startState,
             double startTime, EpidemicEvent epidemicEvent) {
         

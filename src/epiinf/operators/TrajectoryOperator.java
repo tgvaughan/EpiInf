@@ -65,10 +65,10 @@ public class TrajectoryOperator extends Operator {
         EpidemicState thisState = model.getInitialState();
         stateList.add(thisState.copy());
         
-        double t = 0.0;
+        double lastTime = 0.0;
         for (TreeEventList.TreeEvent treeEvent : treeEventList) {
             
-            logHR -= model.generateTrajectory(thisState, t, treeEvent.time);
+            logHR -= model.generateTrajectory(thisState, lastTime, treeEvent.time);
             eventList.addAll(model.getEventList());
             stateList.addAll(model.getStateList());
             
@@ -85,15 +85,13 @@ public class TrajectoryOperator extends Operator {
                 model.incrementState(thisState, EpidemicEvent.EventType.RECOVERY);
             }
             
-            // DEBUG: Problem is here!  Proposal always aborting early.
-            
             if (!thisState.isValid())
                 return Double.NEGATIVE_INFINITY;
             
             eventList.add(newEvent);
             stateList.add(thisState.copy());
             
-            t = treeEvent.time;
+            lastTime = treeEvent.time;
         }
         
         traj.setEventAndStateList(eventList, stateList);
