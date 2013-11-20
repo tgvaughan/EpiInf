@@ -29,13 +29,13 @@ import static org.junit.Assert.*;
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class SIRTrajDensityTest {
+public class TrajDensityTest {
     
-    public SIRTrajDensityTest() {
+    public TrajDensityTest() {
     }
     
     @Test
-    public void test() throws Exception {
+    public void testSIR() throws Exception {
 
         Randomizer.setSeed(2785);
         

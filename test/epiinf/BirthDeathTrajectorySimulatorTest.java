@@ -48,9 +48,9 @@ public class BirthDeathTrajectorySimulatorTest {
         
         trajSim.initStateNodes();
         
-        assertEquals(trajSim.getEventList().size(), 151);
+        assertEquals(trajSim.getEventList().size(), 554);
         assertEquals((long)trajSim.getStateList().get(0).I, 1);
-        assertEquals((long)trajSim.getStateList().get(151).I, 48);
+        assertEquals((long)trajSim.getStateList().get(553).I, 176);
 
     }
 }
