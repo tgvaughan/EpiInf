@@ -59,7 +59,7 @@
     <operator spec='ScaleOperator' weight="1" id="recoveryRateScale"
 	      parameter="@recoveryRate" scaleFactor="0.9"/>
 
-    <logger logEvery="100" fileName="fixedTreeNew.log">
+    <logger logEvery="1000" fileName="fixedTreeNew.log">
       <model idref="posterior"/>
       <log idref="posterior"/>
       <log idref="treeDensity"/>
@@ -69,7 +69,7 @@
       <log idref="recoveryRate"/>
     </logger>
 
-    <logger logEvery="1">
+    <logger logEvery="1000">
       <model idref="posterior"/>
       <log idref="posterior"/>
       <log idref="treeDensity"/>

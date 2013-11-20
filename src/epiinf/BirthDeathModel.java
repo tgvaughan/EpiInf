@@ -22,6 +22,8 @@ import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
 
 /**
+ * General birth-death model of an epidemic.  Suitable only for the
+ * exponential growth period of the epidemic.
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */

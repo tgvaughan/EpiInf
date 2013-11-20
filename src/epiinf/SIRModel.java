@@ -23,6 +23,7 @@ import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 
 /**
+ * General stochastic SIR model of an epidemic.
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */

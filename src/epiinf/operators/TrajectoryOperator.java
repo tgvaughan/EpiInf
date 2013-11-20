@@ -44,6 +44,8 @@ public class TrajectoryOperator extends Operator {
     
     public Input<EpidemicModel> modelInput = new Input<EpidemicModel>(
             "model", "Epidemic model.", Validate.REQUIRED);
+    
+    int count = 0;
 
     @Override
     public void initAndValidate() { }
@@ -69,6 +71,7 @@ public class TrajectoryOperator extends Operator {
         for (TreeEventList.TreeEvent treeEvent : treeEventList) {
             
             logHR -= model.generateTrajectory(thisState, lastTime, treeEvent.time);
+            
             eventList.addAll(model.getEventList());
             stateList.addAll(model.getStateList());
             
@@ -79,7 +82,6 @@ public class TrajectoryOperator extends Operator {
             if (treeEvent.type == TreeEventList.TreeEventType.COALESCENCE) {
                 newEvent.type = EpidemicEvent.EventType.INFECTION;
                 model.incrementState(thisState, EpidemicEvent.EventType.INFECTION);
-                
             } else {
                 newEvent.type = EpidemicEvent.EventType.RECOVERY;
                 model.incrementState(thisState, EpidemicEvent.EventType.RECOVERY);
@@ -115,11 +117,11 @@ public class TrajectoryOperator extends Operator {
         
         double logP = 0.0;
         
-        int idx=0;
+        int lastIdx= -1;
         double lastTime = 0.0;
         for (TreeEventList.TreeEvent treeEvent : treeEventList) {
 
-            int nextIdx = idx;
+            int nextIdx = lastIdx+1;
             while (nextIdx<eventList.size() &&
                     !TreeEventList.eventsMatch(treeEvent, eventList.get(nextIdx)))
                 nextIdx += 1;
@@ -127,17 +129,18 @@ public class TrajectoryOperator extends Operator {
             if (nextIdx>=eventList.size())
                 return Double.NEGATIVE_INFINITY;
            
-            if (nextIdx>idx) {
-                logP += model.getPathProbability(lastTime, treeEvent.time,
-                        stateList.get(idx),
-                        eventList.subList(idx, nextIdx-1));
-            } else {
-                logP += model.getIntervalProbability(stateList.get(idx),
-                        treeEvent.time - lastTime);
-            }
+            int fromIdx;
+            if (lastIdx>=0)
+                fromIdx = lastIdx+1;
+            else
+                fromIdx = 0;
+                
+            logP += model.getPathProbability(lastTime, treeEvent.time,
+                        stateList.get(fromIdx),
+                        eventList.subList(fromIdx, nextIdx));
             
             lastTime = treeEvent.time;
-            idx = nextIdx + 1;
+            lastIdx = nextIdx;
         }
         
         return logP;
