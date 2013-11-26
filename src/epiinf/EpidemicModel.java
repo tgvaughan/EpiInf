@@ -68,6 +68,22 @@ public abstract class EpidemicModel extends CalculationNode {
      */
     public abstract void incrementState(EpidemicState state,
             EpidemicEvent.EventType type);
+    
+    /**
+     * Obtain the Epidemic event type corresponding to a coalescence on
+     * the transmission tree under this model.
+     * 
+     * @return Epidemic event type
+     */
+    public abstract EpidemicEvent.EventType getCoalescenceEventType();
+    
+    /**
+     * Obtain the Epidemic event type corresponding to a leaf on the
+     * transmission tree under this model.
+     * 
+     * @return Epidemic event type
+     */
+    public abstract EpidemicEvent.EventType getLeafEventType();
 
     /**
      * Generate a sequence of events between startTime and endTime conditional

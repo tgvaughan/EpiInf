@@ -69,4 +69,14 @@ public class BirthDeathModel extends EpidemicModel {
                 break;
         }
     }
+
+    @Override
+    public EpidemicEvent.EventType getCoalescenceEventType() {
+        return EpidemicEvent.EventType.INFECTION;
+    }
+
+    @Override
+    public EpidemicEvent.EventType getLeafEventType() {
+        return EpidemicEvent.EventType.RECOVERY;
+    }
 }
