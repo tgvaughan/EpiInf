@@ -123,7 +123,7 @@ public class TrajectoryOperator extends Operator {
 
             int nextIdx = lastIdx+1;
             while (nextIdx<eventList.size() &&
-                    !TreeEventList.eventsMatch(treeEvent, eventList.get(nextIdx)))
+                    !treeEventListInput.get().eventsMatch(treeEvent, eventList.get(nextIdx)))
                 nextIdx += 1;
             
             if (nextIdx>=eventList.size())

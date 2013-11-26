@@ -42,6 +42,9 @@ public class TreeEventList extends CalculationNode {
             "treeOrigin", "Difference between time of MRCA and start of "
                     + "epidemic.", Validate.REQUIRED);
     
+    public Input<EpidemicModel> modelInput = new Input<EpidemicModel>(
+            "model", "Epidemic model.", Validate.REQUIRED);
+    
     public enum TreeEventType { SAMPLE, COALESCENCE }
     public class TreeEvent {
         public Node node;
@@ -51,7 +54,9 @@ public class TreeEventList extends CalculationNode {
     
     private Tree tree;
     private RealParameter treeOrigin;
+    private EpidemicModel model;
     private List<TreeEvent> eventList, eventListStored;
+
     
     /**
      * Tolerance for deviation between tree node ages and trajectory events.
@@ -69,6 +74,7 @@ public class TreeEventList extends CalculationNode {
     public void initAndValidate() {
         tree = treeInput.get();
         treeOrigin = treeOriginInput.get();
+        model = modelInput.get();
         
         eventList = Lists.newArrayList();
         eventListStored = Lists.newArrayList();
@@ -125,7 +131,7 @@ public class TreeEventList extends CalculationNode {
         return treeOrigin.getValue() + tree.getRoot().getHeight() - height;
     }
     
-        /**
+    /**
      * Determine whether given tree event and epidemic event are compatible.
      * 
      * @param treeEvent
@@ -133,17 +139,17 @@ public class TreeEventList extends CalculationNode {
      * 
      * @return true if events are compatible
      */
-    public static boolean eventsMatch(TreeEventList.TreeEvent treeEvent, EpidemicEvent epiEvent) {
+    public boolean eventsMatch(TreeEventList.TreeEvent treeEvent, EpidemicEvent epiEvent) {
         
         if (Math.abs(treeEvent.time-epiEvent.time)>tolerance)
             return false;
         
         if ((treeEvent.type == TreeEventList.TreeEventType.COALESCENCE)
-                && (epiEvent.type != EpidemicEvent.EventType.INFECTION))
+                && (epiEvent.type != model.getCoalescenceEventType()))
             return false;
         
         if ((treeEvent.type == TreeEventList.TreeEventType.SAMPLE)
-                && (epiEvent.type != EpidemicEvent.EventType.RECOVERY))
+                && (epiEvent.type != model.getLeafEventType()))
             return false;
         
         return true;
