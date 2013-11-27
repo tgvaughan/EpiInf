@@ -27,6 +27,7 @@ import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.EpidemicTrajectory;
 import epiinf.TreeEventList;
+import epiinf.models.EpidemicModel;
 import java.util.List;
 import java.util.Random;
 
@@ -42,8 +43,12 @@ public class TreeDensity extends Distribution {
     public Input<EpidemicTrajectory> trajectoryInput = new Input<EpidemicTrajectory>(
             "epidemicTrajectory", "Epidemic trajectory object.", Validate.REQUIRED);
     
+    public Input<EpidemicModel> modelInput = new Input<EpidemicModel> (
+            "model", "Epidemic model.", Validate.REQUIRED);
+    
     EpidemicTrajectory trajectory;
     TreeEventList treeEventList;
+    EpidemicModel model;
     
     public TreeDensity() { }
     
@@ -51,6 +56,7 @@ public class TreeDensity extends Distribution {
     public void initAndValidate() {
         trajectory = trajectoryInput.get();
         treeEventList = treeEventListInput.get();
+        model = modelInput.get();
     }
     
     @Override
@@ -72,9 +78,12 @@ public class TreeDensity extends Distribution {
                     !treeEventList.eventsMatch(treeEvent, revEventList.get(idx))) {
                 
                 // Incoporate probability of no effect on tree
-                if (revEventList.get(idx).type == EpidemicEvent.EventType.INFECTION && k>1) {
-                    double N = revStateList.get(idx).I;
-                    logP += Math.log(1.0 - k*(k-1)/(N*(N-1)));
+                if (revEventList.get(idx).type == model.getCoalescenceEventType() && k>1) {
+                    logP += Math.log(model.getProbNoCoalescence(revStateList.get(idx), k));
+                } else {
+                    if (revEventList.get(idx).type == model.getLeafEventType()) {
+                        logP += Math.log(model.getProbNoLeaf(revStateList.get(idx), k));
+                    }
                 }
                 
                 idx += 1;
@@ -87,11 +96,11 @@ public class TreeDensity extends Distribution {
             }
             
             // Incorporate probability of effect on tree
-            if (treeEvent.type == TreeEventList.TreeEventType.SAMPLE)
+            if (treeEvent.type == TreeEventList.TreeEventType.SAMPLE) {
+                logP += Math.log(model.getProbLeaf(revStateList.get(idx), k));
                 k += 1; // Sample
-            else {
-                double N = revStateList.get(idx).I;
-                logP += Math.log(k*(k-1)/((double)N*(N-1)));
+            } else {
+                logP += Math.log(model.getProbCoalescence(revStateList.get(idx), k));
                 k -= 1; // Coalescence
             }
             

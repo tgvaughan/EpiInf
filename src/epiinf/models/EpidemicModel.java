@@ -87,6 +87,14 @@ public abstract class EpidemicModel extends CalculationNode {
      */
     public abstract EpidemicEvent.EventType getLeafEventType();
 
+    public abstract double getProbCoalescence(EpidemicState state, int lineages);
+    
+    public abstract double getProbNoCoalescence(EpidemicState state, int lineages);
+    
+    public abstract double getProbLeaf(EpidemicState state, int lineages);
+    
+    public abstract double getProbNoLeaf(EpidemicState state, int lineages);
+    
     /**
      * Generate a sequence of events between startTime and endTime conditional
      * on the startState.  The results are retrieved using subsequent calls

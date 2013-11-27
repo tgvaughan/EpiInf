@@ -81,4 +81,25 @@ public class BirthDeathModel extends EpidemicModel {
     public EpidemicEvent.EventType getLeafEventType() {
         return EpidemicEvent.EventType.RECOVERY;
     }
+
+    @Override
+    public double getProbCoalescence(EpidemicState state, int lineages) {
+        double N = state.I;
+        return lineages*(lineages-1)/(N*(N-1));
+    }
+
+    @Override
+    public double getProbNoCoalescence(EpidemicState state, int lineages) {
+        return 1.0 - getProbCoalescence(state, lineages);
+    }
+
+    @Override
+    public double getProbLeaf(EpidemicState state, int lineages) {
+        return 1.0;
+    }
+
+    @Override
+    public double getProbNoLeaf(EpidemicState state, int lineages) {
+        return 1.0;
+    }
 }
