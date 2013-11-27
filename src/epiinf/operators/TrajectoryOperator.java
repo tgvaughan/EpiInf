@@ -23,7 +23,7 @@ import beast.core.Input.Validate;
 import beast.core.Operator;
 import com.google.common.collect.Lists;
 import epiinf.EpidemicEvent;
-import epiinf.EpidemicModel;
+import epiinf.models.EpidemicModel;
 import epiinf.EpidemicState;
 import epiinf.EpidemicTrajectory;
 import epiinf.TreeEventList;

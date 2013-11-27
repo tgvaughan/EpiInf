@@ -15,11 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package epiinf;
+package epiinf.models;
 
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
+import epiinf.EpidemicEvent;
+import epiinf.EpidemicState;
 
 /**
  * General birth-death model of an epidemic.  Suitable only for the

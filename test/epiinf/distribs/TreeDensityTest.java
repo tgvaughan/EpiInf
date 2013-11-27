@@ -21,7 +21,7 @@ import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
-import epiinf.SIRModel;
+import epiinf.models.SIRModel;
 import epiinf.TrajectorySimulator;
 import epiinf.TransmissionTreeSimulator;
 import epiinf.TreeEventList;

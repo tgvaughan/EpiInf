@@ -17,6 +17,7 @@
 
 package epiinf;
 
+import epiinf.models.BirthDeathModel;
 import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
 import org.junit.Test;

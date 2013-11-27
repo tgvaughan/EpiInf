@@ -23,7 +23,7 @@ import beast.core.Input.Validate;
 import beast.core.State;
 import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
-import epiinf.EpidemicModel;
+import epiinf.models.EpidemicModel;
 import epiinf.EpidemicTrajectory;
 import java.io.PrintStream;
 import java.util.List;

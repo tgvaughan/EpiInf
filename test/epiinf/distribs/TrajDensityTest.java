@@ -20,7 +20,7 @@ package epiinf.distribs;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
-import epiinf.SIRModel;
+import epiinf.models.SIRModel;
 import epiinf.TrajectorySimulator;
 import org.junit.Test;
 import static org.junit.Assert.*;

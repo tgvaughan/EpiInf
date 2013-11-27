@@ -17,6 +17,7 @@
 
 package epiinf;
 
+import epiinf.models.EpidemicModel;
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;

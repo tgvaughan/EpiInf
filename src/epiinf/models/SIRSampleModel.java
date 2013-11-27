@@ -1,33 +1,24 @@
 /*
- * Copyright (C) 2013 Tim Vaughan <tgvaughan@gmail.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
  */
 
-package epiinf;
+package epiinf.models;
 
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
+import epiinf.EpidemicEvent;
+import epiinf.EpidemicState;
 
 /**
- * General stochastic SIR model of an epidemic.
- *
+ * Unstructured SIR model with an explicit (rho) sampling process.
+ * 
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class SIRModel extends EpidemicModel {
+public class SIRSampleModel extends EpidemicModel {
     
     public Input<IntegerParameter> S0Input = new Input<IntegerParameter>(
             "S0", "Initial size of susceptible population.", Validate.REQUIRED);
@@ -37,13 +28,15 @@ public class SIRModel extends EpidemicModel {
     
     public Input<RealParameter> recoveryRateInput = new Input<RealParameter>(
             "recoveryRate", "Recovery rate.", Validate.REQUIRED);
-
     
+    public Input<RealParameter> samplingRateInput = new Input<RealParameter>(
+            "samplingRate", "Rho sampling rate.", Validate.REQUIRED);
+
     @Override
     public EpidemicState getInitialState() {
         return new EpidemicState(S0Input.get().getValue(), 1, 0);
     }
-    
+
     @Override
     public void calculatePropensities(EpidemicState state) {
         propensities.put(EpidemicEvent.EventType.INFECTION,
@@ -51,6 +44,9 @@ public class SIRModel extends EpidemicModel {
 
         propensities.put(EpidemicEvent.EventType.RECOVERY,
                 recoveryRateInput.get().getValue()*state.I);
+        
+        propensities.put(EpidemicEvent.EventType.SAMPLE,
+                samplingRateInput.get().getValue()*state.I);
 
         totalPropensity = propensities.get(EpidemicEvent.EventType.INFECTION)
                 + propensities.get(EpidemicEvent.EventType.RECOVERY);
@@ -67,6 +63,9 @@ public class SIRModel extends EpidemicModel {
                 state.I -= 1;
                 state.R += 1;
                 break;
+            case SAMPLE:
+                state.I -= 1;
+                state.R += 1;
             default:
                 break;
         }
@@ -79,8 +78,7 @@ public class SIRModel extends EpidemicModel {
 
     @Override
     public EpidemicEvent.EventType getLeafEventType() {
-        return EpidemicEvent.EventType.RECOVERY;
+        return EpidemicEvent.EventType.SAMPLE;
     }
-
-
+    
 }

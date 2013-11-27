@@ -15,12 +15,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package epiinf;
+package epiinf.models;
 
 import beast.core.CalculationNode;
 import beast.util.Randomizer;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import epiinf.EpidemicEvent;
+import epiinf.EpidemicState;
 import java.util.List;
 import java.util.Map;
 

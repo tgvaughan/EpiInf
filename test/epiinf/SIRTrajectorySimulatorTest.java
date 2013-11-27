@@ -17,6 +17,7 @@
 
 package epiinf;
 
+import epiinf.models.SIRModel;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;

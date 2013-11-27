@@ -17,6 +17,7 @@
 
 package epiinf;
 
+import epiinf.models.EpidemicModel;
 import beast.core.BEASTObject;
 import beast.core.Description;
 import beast.core.Input;
@@ -57,15 +58,24 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
             "Epidemic trajectory object.",
             Validate.REQUIRED);
     
+    public Input<EpidemicModel> modelInput = new Input<EpidemicModel>(
+            "model",
+            "Epidemic model.",
+            Validate.REQUIRED);
+    
     public Input<Integer> nLeavesInput = new Input<Integer>(
             "nLeaves",
-            "Number of leaves in tree.",
-            Validate.REQUIRED);
+            "Fixed number of leaves in tree.");
+    
+    public Input<Double> sampleFractionInput = new Input<Double>(
+            "sampleFraction",
+            "Fraction of events of appropriate type which generate leaves.",
+            Validate.XOR, nLeavesInput);
     
     public Input<Double> sampleBeforeTimeInput = new Input<Double>(
             "sampleBeforeTime",
             "Sample leaves before this time, specified as a fraction of the "
-                    + "total epidemic time.");
+                    + "total epidemic time.  Default 1.0.", 1.0);
     
     public Input<String> fileNameInput = new Input<String>(
             "fileName", "Name of file to save Newick representation of tree to.");
@@ -77,7 +87,9 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
     private Tree tree;
     private RealParameter treeOrigin;
     private EpidemicTrajectory traj;
-    private int nLeaves;
+    private EpidemicModel model;
+    private int nLeaves = -1;
+    private double sampleFraction = -1.0;
     private double sampleBeforeTime;
     private boolean truncateTrajectory;
     
@@ -88,13 +100,14 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         tree = treeInput.get();
         treeOrigin = treeOriginInput.get();
         traj = trajInput.get();
-        nLeaves = nLeavesInput.get();
+        model = modelInput.get();
         
-        if (sampleBeforeTimeInput.get() != null)
-            sampleBeforeTime = sampleBeforeTimeInput.get();
+        if (nLeavesInput.get() != null)
+            nLeaves = nLeavesInput.get();
         else
-            sampleBeforeTime = Double.POSITIVE_INFINITY;
+            sampleFraction = sampleFractionInput.get();
         
+        sampleBeforeTime = sampleBeforeTimeInput.get();
         truncateTrajectory = truncateTrajectoryInput.get();
     }
     
@@ -102,26 +115,39 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
     public void initStateNodes() throws Exception {
         
         List<EpidemicEvent> leafEvents = Lists.newArrayList();
-        List<EpidemicEvent> recoveryEvents = Lists.newArrayList();
-        
         double epidemicDuration = traj.getEventList()
                 .get(traj.getEventList().size()-1).time;
         
-        for (EpidemicEvent event : traj.getEventList()) {
-            if (event.type == EpidemicEvent.EventType.RECOVERY
-                    && event.time<sampleBeforeTime*epidemicDuration)
-                recoveryEvents.add(event);
-        }
-
-        // Check for invalid leaf count request.
-        if (recoveryEvents.size()<nLeaves)
-            throw new IllegalArgumentException("Trajectory has fewer recovery"
-                    + " events than value of nLeaves.");
-        
-        for (int i=0; i<nLeaves; i++) {
-            int idx = Randomizer.nextInt(recoveryEvents.size());
-            leafEvents.add(recoveryEvents.get(idx));
-            recoveryEvents.remove(idx);
+        if (nLeaves>0) {
+            
+            List<EpidemicEvent> samplingEvents = Lists.newArrayList();
+            
+            for (EpidemicEvent event : traj.getEventList()) {
+                if (event.type == model.getLeafEventType()
+                        && event.time<=sampleBeforeTime*epidemicDuration)
+                    samplingEvents.add(event);
+            }
+            
+            // Check for invalid leaf count request.
+            if (samplingEvents.size()<nLeaves)
+                throw new IllegalArgumentException("Trajectory has fewer recovery"
+                        + " events than value of nLeaves.");
+            
+            for (int i=0; i<nLeaves; i++) {
+                int idx = Randomizer.nextInt(samplingEvents.size());
+                leafEvents.add(samplingEvents.get(idx));
+                samplingEvents.remove(idx);
+            }
+            
+        } else {
+            
+            for (EpidemicEvent event : traj.getEventList()) {
+                if (event.type == model.getLeafEventType()
+                        && event.time <= sampleBeforeTime*epidemicDuration
+                        && Randomizer.nextDouble()<sampleFraction)
+                    leafEvents.add(event);
+            }
+            
         }
         
         int nextLeafNr = 0;
@@ -164,7 +190,7 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
                 
             } else {
                 
-                if (event.type == EpidemicEvent.EventType.INFECTION) {
+                if (event.type == model.getCoalescenceEventType()) {
                     int k = activeNodes.size();
                     double N = state.I;
                     

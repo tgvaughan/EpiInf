@@ -17,6 +17,7 @@
 
 package epiinf;
 
+import epiinf.models.EpidemicModel;
 import beast.core.CalculationNode;
 import beast.core.Description;
 import beast.core.Input;
