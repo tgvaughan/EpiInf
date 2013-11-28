@@ -97,12 +97,48 @@ public abstract class EpidemicModel extends CalculationNode {
      */
     public abstract EpidemicEvent.EventType getLeafEventType();
 
+    /**
+     * Obtain probability of coalescence occurring on tree given a compatible
+     * event occurred in the epidemic trajectory and conditional on the number
+     * of extant lineages.
+     * 
+     * @param state
+     * @param lineages
+     * @return probability of coalescence event on the tree
+     */
     public abstract double getProbCoalescence(EpidemicState state, int lineages);
     
+    /**
+     * Obtain probability of coalescence NOT occurring on tree given a compatible
+     * event occurred in the epidemic trajectory and conditional on the number
+     * of extant lineages.
+     * 
+     * @param state
+     * @param lineages
+     * @return probability of NO coalescence event on the tree
+     */
     public abstract double getProbNoCoalescence(EpidemicState state, int lineages);
     
+    /**
+     * Get the probability of a leaf on the tree given a compatible event
+     * occurred in the epidemic trajectory and conditional on the number of
+     * extant lineages.
+     * 
+     * @param state
+     * @param lineages
+     * @return probability of leaf event on tree
+     */
     public abstract double getProbLeaf(EpidemicState state, int lineages);
     
+    /**
+     * Get the probability of NO leaf on the tree given a compatible event
+     * occurred in the epidemic trajectory and conditional on the number of
+     * extant lineages.
+     * 
+     * @param state
+     * @param lineages
+     * @return probability of NO leaf event on tree
+     */
     public abstract double getProbNoLeaf(EpidemicState state, int lineages);
     
     /**

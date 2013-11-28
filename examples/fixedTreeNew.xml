@@ -8,7 +8,7 @@
 
   <input spec='TrajectorySimulator' fileName="trajectory.txt" id="traj">
     <model spec='SIRModel'>
-      <S0 spec='IntegerParameter' value="999"/>
+      <S0 spec='IntegerParameter' value="999" estimate="false"/>
       <infectionRate spec='RealParameter' value="0.001"/>
       <recoveryRate spec='RealParameter' value="0.2"/>
     </model>
@@ -29,8 +29,6 @@
       <stateNode idref="traj"/>
       <stateNode idref="infectionRate"/>
       <stateNode idref="recoveryRate"/>
-      <stateNode idref="S0"/>
-<!--  <stateNode idref="tree"/>-->
     </state>
 
     <distribution spec='CompoundDistribution' id='posterior'>
