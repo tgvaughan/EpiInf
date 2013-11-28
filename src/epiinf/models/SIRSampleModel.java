@@ -93,16 +93,14 @@ public class SIRSampleModel extends EpidemicModel {
     }
 
     
-    // TODO: These are WRONG!  How to fix?
-    
     @Override
     public double getProbLeaf(EpidemicState state, int lineages) {
-        return (lineages+1)/state.I;
+        return 1.0;
     }
 
     @Override
     public double getProbNoLeaf(EpidemicState state, int lineages) {
-        return 1.0 - getProbLeaf(state, lineages);
+        return 0.0;
     }
     
 }

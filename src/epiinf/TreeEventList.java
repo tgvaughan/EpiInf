@@ -17,7 +17,6 @@
 
 package epiinf;
 
-import epiinf.models.EpidemicModel;
 import beast.core.CalculationNode;
 import beast.core.Description;
 import beast.core.Input;
@@ -43,19 +42,8 @@ public class TreeEventList extends CalculationNode {
             "treeOrigin", "Difference between time of MRCA and start of "
                     + "epidemic.", Validate.REQUIRED);
     
-    public Input<EpidemicModel> modelInput = new Input<EpidemicModel>(
-            "model", "Epidemic model.", Validate.REQUIRED);
-    
-    public enum TreeEventType { SAMPLE, COALESCENCE }
-    public class TreeEvent {
-        public Node node;
-        public TreeEventType type;
-        public double time;    
-    }
-    
     private Tree tree;
     private RealParameter treeOrigin;
-    private EpidemicModel model;
     private List<TreeEvent> eventList, eventListStored;
 
     
@@ -75,7 +63,6 @@ public class TreeEventList extends CalculationNode {
     public void initAndValidate() {
         tree = treeInput.get();
         treeOrigin = treeOriginInput.get();
-        model = modelInput.get();
         
         eventList = Lists.newArrayList();
         eventListStored = Lists.newArrayList();
@@ -93,9 +80,9 @@ public class TreeEventList extends CalculationNode {
         for (Node node : tree.getNodesAsArray()) {
             TreeEvent event = new TreeEvent();
             if (node.isLeaf())
-                event.type = TreeEventType.SAMPLE;
+                event.type = TreeEvent.Type.SAMPLE;
             else
-                event.type = TreeEventType.COALESCENCE;
+                event.type = TreeEvent.Type.COALESCENCE;
        
             event.time = getTimeFromHeight(node.getHeight());
             event.node = node;
@@ -132,30 +119,6 @@ public class TreeEventList extends CalculationNode {
         return treeOrigin.getValue() + tree.getRoot().getHeight() - height;
     }
     
-    /**
-     * Determine whether given tree event and epidemic event are compatible.
-     * 
-     * @param treeEvent
-     * @param epiEvent
-     * 
-     * @return true if events are compatible
-     */
-    public boolean eventsMatch(TreeEventList.TreeEvent treeEvent, EpidemicEvent epiEvent) {
-        
-        if (Math.abs(treeEvent.time-epiEvent.time)>tolerance)
-            return false;
-        
-        if ((treeEvent.type == TreeEventList.TreeEventType.COALESCENCE)
-                && (epiEvent.type != model.getCoalescenceEventType()))
-            return false;
-        
-        if ((treeEvent.type == TreeEventList.TreeEventType.SAMPLE)
-                && (epiEvent.type != model.getLeafEventType()))
-            return false;
-        
-        return true;
-    }
-
     /**
      * Retrieve list of events on tree.
      * 

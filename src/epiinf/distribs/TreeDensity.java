@@ -26,6 +26,7 @@ import com.google.common.collect.Lists;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.EpidemicTrajectory;
+import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
 import java.util.List;
@@ -63,7 +64,7 @@ public class TreeDensity extends Distribution {
     public double calculateLogP() {
         logP = 0.0;
         
-        List<TreeEventList.TreeEvent> revTreeEventList =
+        List<TreeEvent> revTreeEventList =
                 Lists.reverse(treeEventList.getEventList());
         List<EpidemicEvent> revEventList = Lists.reverse(trajectory.getEventList());
         List<EpidemicState> revStateList = Lists.reverse(trajectory.getStateList());
@@ -72,10 +73,10 @@ public class TreeDensity extends Distribution {
 
         int k = 0;
         
-        for (TreeEventList.TreeEvent treeEvent : revTreeEventList) {
+        for (TreeEvent treeEvent : revTreeEventList) {
             
             while (idx<revEventList.size() &&
-                    !treeEventList.eventsMatch(treeEvent, revEventList.get(idx))) {
+                    !model.eventsMatch(treeEvent, revEventList.get(idx))) {
                 
                 // Incoporate probability of no effect on tree
                 if (revEventList.get(idx).type == model.getCoalescenceEventType() && k>1) {
@@ -96,7 +97,7 @@ public class TreeDensity extends Distribution {
             }
             
             // Incorporate probability of effect on tree
-            if (treeEvent.type == TreeEventList.TreeEventType.SAMPLE) {
+            if (treeEvent.type == TreeEvent.Type.SAMPLE) {
                 logP += Math.log(model.getProbLeaf(revStateList.get(idx), k));
                 k += 1; // Sample
             } else {

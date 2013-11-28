@@ -26,6 +26,7 @@ import epiinf.EpidemicEvent;
 import epiinf.models.EpidemicModel;
 import epiinf.EpidemicState;
 import epiinf.EpidemicTrajectory;
+import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import java.util.List;
 
@@ -62,13 +63,13 @@ public class TrajectoryOperator extends Operator {
         
         List<EpidemicEvent> eventList = Lists.newArrayList();
         List<EpidemicState> stateList = Lists.newArrayList();
-        List<TreeEventList.TreeEvent> treeEventList = treeEventListInput.get().getEventList();
+        List<TreeEvent> treeEventList = treeEventListInput.get().getEventList();
 
         EpidemicState thisState = model.getInitialState();
         stateList.add(thisState.copy());
         
         double lastTime = 0.0;
-        for (TreeEventList.TreeEvent treeEvent : treeEventList) {
+        for (TreeEvent treeEvent : treeEventList) {
             
             logHR -= model.generateTrajectory(thisState, lastTime, treeEvent.time);
             
@@ -79,7 +80,7 @@ public class TrajectoryOperator extends Operator {
             
             EpidemicEvent newEvent = new EpidemicEvent();
             newEvent.time = treeEvent.time;
-            if (treeEvent.type == TreeEventList.TreeEventType.COALESCENCE) {
+            if (treeEvent.type == TreeEvent.Type.COALESCENCE) {
                 newEvent.type = EpidemicEvent.EventType.INFECTION;
                 model.incrementState(thisState, EpidemicEvent.EventType.INFECTION);
             } else {
@@ -111,7 +112,7 @@ public class TrajectoryOperator extends Operator {
         
         EpidemicModel model = modelInput.get();
         
-        List<TreeEventList.TreeEvent> treeEventList = treeEventListInput.get().getEventList();
+        List<TreeEvent> treeEventList = treeEventListInput.get().getEventList();
         List<EpidemicEvent> eventList = trajInput.get().getEventList();
         List<EpidemicState> stateList = trajInput.get().getStateList();
         
@@ -119,11 +120,11 @@ public class TrajectoryOperator extends Operator {
         
         int lastIdx= -1;
         double lastTime = 0.0;
-        for (TreeEventList.TreeEvent treeEvent : treeEventList) {
+        for (TreeEvent treeEvent : treeEventList) {
 
             int nextIdx = lastIdx+1;
             while (nextIdx<eventList.size() &&
-                    !treeEventListInput.get().eventsMatch(treeEvent, eventList.get(nextIdx)))
+                    !model.eventsMatch(treeEvent, eventList.get(nextIdx)))
                 nextIdx += 1;
             
             if (nextIdx>=eventList.size())

@@ -1,4 +1,4 @@
-<beast version='2.0' namespace='beast.core:beast.core.util:beast.core.parameter:beast.evolution.tree:beast.evolution.operators:beast.math.distributions:epiinf:epiinf.distribs:epiinf.operators'>
+<beast version='2.0' namespace='beast.core:beast.core.util:beast.core.parameter:beast.evolution.tree:beast.evolution.operators:beast.math.distributions:epiinf:epiinf.distribs:epiinf.operators:epiinf.models'>
 
   <input spec='SIRModel' id='model'>
     <S0 spec='IntegerParameter' id="S0" value="999"/>
@@ -22,6 +22,7 @@
       <tree idref="tree"/>
       <treeOrigin idref="treeOrigin"/>
       <epidemicTrajectory idref="traj"/>
+      <model idref="model"/>
     </init>
 
     <state>
@@ -44,6 +45,7 @@
 	  <treeOrigin idref="treeOrigin"/>
 	</treeEventList>
 	<epidemicTrajectory idref="traj"/>
+        <model idref="model"/>
       </distribution>
     </distribution>
 

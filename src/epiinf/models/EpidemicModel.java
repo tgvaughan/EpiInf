@@ -18,11 +18,13 @@
 package epiinf.models;
 
 import beast.core.CalculationNode;
+import beast.core.Input;
 import beast.util.Randomizer;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
+import epiinf.TreeEvent;
 import java.util.List;
 import java.util.Map;
 
@@ -35,11 +37,17 @@ import java.util.Map;
  */
 public abstract class EpidemicModel extends CalculationNode {
     
+    public Input<Double> toleranceInput = new Input<Double>("tolerance",
+            "Maximum absolute time difference between events on tree and "
+                    + "events in epidemic trajectory for events to be"
+                    + "considered compatible.  Default 1e-10.", 1e-10);
+    
     protected List<EpidemicEvent> eventList;
     protected List<EpidemicState> stateList;
     
     protected Map<EpidemicEvent.EventType, Double> propensities;
     protected double totalPropensity;
+    protected double tolerance;
     
     EpidemicModel() {
         eventList = Lists.newArrayList();
@@ -48,7 +56,9 @@ public abstract class EpidemicModel extends CalculationNode {
     }
     
     @Override
-    public void initAndValidate() { };
+    public void initAndValidate() {
+        tolerance = toleranceInput.get();
+    };
     
     /**
      * @return initial state of epidemic
@@ -236,6 +246,29 @@ public abstract class EpidemicModel extends CalculationNode {
         logP += Math.log(propensities.get(epidemicEvent.type));
         
         return logP;
+    }
+    
+        /**
+     * Determine whether a given tree event and epidemic event are compatible
+     * under the this model.
+     * 
+     * @param treeEvent 
+     * @param epidemicEvent 
+     * @return true if events are compatible
+     */
+    public boolean eventsMatch(TreeEvent treeEvent, EpidemicEvent epidemicEvent) {
+        if (Math.abs(treeEvent.time-epidemicEvent.time)>tolerance)
+            return false;
+        
+        if ((treeEvent.type == TreeEvent.Type.COALESCENCE)
+                && (epidemicEvent.type != getCoalescenceEventType()))
+            return false;
+        
+        if ((treeEvent.type == TreeEvent.Type.SAMPLE)
+                && (epidemicEvent.type != getLeafEventType()))
+            return false;
+        
+        return true;
     }
 
 }
