@@ -48,18 +48,18 @@ public class BirthDeathModel extends EpidemicModel {
     
     @Override
     public void calculatePropensities(EpidemicState state) {
-        propensities.put(EpidemicEvent.EventType.INFECTION,
+        propensities.put(EpidemicEvent.Type.INFECTION,
                 birthRateInput.get().getValue()*state.I);
 
-        propensities.put(EpidemicEvent.EventType.RECOVERY,
+        propensities.put(EpidemicEvent.Type.RECOVERY,
                 deathRateInput.get().getValue()*state.I);
 
-        totalPropensity = propensities.get(EpidemicEvent.EventType.INFECTION)
-                + propensities.get(EpidemicEvent.EventType.RECOVERY);
+        totalPropensity = propensities.get(EpidemicEvent.Type.INFECTION)
+                + propensities.get(EpidemicEvent.Type.RECOVERY);
     }
 
     @Override
-    public void incrementState(EpidemicState state, EpidemicEvent.EventType type) {
+    public void incrementState(EpidemicState state, EpidemicEvent.Type type) {
         switch(type) {
             case INFECTION:
                 state.I += 1;
@@ -73,13 +73,13 @@ public class BirthDeathModel extends EpidemicModel {
     }
 
     @Override
-    public EpidemicEvent.EventType getCoalescenceEventType() {
-        return EpidemicEvent.EventType.INFECTION;
+    public EpidemicEvent.Type getCoalescenceEventType() {
+        return EpidemicEvent.Type.INFECTION;
     }
 
     @Override
-    public EpidemicEvent.EventType getLeafEventType() {
-        return EpidemicEvent.EventType.RECOVERY;
+    public EpidemicEvent.Type getLeafEventType() {
+        return EpidemicEvent.Type.RECOVERY;
     }
 
     @Override

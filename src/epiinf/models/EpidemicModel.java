@@ -45,7 +45,7 @@ public abstract class EpidemicModel extends CalculationNode {
     protected List<EpidemicEvent> eventList;
     protected List<EpidemicState> stateList;
     
-    protected Map<EpidemicEvent.EventType, Double> propensities;
+    protected Map<EpidemicEvent.Type, Double> propensities;
     protected double totalPropensity;
     protected double tolerance;
     
@@ -79,7 +79,7 @@ public abstract class EpidemicModel extends CalculationNode {
      * @param type type of reaction to implement
      */
     public abstract void incrementState(EpidemicState state,
-            EpidemicEvent.EventType type);
+            EpidemicEvent.Type type);
     
     /**
      * Obtain the Epidemic event type corresponding to a coalescence on
@@ -87,7 +87,7 @@ public abstract class EpidemicModel extends CalculationNode {
      * 
      * @return Epidemic event type
      */
-    public abstract EpidemicEvent.EventType getCoalescenceEventType();
+    public abstract EpidemicEvent.Type getCoalescenceEventType();
     
     /**
      * Obtain the Epidemic event type corresponding to a leaf on the
@@ -95,7 +95,7 @@ public abstract class EpidemicModel extends CalculationNode {
      * 
      * @return Epidemic event type
      */
-    public abstract EpidemicEvent.EventType getLeafEventType();
+    public abstract EpidemicEvent.Type getLeafEventType();
 
     /**
      * Obtain probability of coalescence occurring on tree given a compatible
@@ -186,7 +186,7 @@ public abstract class EpidemicModel extends CalculationNode {
             
             double u = totalPropensity*Randomizer.nextDouble();
             
-            for (EpidemicEvent.EventType type : propensities.keySet()) {
+            for (EpidemicEvent.Type type : propensities.keySet()) {
                 u -= propensities.get(type);
                 
                 if (u<0) {

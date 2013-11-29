@@ -81,11 +81,11 @@ public class TrajectoryOperator extends Operator {
             EpidemicEvent newEvent = new EpidemicEvent();
             newEvent.time = treeEvent.time;
             if (treeEvent.type == TreeEvent.Type.COALESCENCE) {
-                newEvent.type = EpidemicEvent.EventType.INFECTION;
-                model.incrementState(thisState, EpidemicEvent.EventType.INFECTION);
+                newEvent.type = EpidemicEvent.Type.INFECTION;
+                model.incrementState(thisState, EpidemicEvent.Type.INFECTION);
             } else {
-                newEvent.type = EpidemicEvent.EventType.RECOVERY;
-                model.incrementState(thisState, EpidemicEvent.EventType.RECOVERY);
+                newEvent.type = EpidemicEvent.Type.RECOVERY;
+                model.incrementState(thisState, EpidemicEvent.Type.RECOVERY);
             }
             
             if (!thisState.isValid())

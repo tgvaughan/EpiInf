@@ -18,7 +18,8 @@
 
   <run spec="MCMC" id="mcmc" chainLength="1000000">
 
-    <init spec='TransmissionTreeSimulator' nLeaves="20" fileName="tree.newick">
+    <init spec='TransmissionTreeSimulator' nLeaves="20" fileName="tree.newick"
+          sampleBeforeTime="0.1">
       <tree idref="tree"/>
       <treeOrigin idref="treeOrigin"/>
       <epidemicTrajectory idref="traj"/>
