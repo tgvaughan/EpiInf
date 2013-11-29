@@ -30,7 +30,7 @@ public class SIRSampleModel extends EpidemicModel {
             "recoveryRate", "Recovery rate.", Validate.REQUIRED);
     
     public Input<RealParameter> samplingProbInput = new Input<RealParameter>(
-            "samplingProb", "Rho sampling probability.", Validate.REQUIRED);
+            "samplingProb", "Rho sampling rate.", Validate.REQUIRED);
 
     @Override
     public EpidemicState getInitialState() {
@@ -88,13 +88,13 @@ public class SIRSampleModel extends EpidemicModel {
 
     
     @Override
-    public double getProbLeaf(EpidemicState state, int lineages) {
+    public double getProbLeaf() {
         return samplingProbInput.get().getValue();
     }
 
     @Override
-    public double getProbNoLeaf(EpidemicState state, int lineages) {
-        return 1.0 - getProbLeaf(state, lineages);
+    public double getProbNoLeaf() {
+        return 1.0 - getProbLeaf();
     }
     
 }

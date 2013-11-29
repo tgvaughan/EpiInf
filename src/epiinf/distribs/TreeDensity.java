@@ -83,7 +83,7 @@ public class TreeDensity extends Distribution {
                     logP += Math.log(model.getProbNoCoalescence(revStateList.get(idx), k));
                 } else {
                     if (revEventList.get(idx).type == model.getLeafEventType()) {
-                        logP += Math.log(model.getProbNoLeaf(revStateList.get(idx), k));
+                        logP += Math.log(model.getProbNoLeaf());
                     }
                 }
                 
@@ -98,7 +98,7 @@ public class TreeDensity extends Distribution {
             
             // Incorporate probability of effect on tree
             if (treeEvent.type == TreeEvent.Type.SAMPLE) {
-                logP += Math.log(model.getProbLeaf(revStateList.get(idx), k));
+                logP += Math.log(model.getProbLeaf());
                 k += 1; // Sample
             } else {
                 logP += Math.log(model.getProbCoalescence(revStateList.get(idx), k));

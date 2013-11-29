@@ -58,7 +58,8 @@ public class TreeDensityTest {
                 "tree", tree,
                 "treeOrigin", treeOrigin,
                 "epidemicTrajectory", trajSim,
-                "nLeaves", 100);
+                "nLeaves", 100,
+                "model", model);
         treeSim.initStateNodes();
         
         TreeEventList treeEventList = new TreeEventList();
@@ -69,7 +70,8 @@ public class TreeDensityTest {
         TreeDensity treeDensity = new TreeDensity();
         treeDensity.initByName(
                 "treeEventList", treeEventList,
-                "epidemicTrajectory", trajSim);
+                "epidemicTrajectory", trajSim,
+                "model", model);
 
         double logP = treeDensity.calculateLogP();
         double logPtruth = -281.686741693071;

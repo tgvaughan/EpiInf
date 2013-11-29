@@ -67,11 +67,6 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
             "nLeaves",
             "Fixed number of leaves in tree.");
     
-    public Input<Double> samplingProbInput = new Input<Double>(
-            "sampleProb",
-            "Probability with which events of appropriate type generate leaves.",
-            Validate.XOR, nLeavesInput);
-    
     public Input<Double> sampleBeforeTimeInput = new Input<Double>(
             "sampleBeforeTime",
             "Sample leaves before this time, specified as a fraction of the "
@@ -104,8 +99,6 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         
         if (nLeavesInput.get() != null)
             nLeaves = nLeavesInput.get();
-        else
-            samplingProb = samplingProbInput.get();
         
         sampleBeforeTime = sampleBeforeTimeInput.get();
         truncateTrajectory = truncateTrajectoryInput.get();
@@ -144,7 +137,7 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
             for (EpidemicEvent event : traj.getEventList()) {
                 if (event.type == model.getLeafEventType()
                         && event.time <= sampleBeforeTime*epidemicDuration
-                        && Randomizer.nextDouble()<samplingProb)
+                        && Randomizer.nextDouble()<model.getProbLeaf())
                     leafEvents.add(event);
             }
             

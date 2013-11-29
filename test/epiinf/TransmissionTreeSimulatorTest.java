@@ -55,7 +55,8 @@ public class TransmissionTreeSimulatorTest {
                 "tree", tree,
                 "treeOrigin", treeOrigin,
                 "epidemicTrajectory", trajSim,
-                "nLeaves", 100);
+                "nLeaves", 100,
+                "model", model);
         
         treeSim.initStateNodes();
         

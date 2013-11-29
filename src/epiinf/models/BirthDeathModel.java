@@ -94,12 +94,12 @@ public class BirthDeathModel extends EpidemicModel {
     }
 
     @Override
-    public double getProbLeaf(EpidemicState state, int lineages) {
+    public double getProbLeaf() {
         return 1.0;
     }
 
     @Override
-    public double getProbNoLeaf(EpidemicState state, int lineages) {
+    public double getProbNoLeaf() {
         return 1.0;
     }
 }

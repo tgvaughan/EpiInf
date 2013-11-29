@@ -121,25 +121,21 @@ public abstract class EpidemicModel extends CalculationNode {
     
     /**
      * Get the probability of a leaf on the tree given a compatible event
-     * occurred in the epidemic trajectory and conditional on the number of
-     * extant lineages.
+     * occurred in the epidemic trajectory.
      * 
      * @param state
      * @param lineages
      * @return probability of leaf event on tree
      */
-    public abstract double getProbLeaf(EpidemicState state, int lineages);
+    public abstract double getProbLeaf();
     
     /**
      * Get the probability of NO leaf on the tree given a compatible event
-     * occurred in the epidemic trajectory and conditional on the number of
-     * extant lineages.
+     * occurred in the epidemic trajectory.
      * 
-     * @param state
-     * @param lineages
      * @return probability of NO leaf event on tree
      */
-    public abstract double getProbNoLeaf(EpidemicState state, int lineages);
+    public abstract double getProbNoLeaf();
     
     /**
      * Generate a sequence of events between startTime and endTime conditional
