@@ -42,7 +42,11 @@ public class SMCTrajectoryOperator extends Operator {
     
     @Override
     public double proposal() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        double logHR = 0.0;
+        
+        
+        
+        return logHR;
     }
     
 }
