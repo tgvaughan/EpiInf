@@ -73,6 +73,24 @@ public abstract class EpidemicModel extends CalculationNode {
     public abstract void calculatePropensities(EpidemicState state);
     
     /**
+     * Obtain the most recently calculated reaction propensities.
+     * 
+     * @return propensity map
+     */
+    public Map<EpidemicEvent.Type, Double> getPropensities() {
+        return propensities;
+    }
+    
+    /**
+     * Obtain most recently calculated total reaction propensity.
+     * 
+     * @return propensity
+     */
+    public double getTotalPropensity() {
+        return totalPropensity;
+    }
+    
+    /**
      * Increment state according to reaction of chosen type.
      * 
      * @param state state to update
@@ -123,8 +141,6 @@ public abstract class EpidemicModel extends CalculationNode {
      * Get the probability of a leaf on the tree given a compatible event
      * occurred in the epidemic trajectory.
      * 
-     * @param state
-     * @param lineages
      * @return probability of leaf event on tree
      */
     public abstract double getProbLeaf();
