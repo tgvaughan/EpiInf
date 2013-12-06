@@ -29,7 +29,6 @@ import epiinf.EpidemicState;
 import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -109,8 +108,6 @@ public class SMCTreeDensity extends Distribution {
                 particleStatesNew.add(particleStates.get(pChoice));
             }
             
-            // Incporporate probability of tree event
-            
             // Update lineage counter
             k += 1;
         }
@@ -163,6 +160,15 @@ public class SMCTreeDensity extends Distribution {
             
             if (eventType == model.getLeafEventType())
                 conditionalLogP += Math.log(model.getProbNoLeaf());
+        }
+        
+        // Include probability of tree event
+        if (finalTreeEvent.type == TreeEvent.Type.COALESCENCE) {
+            model.incrementState(particleState, model.getCoalescenceEventType());
+            conditionalLogP += Math.log(model.getProbCoalescence(particleState, lineages+1));
+        } else {
+            model.incrementState(particleState, model.getLeafEventType());
+            conditionalLogP += Math.log(model.getProbLeaf());
         }
         
         return conditionalLogP;

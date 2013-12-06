@@ -21,7 +21,6 @@ import beast.core.Description;
 import beast.core.StateNode;
 import com.google.common.collect.Lists;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.List;
 import org.w3c.dom.Node;
 
