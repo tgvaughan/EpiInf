@@ -82,7 +82,7 @@ public class SMCTreeDensity extends Distribution {
             // Update particles
             double sumOfWeights = 0.0;
             for (int p=0; p<nParticles; p++) {
-                double newWeight = particleWeights.get(p) + 
+                double newWeight = particleWeights.get(p) *
                         updateParticle(particleStates.get(p), t, k, treeEvent);
                 
                 particleWeights.set(p, newWeight);                
@@ -128,11 +128,11 @@ public class SMCTreeDensity extends Distribution {
      * @param startTime
      * @param lineages
      * @param finalTreeEvent
-     * @return 
+     * @return conditional prob of tree interval under trajectory
      */
     private double updateParticle(EpidemicState particleState,
             double startTime, int lineages, TreeEvent finalTreeEvent) {
-        double conditionalLogP = 0.0;
+        double conditionalP = 1.0;
         
         double t = startTime;
         
@@ -162,22 +162,22 @@ public class SMCTreeDensity extends Distribution {
             
             // Increment conditional prob
             if (eventType == model.getCoalescenceEventType())
-                conditionalLogP += Math.log(model.getProbNoCoalescence(particleState, lineages));
+                conditionalP *= model.getProbNoCoalescence(particleState, lineages);
             
             if (eventType == model.getLeafEventType())
-                conditionalLogP += Math.log(model.getProbNoLeaf());
+                conditionalP *= model.getProbNoLeaf();
         }
         
         // Include probability of tree event
         if (finalTreeEvent.type == TreeEvent.Type.COALESCENCE) {
             model.incrementState(particleState, model.getCoalescenceEventType());
-            conditionalLogP += Math.log(model.getProbCoalescence(particleState, lineages+1));
+            conditionalP *= model.getProbCoalescence(particleState, lineages+1);
         } else {
             model.incrementState(particleState, model.getLeafEventType());
-            conditionalLogP += Math.log(model.getProbLeaf());
+            conditionalP *= model.getProbLeaf();
         }
         
-        return conditionalLogP;
+        return conditionalP;
     }
     
     @Override

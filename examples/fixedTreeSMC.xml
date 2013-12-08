@@ -6,7 +6,7 @@
     <recoveryRate spec='RealParameter' id="recoveryRate" value="0.1"/>
   </input>
 
-  <input spec='TrajectorySimulator' fileName="trajectory.txt" id="traj">
+  <input spec='TrajectorySimulator' fileName="trajectory.txt" id="traj" estimate="flase">
     <model spec='SIRModel' id="trueModel">
       <S0 spec='IntegerParameter' value="999" estimate="false"/>
       <infectionRate spec='RealParameter' value="0.001"/>
@@ -27,23 +27,16 @@
     </init>
 
     <state>
-      <stateNode idref="traj"/>
       <stateNode idref="infectionRate"/>
       <stateNode idref="recoveryRate"/>
     </state>
 
     <distribution spec='CompoundDistribution' id='posterior'>
-      <distribution spec="TrajDensity" id="trajDensity">
-	<model idref="model"/>
-	<epidemicTrajectory idref="traj"/>
-      </distribution>
-
-      <distribution spec="TreeProb" id="treeDensity">
+      <distribution spec="SMCTreeDensity" id="treeDensity" nParticles="1000">
 	<treeEventList spec="TreeEventList" id="treeEventList">
 	  <tree idref="tree"/>
 	  <treeOrigin idref="treeOrigin"/>
 	</treeEventList>
-	<epidemicTrajectory idref="traj"/>
         <model idref="model"/>
       </distribution>
     </distribution>
@@ -64,8 +57,6 @@
       <model idref="posterior"/>
       <log idref="posterior"/>
       <log idref="treeDensity"/>
-      <log idref="trajDensity"/>
-      <log idref="traj"/>
       <log idref="infectionRate"/>
       <log idref="recoveryRate"/>
     </logger>
@@ -74,8 +65,6 @@
       <model idref="posterior"/>
       <log idref="posterior"/>
       <log idref="treeDensity"/>
-      <log idref="trajDensity"/>
-      <log idref="traj"/>
       <log idref="infectionRate"/>
       <log idref="recoveryRate"/>
     </logger>
