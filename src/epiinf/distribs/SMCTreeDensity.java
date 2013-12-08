@@ -64,8 +64,6 @@ public class SMCTreeDensity extends Distribution {
 
     @Override
     public double calculateLogP() throws Exception {
-        logP = 0.0;
-
         List<Double> particleWeights = Lists.newArrayList();
         List<Double> particleWeightsNew = Lists.newArrayList();
         List<EpidemicState> particleStates = Lists.newArrayList();
@@ -104,14 +102,22 @@ public class SMCTreeDensity extends Distribution {
                         break;
                 }
                 
-                particleWeightsNew.add(1.0);
+                particleWeightsNew.add(sumOfWeights/nParticles);
                 particleStatesNew.add(particleStates.get(pChoice));
             }
             
             // Update lineage counter
-            k += 1;
+            if (treeEvent.type == TreeEvent.Type.COALESCENCE)
+                k += 1;
+            else
+                k -= 1;
         }
         
+        double sumOfWeights = 0.0;
+        for (double weight : particleWeights)
+            sumOfWeights += weight;
+        
+        logP = sumOfWeights/nParticles;
         return logP;
     }
 
