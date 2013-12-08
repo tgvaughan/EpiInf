@@ -7,7 +7,6 @@
 package epiinf;
 
 import beast.evolution.tree.Node;
-import epiinf.models.EpidemicModel;
 
 /**
  * Class representing events on a transmission tree.

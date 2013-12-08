@@ -67,7 +67,7 @@ public class TreeDensityTest {
                 "tree", tree,
                 "treeOrigin", treeOrigin);
         
-        TreeDensity treeDensity = new TreeDensity();
+        TreeProb treeDensity = new TreeProb();
         treeDensity.initByName(
                 "treeEventList", treeEventList,
                 "epidemicTrajectory", trajSim,

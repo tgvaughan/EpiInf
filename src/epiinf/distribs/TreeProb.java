@@ -36,7 +36,7 @@ import java.util.Random;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 @Description("Exact probability of tree given epidemic trajectory.")
-public class TreeDensity extends Distribution {
+public class TreeProb extends Distribution {
     
     public Input<TreeEventList> treeEventListInput = new Input<TreeEventList>(
             "treeEventList", "Tree event list.", Validate.REQUIRED);
@@ -51,7 +51,7 @@ public class TreeDensity extends Distribution {
     TreeEventList treeEventList;
     EpidemicModel model;
     
-    public TreeDensity() { }
+    public TreeProb() { }
     
     @Override
     public void initAndValidate() {
