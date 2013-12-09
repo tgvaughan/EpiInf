@@ -29,6 +29,7 @@ import epiinf.EpidemicState;
 import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
 
@@ -52,6 +53,9 @@ public class SMCTreeDensity extends Distribution {
     EpidemicModel model;
     TreeEventList eventList;
     int nParticles;
+    
+    // DEBUG
+    PrintStream debugOut;
 
     public SMCTreeDensity() { }
 
@@ -64,6 +68,11 @@ public class SMCTreeDensity extends Distribution {
 
     @Override
     public double calculateLogP() throws Exception {
+        
+        // DEBUG
+        debugOut = new PrintStream("SMCdebug.json");
+        debugOut.println("{");
+        
         logP = 0.0;
         
         List<Double> particleWeights = Lists.newArrayList();
@@ -76,17 +85,35 @@ public class SMCTreeDensity extends Distribution {
         
         double t = 0.0;
         int k = 1;
+        int interval = 0;
         for (TreeEvent treeEvent : eventList.getEventList()) {
+            
+            // DEBUG
+            if (interval>0)
+                debugOut.println(",");
+            debugOut.println("\"interval" + interval + "\": {");
             
             // Update particles
             particleWeights.clear();
             double sumOfWeights = 0.0;
             for (int p=0; p<nParticles; p++) {
+                
+                // DEBUG
+                if (p>0)
+                    debugOut.println(", ");
+                debugOut.println("\"p" + p + "\": {");
+                
                 double newWeight = updateParticle(particleStates.get(p), t, k, treeEvent);
                 
                 particleWeights.add(newWeight);                
                 sumOfWeights += newWeight;
+                
+                // DEBUG
+                debugOut.print("\n}");
             }
+            
+            // DEBUG
+            debugOut.print("}");
             
             // Update marginal likelihood estimate
             logP += Math.log(sumOfWeights/nParticles);
@@ -116,6 +143,11 @@ public class SMCTreeDensity extends Distribution {
                 k += 1;
             else
                 k -= 1;
+            
+            // Update start interval time
+            t = treeEvent.time;
+            
+            interval += 1;
         }
         
         double sumOfWeights = 0.0;
@@ -140,6 +172,13 @@ public class SMCTreeDensity extends Distribution {
         double conditionalP = 1.0;
         
         double t = startTime;
+        
+        List<Double> tList = Lists.newArrayList();
+        List<Double> nList = Lists.newArrayList();
+        
+        // DEBUG
+        tList.add(t);
+        nList.add(particleState.I);
         
         while (true) {
             model.calculatePropensities(particleState);
@@ -171,6 +210,10 @@ public class SMCTreeDensity extends Distribution {
             
             if (eventType == model.getLeafEventType())
                 conditionalP *= model.getProbNoLeaf();
+            
+            // DEBUG
+            tList.add(t);
+            nList.add(particleState.I);
         }
         
         // Include probability of tree event
@@ -185,6 +228,21 @@ public class SMCTreeDensity extends Distribution {
             conditionalP *= model.getProbLeaf()
                     *model.getPropensities().get(model.getLeafEventType());
         }
+        
+        // DEBUG
+        debugOut.print("\"t\": [");
+        for (int s=0; s<tList.size(); s++) {
+            if (s>0)
+                debugOut.print(",");
+            debugOut.print(tList.get(s));
+        }
+        debugOut.print("], \"n\": [");
+        for (int s=0; s<nList.size(); s++) {
+            if (s>0)
+                debugOut.print(",");
+            debugOut.print(nList.get(s));
+        }
+        debugOut.print("]");
         
         if (!particleState.isValid())
             return 0.0;
