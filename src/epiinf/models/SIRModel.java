@@ -87,7 +87,11 @@ public class SIRModel extends EpidemicModel {
     @Override
     public double getProbCoalescence(EpidemicState state, int lineages) {
         double N = state.I;
-        return (lineages)*(lineages-1)/(N*(N-1));
+        
+        if (N<2)
+            return 0.0;
+        else
+            return (lineages)*(lineages-1)/(N*(N-1));
     }
 
     @Override
