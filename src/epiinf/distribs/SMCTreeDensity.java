@@ -64,33 +64,34 @@ public class SMCTreeDensity extends Distribution {
 
     @Override
     public double calculateLogP() throws Exception {
+        logP = 0.0;
+        
         List<Double> particleWeights = Lists.newArrayList();
-        List<Double> particleWeightsNew = Lists.newArrayList();
         List<EpidemicState> particleStates = Lists.newArrayList();
         List<EpidemicState> particleStatesNew = Lists.newArrayList();
         
         // Initialize particles
-        for (int p=0; p<nParticles; p++) {
-            particleWeights.add(1.0);
+        for (int p=0; p<nParticles; p++)
             particleStates.add(model.getInitialState());
-        }
         
         double t = 0.0;
         int k = 1;
         for (TreeEvent treeEvent : eventList.getEventList()) {
             
             // Update particles
+            particleWeights.clear();
             double sumOfWeights = 0.0;
             for (int p=0; p<nParticles; p++) {
-                double newWeight = particleWeights.get(p) *
-                        updateParticle(particleStates.get(p), t, k, treeEvent);
+                double newWeight = updateParticle(particleStates.get(p), t, k, treeEvent);
                 
-                particleWeights.set(p, newWeight);                
+                particleWeights.add(newWeight);                
                 sumOfWeights += newWeight;
             }
+            
+            // Update marginal likelihood estimate
+            logP += Math.log(sumOfWeights/nParticles);
 
             // Sample particle with replacement
-            particleWeightsNew.clear();
             particleStatesNew.clear();
             for (int p=0; p<nParticles; p++) {
                 double u = Randomizer.nextDouble()*sumOfWeights;
@@ -102,9 +103,13 @@ public class SMCTreeDensity extends Distribution {
                         break;
                 }
                 
-                particleWeightsNew.add(sumOfWeights/nParticles);
                 particleStatesNew.add(particleStates.get(pChoice));
             }
+            
+            // Switch particleStates and particleStatesNew
+            List<EpidemicState> temp = particleStates;
+            particleStates = particleStatesNew;
+            particleStatesNew = temp;
             
             // Update lineage counter
             if (treeEvent.type == TreeEvent.Type.COALESCENCE)
@@ -117,7 +122,7 @@ public class SMCTreeDensity extends Distribution {
         for (double weight : particleWeights)
             sumOfWeights += weight;
         
-        logP = sumOfWeights/nParticles;
+        logP = Math.log(sumOfWeights/nParticles);
         return logP;
     }
 
@@ -171,10 +176,12 @@ public class SMCTreeDensity extends Distribution {
         // Include probability of tree event
         if (finalTreeEvent.type == TreeEvent.Type.COALESCENCE) {
             model.incrementState(particleState, model.getCoalescenceEventType());
-            conditionalP *= model.getProbCoalescence(particleState, lineages+1);
+            conditionalP *= model.getProbCoalescence(particleState, lineages+1)
+                    *model.getPropensities().get(model.getCoalescenceEventType());
         } else {
             model.incrementState(particleState, model.getLeafEventType());
-            conditionalP *= model.getProbLeaf();
+            conditionalP *= model.getProbLeaf()
+                    *model.getPropensities().get(model.getLeafEventType());
         }
         
         return conditionalP;
