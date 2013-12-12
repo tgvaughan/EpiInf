@@ -22,6 +22,8 @@ import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
+import beast.core.parameter.IntegerParameter;
+import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
 import com.google.common.collect.Lists;
 import epiinf.EpidemicEvent;
@@ -29,6 +31,7 @@ import epiinf.EpidemicState;
 import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
+import epiinf.models.SIRModel;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
@@ -103,7 +106,7 @@ public class SMCTreeDensity extends Distribution {
                     debugOut.println(", ");
                 debugOut.println("\"p" + p + "\": {");
                 
-                double newWeight = updateParticle(particleStates.get(p), t, k, treeEvent);
+                double newWeight = Math.exp(updateParticle(particleStates.get(p), t, k, treeEvent));
                 
                 particleWeights.add(newWeight);                
                 sumOfWeights += newWeight;
@@ -130,7 +133,7 @@ public class SMCTreeDensity extends Distribution {
                         break;
                 }
                 
-                particleStatesNew.add(particleStates.get(pChoice));
+                particleStatesNew.add(particleStates.get(pChoice).copy());
             }
             
             // Switch particleStates and particleStatesNew
@@ -165,11 +168,11 @@ public class SMCTreeDensity extends Distribution {
      * @param startTime
      * @param lineages
      * @param finalTreeEvent
-     * @return conditional prob of tree interval under trajectory
+     * @return conditional log prob of tree interval under trajectory
      */
     private double updateParticle(EpidemicState particleState,
             double startTime, int lineages, TreeEvent finalTreeEvent) {
-        double conditionalP = 1.0;
+        double conditionalLogP = 0.0;
         
         double t = startTime;
         
@@ -206,10 +209,10 @@ public class SMCTreeDensity extends Distribution {
             
             // Increment conditional prob
             if (eventType == model.getCoalescenceEventType())
-                conditionalP *= model.getProbNoCoalescence(particleState, lineages);
+                conditionalLogP += Math.log(model.getProbNoCoalescence(particleState, lineages+1));
             
             if (eventType == model.getLeafEventType())
-                conditionalP *= model.getProbNoLeaf();
+                conditionalLogP += Math.log(model.getProbNoLeaf());
             
             // DEBUG
             tList.add(t);
@@ -220,16 +223,18 @@ public class SMCTreeDensity extends Distribution {
         if (finalTreeEvent.type == TreeEvent.Type.COALESCENCE) {
             model.incrementState(particleState, model.getCoalescenceEventType());
             model.calculatePropensities(particleState);
-            conditionalP *= model.getProbCoalescence(particleState, lineages+1)
-                    *model.getPropensities().get(model.getCoalescenceEventType());
+            conditionalLogP += Math.log(model.getProbCoalescence(particleState, lineages+1)
+                    *model.getPropensities().get(model.getCoalescenceEventType()));
         } else {
             model.incrementState(particleState, model.getLeafEventType());
             model.calculatePropensities(particleState);
-            conditionalP *= model.getProbLeaf()
-                    *model.getPropensities().get(model.getLeafEventType());
+            conditionalLogP *= Math.log(model.getProbLeaf()
+                    *model.getPropensities().get(model.getLeafEventType()));
         }
         
         // DEBUG
+        tList.add(finalTreeEvent.time);
+        nList.add(particleState.I);
         debugOut.print("\"t\": [");
         for (int s=0; s<tList.size(); s++) {
             if (s>0)
@@ -245,9 +250,9 @@ public class SMCTreeDensity extends Distribution {
         debugOut.print("]");
         
         if (!particleState.isValid())
-            return 0.0;
+            return Double.NEGATIVE_INFINITY;
         else
-            return conditionalP;
+            return conditionalLogP;
     }
     
     @Override
