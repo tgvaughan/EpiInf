@@ -22,8 +22,6 @@ import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
-import beast.core.parameter.IntegerParameter;
-import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
 import com.google.common.collect.Lists;
 import epiinf.EpidemicEvent;
@@ -31,7 +29,6 @@ import epiinf.EpidemicState;
 import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
-import epiinf.models.SIRModel;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
@@ -106,7 +103,7 @@ public class SMCTreeDensity extends Distribution {
                     debugOut.println(", ");
                 debugOut.println("\"p" + p + "\": {");
                 
-                double newWeight = Math.exp(updateParticle(particleStates.get(p), t, k, treeEvent));
+                double newWeight = updateParticle(particleStates.get(p), t, k, treeEvent);
                 
                 particleWeights.add(newWeight);                
                 sumOfWeights += newWeight;
@@ -172,7 +169,7 @@ public class SMCTreeDensity extends Distribution {
      */
     private double updateParticle(EpidemicState particleState,
             double startTime, int lineages, TreeEvent finalTreeEvent) {
-        double conditionalLogP = 0.0;
+        double conditionalP = 1.0;
         
         double t = startTime;
         
@@ -207,33 +204,34 @@ public class SMCTreeDensity extends Distribution {
                 }
             }
             
+            // Early exit if invalid state:
+            if (particleState.I<lineages)
+                return 0.0;
+            
             // Increment conditional prob
             if (eventType == model.getCoalescenceEventType())
-                conditionalLogP += Math.log(model.getProbNoCoalescence(particleState, lineages+1));
+                conditionalP *= model.getProbNoCoalescence(particleState, lineages);
             
             if (eventType == model.getLeafEventType())
-                conditionalLogP += Math.log(model.getProbNoLeaf());
+                conditionalP *= model.getProbNoLeaf();
             
             // DEBUG
             tList.add(t);
             nList.add(particleState.I);
             
-            if (Double.isNaN(conditionalLogP)) {
-                System.out.println(model.getProbNoCoalescence(particleState, lineages+1));
-            }
         }
         
         // Include probability of tree event
         if (finalTreeEvent.type == TreeEvent.Type.COALESCENCE) {
             model.incrementState(particleState, model.getCoalescenceEventType());
             model.calculatePropensities(particleState);
-            conditionalLogP += Math.log(model.getProbCoalescence(particleState, lineages+1)
-                    *model.getPropensities().get(model.getCoalescenceEventType()));
+            conditionalP *= model.getProbCoalescence(particleState, lineages+1)
+                    *model.getPropensities().get(model.getCoalescenceEventType());
         } else {
             model.incrementState(particleState, model.getLeafEventType());
             model.calculatePropensities(particleState);
-            conditionalLogP *= Math.log(model.getProbLeaf()
-                    *model.getPropensities().get(model.getLeafEventType()));
+            conditionalP *= model.getProbLeaf()
+                    *model.getPropensities().get(model.getLeafEventType());
         }
         
         // DEBUG
@@ -253,10 +251,13 @@ public class SMCTreeDensity extends Distribution {
         }
         debugOut.print("]");
         
+        if (conditionalP<0)
+            System.out.println("WTF" + conditionalP);
+        
         if (!particleState.isValid())
-            return Double.NEGATIVE_INFINITY;
+            return 0.0;
         else
-            return conditionalLogP;
+            return conditionalP;
     }
     
     @Override

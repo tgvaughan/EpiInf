@@ -15,10 +15,12 @@ for (idx in 1:intmax) {
     }
 }
 
+pdf('particleTrajectories.pdf', width=7, height=5)
 plot(df[[1]][[1]]$t, df[[1]][[1]]$n, xlim=c(0,tmax), ylim=c(0,Imax), 'l', col='white',
      xlab="Epidemic time", ylab="Infected count")
 for (idx in 1:intmax) {
     for (p in 1:nParticles) {
-        lines(df[[idx]][[p]]$t, df[[idx]][[p]]$n, 'l', col=rgb(0,0,0,.05))
+        lines(df[[idx]][[p]]$t, df[[idx]][[p]]$n, 'l', col=rgb(0,0,0,.02))
     }
 }
+dev.off()
