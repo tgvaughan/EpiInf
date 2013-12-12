@@ -217,6 +217,10 @@ public class SMCTreeDensity extends Distribution {
             // DEBUG
             tList.add(t);
             nList.add(particleState.I);
+            
+            if (Double.isNaN(conditionalLogP)) {
+                System.out.println(model.getProbNoCoalescence(particleState, lineages+1));
+            }
         }
         
         // Include probability of tree event
