@@ -32,9 +32,9 @@ import static org.junit.Assert.*;
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class TreeDensityTest {
+public class TreeProbTest {
     
-    public TreeDensityTest() {
+    public TreeProbTest() {
     }
 
     @Test

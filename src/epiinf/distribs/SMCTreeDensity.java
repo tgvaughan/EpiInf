@@ -22,13 +22,19 @@ import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
+import beast.core.parameter.IntegerParameter;
+import beast.core.parameter.RealParameter;
+import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 import com.google.common.collect.Lists;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
+import epiinf.TrajectorySimulator;
+import epiinf.TransmissionTreeSimulator;
 import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
+import epiinf.models.SIRModel;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
@@ -55,7 +61,7 @@ public class SMCTreeDensity extends Distribution {
     int nParticles;
     
     // DEBUG
-    PrintStream debugOut;
+//    PrintStream debugOut;
 
     public SMCTreeDensity() { }
 
@@ -70,8 +76,8 @@ public class SMCTreeDensity extends Distribution {
     public double calculateLogP() throws Exception {
         
         // DEBUG
-        debugOut = new PrintStream("SMCdebug.json");
-        debugOut.println("{");
+//        debugOut = new PrintStream("SMCdebug.json");
+//        debugOut.println("{");
         
         logP = 0.0;
         
@@ -89,9 +95,9 @@ public class SMCTreeDensity extends Distribution {
         for (TreeEvent treeEvent : eventList.getEventList()) {
             
             // DEBUG
-            if (interval>0)
-                debugOut.println(",");
-            debugOut.println("\"interval" + interval + "\": {");
+//            if (interval>0)
+//                debugOut.println(",");
+//            debugOut.println("\"interval" + interval + "\": {");
             
             // Update particles
             particleWeights.clear();
@@ -99,9 +105,9 @@ public class SMCTreeDensity extends Distribution {
             for (int p=0; p<nParticles; p++) {
                 
                 // DEBUG
-                if (p>0)
-                    debugOut.println(", ");
-                debugOut.println("\"p" + p + "\": {");
+//                if (p>0)
+//                    debugOut.println(", ");
+//                debugOut.println("\"p" + p + "\": {");
                 
                 double newWeight = updateParticle(particleStates.get(p), t, k, treeEvent);
                 
@@ -109,14 +115,17 @@ public class SMCTreeDensity extends Distribution {
                 sumOfWeights += newWeight;
                 
                 // DEBUG
-                debugOut.print("\n}");
+//                debugOut.print("\n}");
             }
             
             // DEBUG
-            debugOut.print("}");
+//            debugOut.print("}");
             
             // Update marginal likelihood estimate
             logP += Math.log(sumOfWeights/nParticles);
+            
+            if (!(sumOfWeights>0.0))
+                return Double.NEGATIVE_INFINITY;
 
             // Sample particle with replacement
             particleStatesNew.clear();
@@ -129,6 +138,9 @@ public class SMCTreeDensity extends Distribution {
                     if (u<0.0)
                         break;
                 }
+                
+                if (pChoice == nParticles)
+                    System.err.println("sumOfWeights: " + sumOfWeights);
                 
                 particleStatesNew.add(particleStates.get(pChoice).copy());
             }
@@ -173,12 +185,11 @@ public class SMCTreeDensity extends Distribution {
         
         double t = startTime;
         
-        List<Double> tList = Lists.newArrayList();
-        List<Double> nList = Lists.newArrayList();
-        
         // DEBUG
-        tList.add(t);
-        nList.add(particleState.I);
+//        List<Double> tList = Lists.newArrayList();
+//        List<Double> nList = Lists.newArrayList();
+//        tList.add(t);
+//        nList.add(particleState.I);
         
         while (true) {
             model.calculatePropensities(particleState);
@@ -216,8 +227,8 @@ public class SMCTreeDensity extends Distribution {
                 conditionalP *= model.getProbNoLeaf();
             
             // DEBUG
-            tList.add(t);
-            nList.add(particleState.I);
+//            tList.add(t);
+//            nList.add(particleState.I);
             
         }
         
@@ -235,24 +246,21 @@ public class SMCTreeDensity extends Distribution {
         }
         
         // DEBUG
-        tList.add(finalTreeEvent.time);
-        nList.add(particleState.I);
-        debugOut.print("\"t\": [");
-        for (int s=0; s<tList.size(); s++) {
-            if (s>0)
-                debugOut.print(",");
-            debugOut.print(tList.get(s));
-        }
-        debugOut.print("], \"n\": [");
-        for (int s=0; s<nList.size(); s++) {
-            if (s>0)
-                debugOut.print(",");
-            debugOut.print(nList.get(s));
-        }
-        debugOut.print("]");
-        
-        if (conditionalP<0)
-            System.out.println("WTF" + conditionalP);
+//        tList.add(finalTreeEvent.time);
+//        nList.add(particleState.I);
+//        debugOut.print("\"t\": [");
+//        for (int s=0; s<tList.size(); s++) {
+//            if (s>0)
+//                debugOut.print(",");
+//            debugOut.print(tList.get(s));
+//        }
+//        debugOut.print("], \"n\": [");
+//        for (int s=0; s<nList.size(); s++) {
+//            if (s>0)
+//                debugOut.print(",");
+//            debugOut.print(nList.get(s));
+//        }
+//        debugOut.print("]");
         
         if (!particleState.isValid())
             return 0.0;
@@ -274,4 +282,62 @@ public class SMCTreeDensity extends Distribution {
     public void sample(State state, Random random) {
     }
     
+    /**
+     * Main method for testing/debugging.
+     * 
+     * @param args 
+     */
+    public static void main (String [] args) throws Exception {
+        //Randomizer.setSeed(2785);
+        
+        
+        SIRModel model = new SIRModel();
+        model.initByName(
+                "S0", new IntegerParameter("999"),
+                "infectionRate", new RealParameter("0.001"),
+                "recoveryRate", new RealParameter("0.2"));
+        
+        TrajectorySimulator trajSim = new TrajectorySimulator();
+        trajSim.initByName("model", model);
+        
+        Tree tree = new Tree();
+        RealParameter treeOrigin = new RealParameter();
+        
+        TransmissionTreeSimulator treeSim = new TransmissionTreeSimulator();
+        treeSim.initByName(
+                "tree", tree,
+                "treeOrigin", treeOrigin,
+                "epidemicTrajectory", trajSim,
+                "nLeaves", 100,
+                "model", model);
+        treeSim.initStateNodes();
+        
+        TreeEventList treeEventList = new TreeEventList();
+        treeEventList.initByName(
+                "tree", tree,
+                "treeOrigin", treeOrigin); 
+        
+        SMCTreeDensity treeDensity = new SMCTreeDensity();
+        treeDensity.initByName(
+                "treeEventList", treeEventList,
+                "model", model,
+                "nParticles", 100);
+        
+        for (int bidx=-5; bidx<=5; bidx++) {
+            double beta = 0.001*Math.pow(1.3, bidx);
+            
+            model.initByName(
+                "S0", new IntegerParameter("999"),
+                "infectionRate", new RealParameter(String.valueOf(beta)),
+                "recoveryRate", new RealParameter("0.2"));
+            
+            treeDensity.initByName(
+                "treeEventList", treeEventList,
+                "model", model,
+                "nParticles", 1000);
+            
+            System.out.println("beta: " + beta
+                    + " logP: " + treeDensity.calculateLogP());
+        }
+    }
 }
