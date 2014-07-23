@@ -37,14 +37,14 @@ import java.util.logging.Logger;
 @Description("Simulate an epidemic trajectory under a stochastic SIR model.")
 public class TrajectorySimulator extends EpidemicTrajectory implements StateNodeInitialiser {
     
-    public Input<EpidemicModel> modelInput = new Input<EpidemicModel>(
+    public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
     
-    public Input<Double> durationInput = new Input<Double>(
+    public Input<Double> durationInput = new Input<>(
             "maxDuration", "Maximum duration of epidemic to simulate. "
                     + "Defaults to infinity.", Double.POSITIVE_INFINITY);
     
-    public Input<String> fileNameInput = new Input<String>(
+    public Input<String> fileNameInput = new Input<>(
             "fileName",
             "Optional name of file to write simulated trajectory to.");
     

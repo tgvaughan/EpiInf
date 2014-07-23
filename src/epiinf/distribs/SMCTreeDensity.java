@@ -35,6 +35,8 @@ import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
 import epiinf.models.SIRModel;
+import epiinf.models.SISModel;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
 
@@ -161,6 +163,9 @@ public class SMCTreeDensity extends Distribution {
             interval += 1;
         }
         
+        // DEBUG
+//        debugOut.println("}");
+        
         double sumOfWeights = 0.0;
         for (double weight : particleWeights)
             sumOfWeights += weight;
@@ -176,7 +181,7 @@ public class SMCTreeDensity extends Distribution {
      * @param startTime
      * @param lineages
      * @param finalTreeEvent
-     * @return conditional log prob of tree interval under trajectory
+     * @return conditional prob of tree interval under trajectory
      */
     private double updateParticle(EpidemicState particleState,
             double startTime, int lineages, TreeEvent finalTreeEvent) {
@@ -185,10 +190,10 @@ public class SMCTreeDensity extends Distribution {
         double t = startTime;
         
         // DEBUG
-//        List<Double> tList = Lists.newArrayList();
-//        List<Double> nList = Lists.newArrayList();
-//        tList.add(t);
-//        nList.add(particleState.I);
+        List<Double> tList = Lists.newArrayList();
+        List<Double> nList = Lists.newArrayList();
+        tList.add(t);
+        nList.add(particleState.I);
         
         while (true) {
             model.calculatePropensities(particleState);
@@ -208,11 +213,12 @@ public class SMCTreeDensity extends Distribution {
                 u -= model.getPropensities().get(type);
                 
                 if (u<0) {
-                    model.incrementState(particleState, type);
                     eventType = type;
                     break;
                 }
             }
+            
+            model.incrementState(particleState, eventType);
             
             // Early exit if invalid state:
             if (particleState.I<lineages)
@@ -226,8 +232,8 @@ public class SMCTreeDensity extends Distribution {
                 conditionalP *= model.getProbNoLeaf();
             
             // DEBUG
-//            tList.add(t);
-//            nList.add(particleState.I);
+            tList.add(t);
+            nList.add(particleState.I);
             
         }
         
@@ -291,14 +297,17 @@ public class SMCTreeDensity extends Distribution {
         //Randomizer.setSeed(2785);
         
         
-        SIRModel model = new SIRModel();
+        SISModel model = new SISModel();
         model.initByName(
                 "S0", new IntegerParameter("999"),
                 "infectionRate", new RealParameter("0.001"),
                 "recoveryRate", new RealParameter("0.2"));
         
         TrajectorySimulator trajSim = new TrajectorySimulator();
-        trajSim.initByName("model", model);
+        trajSim.initByName(
+                "model", model,
+                "maxDuration", 15.0,
+                "fileName", "truth.txt");
         
         Tree tree = new Tree();
         RealParameter treeOrigin = new RealParameter();
@@ -308,8 +317,9 @@ public class SMCTreeDensity extends Distribution {
                 "tree", tree,
                 "treeOrigin", treeOrigin,
                 "epidemicTrajectory", trajSim,
-                "nLeaves", 100,
-                "model", model);
+                "nLeaves", 10,
+                "model", model,
+                "fileName", "truth.newick");
         treeSim.initStateNodes();
         
         TreeEventList treeEventList = new TreeEventList();
@@ -325,6 +335,7 @@ public class SMCTreeDensity extends Distribution {
         
         for (int bidx=-5; bidx<=5; bidx++) {
             double beta = 0.001*Math.pow(1.3, bidx);
+        //double beta = 0.001;
             
             model.initByName(
                 "S0", new IntegerParameter("999"),
@@ -334,7 +345,7 @@ public class SMCTreeDensity extends Distribution {
             treeDensity.initByName(
                 "treeEventList", treeEventList,
                 "model", model,
-                "nParticles", 1000);
+                "nParticles", 100);
             
             System.out.println("beta: " + beta
                     + " logP: " + treeDensity.calculateLogP());

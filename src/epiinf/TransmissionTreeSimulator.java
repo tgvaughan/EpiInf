@@ -43,52 +43,58 @@ import java.util.List;
 @Description("Simulate transmission tree conditional on epidemic trajectory.")
 public class TransmissionTreeSimulator extends BEASTObject implements StateNodeInitialiser {
 
-    public Input<Tree> treeInput = new Input<Tree>(
+    public Input<Tree> treeInput = new Input<>(
             "tree",
             "Tree to initialize",
             Validate.REQUIRED);
     
-    public Input<RealParameter> treeOriginInput = new Input<RealParameter>(
+    public Input<RealParameter> treeOriginInput = new Input<>(
             "treeOrigin",
             "Difference between start of epidemic and MRCA.",
             Validate.REQUIRED);
     
-    public Input<EpidemicTrajectory> trajInput = new Input<EpidemicTrajectory>(
+    public Input<EpidemicTrajectory> trajInput = new Input<>(
             "epidemicTrajectory",
             "Epidemic trajectory object.",
             Validate.REQUIRED);
     
-    public Input<EpidemicModel> modelInput = new Input<EpidemicModel>(
-            "model",
-            "Epidemic model.",
-            Validate.REQUIRED);
+    public Input<EpidemicModel> modelInput;
     
-    public Input<Integer> nLeavesInput = new Input<Integer>(
+    public Input<Integer> nLeavesInput = new Input<>(
             "nLeaves",
             "Fixed number of leaves in tree.");
     
-    public Input<Double> sampleBeforeTimeInput = new Input<Double>(
+    public Input<Double> sampleBeforeTimeInput = new Input<>(
             "sampleBeforeTime",
             "Sample leaves before this time, specified as a fraction of the "
                     + "total epidemic time.  Default 1.0.", 1.0);
     
-    public Input<String> fileNameInput = new Input<String>(
+    public Input<String> fileNameInput = new Input<>(
             "fileName", "Name of file to save Newick representation of tree to.");
     
-    public Input<Boolean> truncateTrajectoryInput = new Input<Boolean>(
+    public Input<Boolean> truncateTrajectoryInput = new Input<>(
             "truncateTrajectory",
             "Truncate trajectory at most recent sample. (Default true.)", true);
+    
+    public Input<Boolean> contempSamplingInput = new Input<>(
+            "contempSampling",
+            "Leaves are sampled at the same time (end of trajectory or"
+                    + " fraction given by sampleBeforeTime).", false);
 
     private Tree tree;
     private RealParameter treeOrigin;
     private EpidemicTrajectory traj;
     private EpidemicModel model;
     private int nLeaves = -1;
-    private double samplingProb = -1.0;
     private double sampleBeforeTime;
     private boolean truncateTrajectory;
+    private boolean contempSampling;
     
-    public TransmissionTreeSimulator() { }
+    public TransmissionTreeSimulator() {this.modelInput = new Input<>(
+            "model",
+            "Epidemic model.",
+            Validate.REQUIRED);
+ }
     
     @Override
     public void initAndValidate() throws Exception {
@@ -102,6 +108,7 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         
         sampleBeforeTime = sampleBeforeTimeInput.get();
         truncateTrajectory = truncateTrajectoryInput.get();
+        contempSampling = contempSamplingInput.get();
     }
     
     @Override
@@ -111,16 +118,17 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         double epidemicDuration = traj.getEventList()
                 .get(traj.getEventList().size()-1).time;
         
+        double samplingTime = sampleBeforeTime*epidemicDuration;
+
+        // Extract existing sampling events from tree
+        List<EpidemicEvent> samplingEvents = Lists.newArrayList();
+        for (EpidemicEvent event : traj.getEventList()) {
+            if (event.type == model.getLeafEventType()
+                    && event.time<=samplingTime)
+                samplingEvents.add(event);
+        }
+        
         if (nLeaves>0) {
-            
-            List<EpidemicEvent> samplingEvents = Lists.newArrayList();
-            
-            for (EpidemicEvent event : traj.getEventList()) {
-                if (event.type == model.getLeafEventType()
-                        && event.time<=sampleBeforeTime*epidemicDuration)
-                    samplingEvents.add(event);
-            }
-            
             // Check for invalid leaf count request.
             if (samplingEvents.size()<nLeaves)
                 throw new IllegalArgumentException("Trajectory has fewer recovery"
@@ -133,11 +141,9 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
             }
             
         } else {
-            
-            for (EpidemicEvent event : traj.getEventList()) {
-                if (event.type == model.getLeafEventType()
-                        && event.time <= sampleBeforeTime*epidemicDuration
-                        && Randomizer.nextDouble()<model.getProbLeaf())
+
+            for (EpidemicEvent event : samplingEvents) {
+                if (Randomizer.nextDouble()<model.getProbLeaf())
                     leafEvents.add(event);
             }
             
@@ -147,18 +153,14 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         int nextInternalID = leafEvents.size();
         
         // Order leaf events from youngest to oldest.
-        Collections.sort(leafEvents, new Comparator<EpidemicEvent>() {
-
-            @Override
-            public int compare(EpidemicEvent o1, EpidemicEvent o2) {
-                if (o1.time > o2.time)
-                    return -1;
-                
-                if (o1.time < o2.time)
-                    return 1;
-                
-                return 0;
-            }
+        Collections.sort(leafEvents, (EpidemicEvent o1, EpidemicEvent o2) -> {
+            if (o1.time > o2.time)
+                return -1;
+            
+            if (o1.time < o2.time)
+                return 1;
+            
+            return 0;
         });
         
         // Record time of youngest sample:
@@ -228,10 +230,10 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         
         // Write tree to disk if requested:
         if (fileNameInput.get() != null) {
-            PrintStream ps = new PrintStream(fileNameInput.get());
-            String newick = tree.toString().concat(";");
-            ps.println(newick.replace(":0.0;", ":" + treeOrigin.getValue() + ";"));
-            ps.close();
+            try (PrintStream ps = new PrintStream(fileNameInput.get())) {
+                String newick = tree.toString().concat(";");
+                ps.println(newick.replace(":0.0;", ":" + treeOrigin.getValue() + ";"));
+            }
         }
     }
 

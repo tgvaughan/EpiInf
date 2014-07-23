@@ -175,7 +175,7 @@ public abstract class EpidemicModel extends CalculationNode {
         stateList.clear();
         
         EpidemicState thisState = startState.copy();
-        double t = startTime;
+        thisState.time = startTime;
 
         while (true) {
             calculatePropensities(thisState);
@@ -186,15 +186,15 @@ public abstract class EpidemicModel extends CalculationNode {
             else
                 dt = Double.POSITIVE_INFINITY;
             
-            logP += -Math.min(dt, endTime-t)*totalPropensity;
+            logP += -Math.min(dt, endTime-thisState.time)*totalPropensity;
             
-            t += dt;
+            thisState.time += dt;
                     
-            if (t>=endTime)
+            if (thisState.time>=endTime)
                 break;
             
             EpidemicEvent nextEvent = new EpidemicEvent();
-            nextEvent.time = t;
+            nextEvent.time = thisState.time;
             
             double u = totalPropensity*Randomizer.nextDouble();
             

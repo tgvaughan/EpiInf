@@ -31,13 +31,13 @@ import epiinf.models.EpidemicModel;
         + "the epidemic origin.")
 public class SMCTrajectoryOperator extends Operator {
 
-    public Input<TreeEventList> treeEventListInput = new Input<TreeEventList>(
+    public Input<TreeEventList> treeEventListInput = new Input<>(
             "treeEventList", "Tree event list.", Input.Validate.REQUIRED);
 
-    public Input<EpidemicTrajectory> trajInput = new Input<EpidemicTrajectory>(
+    public Input<EpidemicTrajectory> trajInput = new Input<>(
             "epidemicTrajectory", "Epidemic trajectory.", Input.Validate.REQUIRED);
     
-    public Input<EpidemicModel> modelInput = new Input<EpidemicModel>(
+    public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Input.Validate.REQUIRED);
     
     @Override

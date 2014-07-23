@@ -26,7 +26,6 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import com.google.common.collect.Lists;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -35,10 +34,10 @@ import java.util.List;
 @Description("Maintains a sorted list of events in the tree.")
 public class TreeEventList extends CalculationNode {
     
-    public Input<Tree> treeInput = new Input<Tree>("tree",
+    public Input<Tree> treeInput = new Input<>("tree",
             "Transmission tree.", Validate.REQUIRED);
     
-    public Input<RealParameter> treeOriginInput = new Input<RealParameter>(
+    public Input<RealParameter> treeOriginInput = new Input<>(
             "treeOrigin", "Difference between time of MRCA and start of "
                     + "epidemic.", Validate.REQUIRED);
     
@@ -91,19 +90,14 @@ public class TreeEventList extends CalculationNode {
         }
         
         // Sort events in order of absolute time
-        Collections.sort(eventList, new Comparator<TreeEvent>() {
-
-            @Override
-            public int compare(TreeEvent e1, TreeEvent e2) {
-                if (e1.time < e2.time)
-                    return -1;
-                
-                if (e1.time > e2.time)
-                    return 1;
-                
-                return 0;
-            }
+        Collections.sort(eventList, (TreeEvent e1, TreeEvent e2) -> {
+            if (e1.time < e2.time)
+                return -1;
             
+            if (e1.time > e2.time)
+                return 1;
+            
+            return 0;
         });
 
         dirty = false;

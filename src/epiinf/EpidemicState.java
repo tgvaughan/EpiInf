@@ -24,6 +24,7 @@ package epiinf;
  */
 public class EpidemicState {
     public double S, I, R;
+    public double time;
     
     public EpidemicState() { }
     
@@ -31,6 +32,7 @@ public class EpidemicState {
         this.S = S;
         this.I = I;
         this.R = R;
+        this.time = Double.NaN;
     }
     
     /**
@@ -47,6 +49,7 @@ public class EpidemicState {
         stateCopy.S = S;
         stateCopy.I = I;
         stateCopy.R = R;
+        stateCopy.time = time;
         
         return stateCopy;
     }
