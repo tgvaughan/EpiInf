@@ -48,5 +48,10 @@ public class SMCTrajectoryOperator extends Operator {
         
         return logHR;
     }
+
+    @Override
+    public void initAndValidate() throws Exception {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
     
 }

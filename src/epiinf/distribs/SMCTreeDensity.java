@@ -35,7 +35,6 @@ import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
 import epiinf.models.SIRModel;
-import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
 
@@ -46,13 +45,13 @@ import java.util.Random;
         + "parameters.")
 public class SMCTreeDensity extends Distribution {
 
-    public Input<EpidemicModel> modelInput = new Input<EpidemicModel>(
+    public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
     
-    public Input<TreeEventList> treeEventListInput = new Input<TreeEventList>(
+    public Input<TreeEventList> treeEventListInput = new Input<>(
             "treeEventList", "Tree event list.", Validate.REQUIRED);
     
-    public Input<Integer> nParticlesInput = new Input<Integer>(
+    public Input<Integer> nParticlesInput = new Input<>(
             "nParticles", "Number of particles to use in SMC calculation.",
             Validate.REQUIRED);
 
@@ -286,6 +285,7 @@ public class SMCTreeDensity extends Distribution {
      * Main method for testing/debugging.
      * 
      * @param args 
+     * @throws java.lang.Exception 
      */
     public static void main (String [] args) throws Exception {
         //Randomizer.setSeed(2785);
