@@ -62,7 +62,7 @@ public class SMCTreeDensity extends Distribution {
     int nParticles;
     
     // DEBUG
-//    PrintStream debugOut;
+    PrintStream debugOut;
 
     public SMCTreeDensity() { }
 
@@ -77,8 +77,8 @@ public class SMCTreeDensity extends Distribution {
     public double calculateLogP() throws Exception {
         
         // DEBUG
-//        debugOut = new PrintStream("SMCdebug.json");
-//        debugOut.println("{");
+        debugOut = new PrintStream("SMCdebug.json");
+        debugOut.println("{");
         
         logP = 0.0;
         
@@ -96,9 +96,9 @@ public class SMCTreeDensity extends Distribution {
         for (TreeEvent treeEvent : eventList.getEventList()) {
             
             // DEBUG
-//            if (interval>0)
-//                debugOut.println(",");
-//            debugOut.println("\"interval" + interval + "\": {");
+            if (interval>0)
+                debugOut.println(",");
+            debugOut.println("\"interval" + interval + "\": {");
             
             // Update particles
             particleWeights.clear();
@@ -106,9 +106,9 @@ public class SMCTreeDensity extends Distribution {
             for (int p=0; p<nParticles; p++) {
                 
                 // DEBUG
-//                if (p>0)
-//                    debugOut.println(", ");
-//                debugOut.println("\"p" + p + "\": {");
+                if (p>0)
+                    debugOut.println(", ");
+                debugOut.println("\"p" + p + "\": {");
                 
                 double newWeight = updateParticle(particleStates.get(p), t, k, treeEvent);
                 
@@ -116,11 +116,11 @@ public class SMCTreeDensity extends Distribution {
                 sumOfWeights += newWeight;
                 
                 // DEBUG
-//                debugOut.print("\n}");
+                debugOut.print("\n}");
             }
             
             // DEBUG
-//            debugOut.print("}");
+            debugOut.print("}");
             
             // Update marginal likelihood estimate
             logP += Math.log(sumOfWeights/nParticles);
@@ -164,7 +164,7 @@ public class SMCTreeDensity extends Distribution {
         }
         
         // DEBUG
-//        debugOut.println("}");
+        debugOut.println("}");
         
         double sumOfWeights = 0.0;
         for (double weight : particleWeights)
@@ -251,21 +251,21 @@ public class SMCTreeDensity extends Distribution {
         }
         
         // DEBUG
-//        tList.add(finalTreeEvent.time);
-//        nList.add(particleState.I);
-//        debugOut.print("\"t\": [");
-//        for (int s=0; s<tList.size(); s++) {
-//            if (s>0)
-//                debugOut.print(",");
-//            debugOut.print(tList.get(s));
-//        }
-//        debugOut.print("], \"n\": [");
-//        for (int s=0; s<nList.size(); s++) {
-//            if (s>0)
-//                debugOut.print(",");
-//            debugOut.print(nList.get(s));
-//        }
-//        debugOut.print("]");
+        tList.add(finalTreeEvent.time);
+        nList.add(particleState.I);
+        debugOut.print("\"t\": [");
+        for (int s=0; s<tList.size(); s++) {
+            if (s>0)
+                debugOut.print(",");
+            debugOut.print(tList.get(s));
+        }
+        debugOut.print("], \"n\": [");
+        for (int s=0; s<nList.size(); s++) {
+            if (s>0)
+                debugOut.print(",");
+            debugOut.print(nList.get(s));
+        }
+        debugOut.print("]");
         
         if (!particleState.isValid())
             return 0.0;

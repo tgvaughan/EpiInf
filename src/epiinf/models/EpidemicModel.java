@@ -143,6 +143,8 @@ public abstract class EpidemicModel extends CalculationNode {
         eventList.clear();
         stateList.clear();
         
+        stateList.add(startState);
+        
         EpidemicState thisState = startState.copy();
         thisState.time = startTime;
 

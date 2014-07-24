@@ -99,7 +99,7 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         
         double samplingTime = sampleBeforeTime*epidemicDuration;
 
-        // Extract existing sampling events from tree
+        // Extract sampling events from trajectory
         List<EpidemicEvent> samplingEvents = Lists.newArrayList();
         for (EpidemicEvent event : traj.getEventList()) {
             if (event.type == EpidemicEvent.Type.SAMPLE

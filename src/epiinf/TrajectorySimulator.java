@@ -17,14 +17,16 @@
 
 package epiinf;
 
-import epiinf.models.EpidemicModel;
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
+import beast.util.Randomizer;
+import epiinf.models.EpidemicModel;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,6 +50,18 @@ public class TrajectorySimulator extends EpidemicTrajectory implements StateNode
             "fileName",
             "Optional name of file to write simulated trajectory to.");
     
+    public Input<Integer> nSerialSamplesInput = new Input<>(
+            "nSerialSamples",
+            "Optional number of serial samples.");
+    
+    public Input<List<Double>> samplingTimesInput = new Input<>(
+            "samplingTime", "Times (monotonically increasing) for contemporaneous sampling.",
+            new ArrayList<>());
+    
+    public Input<List<Integer>> sampleSizesInput = new Input<>(
+            "sampleSize", "Sizes of contemporaneous samples.",
+            new ArrayList<>());
+    
     EpidemicModel model;
     double duration;
     
@@ -60,13 +74,15 @@ public class TrajectorySimulator extends EpidemicTrajectory implements StateNode
         model = modelInput.get();
         duration = durationInput.get();
         
+        if (samplingTimesInput.get().size() != sampleSizesInput.get().size())
+            throw new IllegalArgumentException(
+                    "Number of sample times and sample size entries do not match.");
+        
         simulate();
         
         if (fileNameInput.get() != null) {
-            try {
-                PrintStream ps = new PrintStream(fileNameInput.get());
-                dumpTrajectory(ps);
-                ps.close();
+            try (PrintStream ps = new PrintStream(fileNameInput.get())) {
+                    dumpTrajectory(ps);
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(TrajectorySimulator.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -79,9 +95,49 @@ public class TrajectorySimulator extends EpidemicTrajectory implements StateNode
         
         stateList.add(model.getInitialState());
         
-        model.generateTrajectory(model.getInitialState(), 0, duration);
+        double t = 0.0;
+        EpidemicState currentState = model.getInitialState();
+        
+        // Simulate portion of trajectory incorporating serial samples.
+        for (int i=0; i<samplingTimesInput.get().size(); i++) {
+            double sampleTime = samplingTimesInput.get().get(i);
+            
+            model.generateTrajectory(currentState, t, sampleTime);
+            eventList.addAll(model.getEventList());
+            stateList.addAll(model.getStateList());
+            
+            currentState = model.getStateList().get(model.getStateList().size()-1);
+            t = sampleTime;
+            
+            // Perform contemporaneous sampling
+            for (int s=0; s<sampleSizesInput.get().get(i); s++) {
+                model.incrementState(currentState, EpidemicEvent.Type.SAMPLE);
+                EpidemicEvent samplingEvent = new EpidemicEvent();
+                samplingEvent.time = t;
+                samplingEvent.type = EpidemicEvent.Type.SAMPLE;
+                eventList.add(samplingEvent);
+                stateList.add(currentState.copy());
+            }
+        }
+        
+        // Simulate rest of trajectory
+        model.generateTrajectory(currentState, t, duration);
         eventList.addAll(model.getEventList());
         stateList.addAll(model.getStateList());
+        
+        // Sample nSamples uniformly from amongst recovery events.
+        if (nSerialSamplesInput.get()>0) {
+            List<EpidemicEvent> recovEvents = new ArrayList<>();
+            for (EpidemicEvent event : eventList)
+                if (event.type == EpidemicEvent.Type.RECOVERY)
+                    recovEvents.add(event);
+            
+            for (int i=0; i<nSerialSamplesInput.get(); i++) {
+                EpidemicEvent event = recovEvents.get(Randomizer.nextInt(recovEvents.size()));
+                event.type = EpidemicEvent.Type.SAMPLE;
+                recovEvents.remove(event);
+            }
+        }
     }
     
     @Override
