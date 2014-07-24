@@ -31,13 +31,13 @@ import epiinf.EpidemicState;
  */
 public class SIRModel extends EpidemicModel {
     
-    public Input<IntegerParameter> S0Input = new Input<IntegerParameter>(
+    public Input<IntegerParameter> S0Input = new Input<>(
             "S0", "Initial size of susceptible population.", Validate.REQUIRED);
     
-    public Input<RealParameter> infectionRateInput = new Input<RealParameter>(
+    public Input<RealParameter> infectionRateInput = new Input<>(
             "infectionRate", "Infection rate.", Validate.REQUIRED);
     
-    public Input<RealParameter> recoveryRateInput = new Input<RealParameter>(
+    public Input<RealParameter> recoveryRateInput = new Input<>(
             "recoveryRate", "Recovery rate.", Validate.REQUIRED);
 
     
@@ -69,19 +69,13 @@ public class SIRModel extends EpidemicModel {
                 state.I -= 1;
                 state.R += 1;
                 break;
+            case SAMPLE:
+                state.I -= 1;
+                state.R += 1;
+                break;
             default:
                 break;
         }
-    }
-
-    @Override
-    public EpidemicEvent.Type getCoalescenceEventType() {
-        return EpidemicEvent.Type.INFECTION;
-    }
-
-    @Override
-    public EpidemicEvent.Type getLeafEventType() {
-        return EpidemicEvent.Type.RECOVERY;
     }
 
     @Override
@@ -98,16 +92,5 @@ public class SIRModel extends EpidemicModel {
     public double getProbNoCoalescence(EpidemicState state, int lineages) {
         return 1.0 - getProbCoalescence(state, lineages);
     }
-
-    @Override
-    public double getProbLeaf() {
-        return 1.0;
-    }
-
-    @Override
-    public double getProbNoLeaf() {
-        return 1.0;
-    }
-
 
 }

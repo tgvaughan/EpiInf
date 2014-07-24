@@ -37,7 +37,7 @@ import java.util.Map;
  */
 public abstract class EpidemicModel extends CalculationNode {
     
-    public Input<Double> toleranceInput = new Input<Double>("tolerance",
+    public Input<Double> toleranceInput = new Input<>("tolerance",
             "Maximum absolute time difference between events on tree and "
                     + "events in epidemic trajectory for events to be"
                     + "considered compatible.  Default 1e-10.", 1e-10);
@@ -99,21 +99,6 @@ public abstract class EpidemicModel extends CalculationNode {
     public abstract void incrementState(EpidemicState state,
             EpidemicEvent.Type type);
     
-    /**
-     * Obtain the Epidemic event type corresponding to a coalescence on
-     * the transmission tree under this model.
-     * 
-     * @return Epidemic event type
-     */
-    public abstract EpidemicEvent.Type getCoalescenceEventType();
-    
-    /**
-     * Obtain the Epidemic event type corresponding to a leaf on the
-     * transmission tree under this model.
-     * 
-     * @return Epidemic event type
-     */
-    public abstract EpidemicEvent.Type getLeafEventType();
 
     /**
      * Obtain probability of coalescence occurring on tree given a compatible
@@ -136,22 +121,6 @@ public abstract class EpidemicModel extends CalculationNode {
      * @return probability of NO coalescence event on the tree
      */
     public abstract double getProbNoCoalescence(EpidemicState state, int lineages);
-    
-    /**
-     * Get the probability of a leaf on the tree given a compatible event
-     * occurred in the epidemic trajectory.
-     * 
-     * @return probability of leaf event on tree
-     */
-    public abstract double getProbLeaf();
-    
-    /**
-     * Get the probability of NO leaf on the tree given a compatible event
-     * occurred in the epidemic trajectory.
-     * 
-     * @return probability of NO leaf event on tree
-     */
-    public abstract double getProbNoLeaf();
     
     /**
      * Generate a sequence of events between startTime and endTime conditional
@@ -309,11 +278,11 @@ public abstract class EpidemicModel extends CalculationNode {
             return false;
         
         if ((treeEvent.type == TreeEvent.Type.COALESCENCE)
-                && (epidemicEvent.type != getCoalescenceEventType()))
+                && (epidemicEvent.type != EpidemicEvent.Type.INFECTION))
             return false;
         
-        if ((treeEvent.type == TreeEvent.Type.SAMPLE)
-                && (epidemicEvent.type != getLeafEventType()))
+        if ((treeEvent.type == TreeEvent.Type.LEAF)
+                && (epidemicEvent.type != EpidemicEvent.Type.SAMPLE))
             return false;
         
         return true;

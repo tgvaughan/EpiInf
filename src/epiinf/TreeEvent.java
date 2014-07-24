@@ -14,7 +14,7 @@ import beast.evolution.tree.Node;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class TreeEvent {
-    public enum Type { COALESCENCE, SAMPLE };
+    public enum Type { COALESCENCE, LEAF };
     
     public Node node;
     public Type type;

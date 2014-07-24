@@ -79,7 +79,7 @@ public class TreeEventList extends CalculationNode {
         for (Node node : tree.getNodesAsArray()) {
             TreeEvent event = new TreeEvent();
             if (node.isLeaf())
-                event.type = TreeEvent.Type.SAMPLE;
+                event.type = TreeEvent.Type.LEAF;
             else
                 event.type = TreeEvent.Type.COALESCENCE;
        

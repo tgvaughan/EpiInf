@@ -37,13 +37,13 @@ import java.util.List;
         + "the transmission tree and the tree origin.")
 public class TrajectoryOperator extends Operator {
     
-    public Input<TreeEventList> treeEventListInput = new Input<TreeEventList>(
+    public Input<TreeEventList> treeEventListInput = new Input<>(
             "treeEventList", "Tree event list.", Validate.REQUIRED);
 
-    public Input<EpidemicTrajectory> trajInput = new Input<EpidemicTrajectory>(
+    public Input<EpidemicTrajectory> trajInput = new Input<>(
             "epidemicTrajectory", "Epidemic trajectory.", Validate.REQUIRED);
     
-    public Input<EpidemicModel> modelInput = new Input<EpidemicModel>(
+    public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
     
     int count = 0;
@@ -81,10 +81,10 @@ public class TrajectoryOperator extends Operator {
             EpidemicEvent newEvent = new EpidemicEvent();
             newEvent.time = treeEvent.time;
             if (treeEvent.type == TreeEvent.Type.COALESCENCE) {
-                newEvent.type = model.getCoalescenceEventType();
+                newEvent.type = EpidemicEvent.Type.INFECTION;
                 model.incrementState(thisState, newEvent.type);
             } else {
-                newEvent.type = model.getLeafEventType();
+                newEvent.type = EpidemicEvent.Type.SAMPLE;
                 model.incrementState(thisState, newEvent.type);
             }
             

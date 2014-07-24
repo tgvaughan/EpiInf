@@ -31,7 +31,6 @@ import beast.util.Randomizer;
 import com.google.common.collect.Lists;
 import java.io.PrintStream;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -60,26 +59,12 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
     
     public Input<EpidemicModel> modelInput;
     
-    public Input<Integer> nLeavesInput = new Input<>(
-            "nLeaves",
-            "Fixed number of leaves in tree.");
-    
-    public Input<Double> sampleBeforeTimeInput = new Input<>(
-            "sampleBeforeTime",
-            "Sample leaves before this time, specified as a fraction of the "
-                    + "total epidemic time.  Default 1.0.", 1.0);
-    
     public Input<String> fileNameInput = new Input<>(
             "fileName", "Name of file to save Newick representation of tree to.");
     
     public Input<Boolean> truncateTrajectoryInput = new Input<>(
             "truncateTrajectory",
             "Truncate trajectory at most recent sample. (Default true.)", true);
-    
-    public Input<Boolean> contempSamplingInput = new Input<>(
-            "contempSampling",
-            "Leaves are sampled at the same time (end of trajectory or"
-                    + " fraction given by sampleBeforeTime).", false);
 
     private Tree tree;
     private RealParameter treeOrigin;
@@ -103,18 +88,12 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         traj = trajInput.get();
         model = modelInput.get();
         
-        if (nLeavesInput.get() != null)
-            nLeaves = nLeavesInput.get();
-        
-        sampleBeforeTime = sampleBeforeTimeInput.get();
         truncateTrajectory = truncateTrajectoryInput.get();
-        contempSampling = contempSamplingInput.get();
     }
     
     @Override
     public void initStateNodes() throws Exception {
         
-        List<EpidemicEvent> leafEvents = Lists.newArrayList();
         double epidemicDuration = traj.getEventList()
                 .get(traj.getEventList().size()-1).time;
         
@@ -123,37 +102,16 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         // Extract existing sampling events from tree
         List<EpidemicEvent> samplingEvents = Lists.newArrayList();
         for (EpidemicEvent event : traj.getEventList()) {
-            if (event.type == model.getLeafEventType()
+            if (event.type == EpidemicEvent.Type.SAMPLE
                     && event.time<=samplingTime)
                 samplingEvents.add(event);
         }
         
-        if (nLeaves>0) {
-            // Check for invalid leaf count request.
-            if (samplingEvents.size()<nLeaves)
-                throw new IllegalArgumentException("Trajectory has fewer recovery"
-                        + " events than value of nLeaves.");
-            
-            for (int i=0; i<nLeaves; i++) {
-                int idx = Randomizer.nextInt(samplingEvents.size());
-                leafEvents.add(samplingEvents.get(idx));
-                samplingEvents.remove(idx);
-            }
-            
-        } else {
-
-            for (EpidemicEvent event : samplingEvents) {
-                if (Randomizer.nextDouble()<model.getProbLeaf())
-                    leafEvents.add(event);
-            }
-            
-        }
-        
         int nextLeafNr = 0;
-        int nextInternalID = leafEvents.size();
+        int nextInternalID = samplingEvents.size();
         
         // Order leaf events from youngest to oldest.
-        Collections.sort(leafEvents, (EpidemicEvent o1, EpidemicEvent o2) -> {
+        Collections.sort(samplingEvents, (EpidemicEvent o1, EpidemicEvent o2) -> {
             if (o1.time > o2.time)
                 return -1;
             
@@ -164,7 +122,7 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         });
         
         // Record time of youngest sample:
-        double youngestSamp = leafEvents.get(0).time;
+        double youngestSamp = samplingEvents.get(0).time;
         
         List<Node> activeNodes = Lists.newArrayList();
         List<EpidemicEvent> revEventList = Lists.reverse(traj.getEventList());
@@ -175,17 +133,17 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
             EpidemicEvent event = revEventList.get(eidx);
             EpidemicState state = revStateList.get(eidx);
             
-            if (!leafEvents.isEmpty() && leafEvents.get(0).equals(event)) {
+            if (!samplingEvents.isEmpty() && samplingEvents.get(0).equals(event)) {
                 
                 Node leaf = new Node();
                 leaf.setHeight(youngestSamp-event.time);
                 leaf.setNr(nextLeafNr++);
                 activeNodes.add(leaf);
-                leafEvents.remove(0);
+                samplingEvents.remove(0);
                 
             } else {
                 
-                if (event.type == model.getCoalescenceEventType()) {
+                if (event.type == EpidemicEvent.Type.INFECTION) {
                     int k = activeNodes.size();
                     double N = state.I;
                     
@@ -211,7 +169,7 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
             }
             
             // Stop when we reach the MRCA of all sampled events.
-            if (leafEvents.isEmpty() && activeNodes.size()<2)
+            if (samplingEvents.isEmpty() && activeNodes.size()<2)
                 break;
         }
         

@@ -67,19 +67,12 @@ public class BirthDeathModel extends EpidemicModel {
             case RECOVERY:
                 state.I -= 1;
                 break;
+            case SAMPLE:
+                state.I -= 1;
+                break;
             default:
                 break;
         }
-    }
-
-    @Override
-    public EpidemicEvent.Type getCoalescenceEventType() {
-        return EpidemicEvent.Type.INFECTION;
-    }
-
-    @Override
-    public EpidemicEvent.Type getLeafEventType() {
-        return EpidemicEvent.Type.RECOVERY;
     }
 
     @Override
@@ -95,15 +88,5 @@ public class BirthDeathModel extends EpidemicModel {
     @Override
     public double getProbNoCoalescence(EpidemicState state, int lineages) {
         return 1.0 - getProbCoalescence(state, lineages);
-    }
-
-    @Override
-    public double getProbLeaf() {
-        return 1.0;
-    }
-
-    @Override
-    public double getProbNoLeaf() {
-        return 1.0;
     }
 }

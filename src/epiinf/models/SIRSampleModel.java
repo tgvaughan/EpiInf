@@ -20,16 +20,16 @@ import epiinf.EpidemicState;
  */
 public class SIRSampleModel extends EpidemicModel {
     
-    public Input<IntegerParameter> S0Input = new Input<IntegerParameter>(
+    public Input<IntegerParameter> S0Input = new Input<>(
             "S0", "Initial size of susceptible population.", Validate.REQUIRED);
     
-    public Input<RealParameter> infectionRateInput = new Input<RealParameter>(
+    public Input<RealParameter> infectionRateInput = new Input<>(
             "infectionRate", "Infection rate.", Validate.REQUIRED);
     
-    public Input<RealParameter> recoveryRateInput = new Input<RealParameter>(
+    public Input<RealParameter> recoveryRateInput = new Input<>(
             "recoveryRate", "Recovery rate.", Validate.REQUIRED);
     
-    public Input<RealParameter> samplingProbInput = new Input<RealParameter>(
+    public Input<RealParameter> samplingProbInput = new Input<>(
             "samplingProb", "Rho sampling rate.", Validate.REQUIRED);
 
     @Override
@@ -43,9 +43,17 @@ public class SIRSampleModel extends EpidemicModel {
                 infectionRateInput.get().getValue()*state.S*state.I);
 
         propensities.put(EpidemicEvent.Type.RECOVERY,
-                recoveryRateInput.get().getValue()*state.I);
+                recoveryRateInput.get().getValue()
+                        *(1.0-samplingProbInput.get().getValue())
+                        *state.I);
+        
+        propensities.put(EpidemicEvent.Type.SAMPLE,
+                recoveryRateInput.get().getValue()
+                        *samplingProbInput.get().getValue()
+                        *state.I);
 
         totalPropensity = propensities.get(EpidemicEvent.Type.INFECTION)
+                + propensities.get(EpidemicEvent.Type.SAMPLE)
                 + propensities.get(EpidemicEvent.Type.RECOVERY);
     }
 
@@ -60,19 +68,12 @@ public class SIRSampleModel extends EpidemicModel {
                 state.I -= 1;
                 state.R += 1;
                 break;
+            case SAMPLE:
+                state.I -= 1;
+                state.R += 1;
             default:
                 break;
         }
-    }
-
-    @Override
-    public EpidemicEvent.Type getCoalescenceEventType() {
-        return EpidemicEvent.Type.INFECTION;
-    }
-
-    @Override
-    public EpidemicEvent.Type getLeafEventType() {
-        return EpidemicEvent.Type.RECOVERY;
     }
 
     @Override
@@ -88,17 +89,6 @@ public class SIRSampleModel extends EpidemicModel {
     @Override
     public double getProbNoCoalescence(EpidemicState state, int lineages) {
         return 1.0 - getProbCoalescence(state, lineages);
-    }
-
-    
-    @Override
-    public double getProbLeaf() {
-        return samplingProbInput.get().getValue();
-    }
-
-    @Override
-    public double getProbNoLeaf() {
-        return 1.0 - getProbLeaf();
     }
     
 }

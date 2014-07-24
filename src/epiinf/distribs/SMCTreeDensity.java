@@ -225,11 +225,11 @@ public class SMCTreeDensity extends Distribution {
                 return 0.0;
             
             // Increment conditional prob
-            if (eventType == model.getCoalescenceEventType())
+            if (eventType == EpidemicEvent.Type.INFECTION)
                 conditionalP *= model.getProbNoCoalescence(particleState, lineages);
             
-            if (eventType == model.getLeafEventType())
-                conditionalP *= model.getProbNoLeaf();
+            if (eventType == EpidemicEvent.Type.SAMPLE)
+                return 0.0;
             
             // DEBUG
             tList.add(t);
@@ -239,15 +239,14 @@ public class SMCTreeDensity extends Distribution {
         
         // Include probability of tree event
         if (finalTreeEvent.type == TreeEvent.Type.COALESCENCE) {
-            model.incrementState(particleState, model.getCoalescenceEventType());
+            model.incrementState(particleState, EpidemicEvent.Type.INFECTION);
             model.calculatePropensities(particleState);
             conditionalP *= model.getProbCoalescence(particleState, lineages+1)
-                    *model.getPropensities().get(model.getCoalescenceEventType());
+                    *model.getPropensities().get(EpidemicEvent.Type.INFECTION);
         } else {
-            model.incrementState(particleState, model.getLeafEventType());
+            model.incrementState(particleState, EpidemicEvent.Type.SAMPLE);
             model.calculatePropensities(particleState);
-            conditionalP *= model.getProbLeaf()
-                    *model.getPropensities().get(model.getLeafEventType());
+            conditionalP *= model.getPropensities().get(EpidemicEvent.Type.SAMPLE);
         }
         
         // DEBUG

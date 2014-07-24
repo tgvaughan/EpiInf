@@ -69,19 +69,12 @@ public class SISModel extends EpidemicModel {
                 state.I -= 1;
                 state.S += 1;
                 break;
+            case SAMPLE:
+                state.I -= 1;
+                state.S += 1;
             default:
                 break;
         }
-    }
-
-    @Override
-    public EpidemicEvent.Type getCoalescenceEventType() {
-        return EpidemicEvent.Type.INFECTION;
-    }
-
-    @Override
-    public EpidemicEvent.Type getLeafEventType() {
-        return EpidemicEvent.Type.RECOVERY;
     }
 
     @Override
@@ -98,16 +91,4 @@ public class SISModel extends EpidemicModel {
     public double getProbNoCoalescence(EpidemicState state, int lineages) {
         return 1.0 - getProbCoalescence(state, lineages);
     }
-
-    @Override
-    public double getProbLeaf() {
-        return 1.0;
-    }
-
-    @Override
-    public double getProbNoLeaf() {
-        return 1.0;
-    }
-
-
 }
