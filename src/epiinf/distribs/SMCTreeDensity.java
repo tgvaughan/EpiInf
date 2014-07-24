@@ -309,6 +309,8 @@ public class SMCTreeDensity extends Distribution {
                 "maxDuration", 50.0,
                 "samplingTime", 20.0,
                 "sampleSize", 100,
+                "samplingTime", 30.0,
+                "sampleSize", 50,
                 "fileName", "truth.txt");
         
         Tree tree = new Tree();

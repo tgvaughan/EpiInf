@@ -92,48 +92,36 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
     
     @Override
     public void initStateNodes() throws Exception {
-        
-        // Extract sampling events from trajectory
-        List<EpidemicEvent> samplingEvents = Lists.newArrayList();
+
+        int nSamples = 0;
+        double youngestSamp = 0.0;
         for (EpidemicEvent event : traj.getEventList()) {
-            if (event.type == EpidemicEvent.Type.SAMPLE)
-                samplingEvents.add(event);
+            if (event.type == EpidemicEvent.Type.SAMPLE) {
+                nSamples += 1;
+                youngestSamp = Math.max(event.time, youngestSamp);
+            }
         }
-        
+
         int nextLeafNr = 0;
-        int nextInternalID = samplingEvents.size();
-        
-        // Order leaf events from youngest to oldest.
-        Collections.sort(samplingEvents, (EpidemicEvent o1, EpidemicEvent o2) -> {
-            if (o1.time > o2.time)
-                return -1;
-            
-            if (o1.time < o2.time)
-                return 1;
-            
-            return 0;
-        });
-        
-        // Record time of youngest sample:
-        double youngestSamp = samplingEvents.get(0).time;
+        int nextInternalID = nSamples;
         
         List<Node> activeNodes = Lists.newArrayList();
         List<EpidemicEvent> revEventList = Lists.reverse(traj.getEventList());
         List<EpidemicState> revStateList = Lists.reverse(traj.getStateList());
         
+        int samplesSeen = 0;
         for (int eidx=0; eidx<revEventList.size(); eidx++) {
             
             EpidemicEvent event = revEventList.get(eidx);
             EpidemicState state = revStateList.get(eidx);
             
-            if (!samplingEvents.isEmpty() && samplingEvents.get(0).equals(event)) {
-                
+            if (event.type == EpidemicEvent.Type.SAMPLE) {                
                 Node leaf = new Node();
                 leaf.setHeight(youngestSamp-event.time);
                 leaf.setNr(nextLeafNr++);
                 activeNodes.add(leaf);
-                samplingEvents.remove(0);
                 
+                samplesSeen += 1;
             } else {
                 
                 if (event.type == EpidemicEvent.Type.INFECTION) {
@@ -162,7 +150,7 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
             }
             
             // Stop when we reach the MRCA of all sampled events.
-            if (samplingEvents.isEmpty() && activeNodes.size()<2)
+            if (samplesSeen==nSamples && activeNodes.size()<2)
                 break;
         }
         
