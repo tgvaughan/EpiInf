@@ -219,8 +219,9 @@ public abstract class EpidemicModel extends CalculationNode {
         for (EpidemicEvent event : eventList) {
             
             calculatePropensities(thisState);
-            logP += -totalPropensity*(event.time-t)
-                    + Math.log(propensities.get(event.type));
+            logP += -totalPropensity*(event.time-t);
+            if (propensities.containsKey(event.type))
+                    logP += Math.log(propensities.get(event.type));
             
             incrementState(thisState, event.type);
             t = event.time;
@@ -249,23 +250,6 @@ public abstract class EpidemicModel extends CalculationNode {
     }
     
     /**
-     * Joint probability of an interval followed by an event.
-     * 
-     * @param startState state at start of interval
-     * @param startTime time at start of interval
-     * @param epidemicEvent object describing time and type of event
-     * @return log of probability density
-     */
-    public double getJointReactionProbability(EpidemicState startState,
-            double startTime, EpidemicEvent epidemicEvent) {
-        
-        double logP = getIntervalProbability(startState, epidemicEvent.time-startTime);
-        logP += Math.log(propensities.get(epidemicEvent.type));
-        
-        return logP;
-    }
-    
-        /**
      * Determine whether a given tree event and epidemic event are compatible
      * under the this model.
      * 

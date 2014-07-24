@@ -246,7 +246,8 @@ public class SMCTreeDensity extends Distribution {
         } else {
             model.incrementState(particleState, EpidemicEvent.Type.SAMPLE);
             model.calculatePropensities(particleState);
-            conditionalP *= model.getPropensities().get(EpidemicEvent.Type.SAMPLE);
+            if (model.getPropensities().containsKey(EpidemicEvent.Type.SAMPLE))
+                conditionalP *= model.getPropensities().get(EpidemicEvent.Type.SAMPLE);
         }
         
         // DEBUG
