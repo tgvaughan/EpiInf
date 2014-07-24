@@ -33,4 +33,8 @@ public class EpidemicEvent {
      */
     public int from, to;
 
+    @Override
+    public String toString() {
+        return "t: " + time + " type: " + type;
+    }
 }

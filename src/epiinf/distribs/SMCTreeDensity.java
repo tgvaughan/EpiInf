@@ -306,7 +306,9 @@ public class SMCTreeDensity extends Distribution {
         TrajectorySimulator trajSim = new TrajectorySimulator();
         trajSim.initByName(
                 "model", model,
-                "maxDuration", 15.0,
+                "maxDuration", 50.0,
+                "samplingTime", 20.0,
+                "sampleSize", 100,
                 "fileName", "truth.txt");
         
         Tree tree = new Tree();
@@ -317,7 +319,6 @@ public class SMCTreeDensity extends Distribution {
                 "tree", tree,
                 "treeOrigin", treeOrigin,
                 "epidemicTrajectory", trajSim,
-                "nLeaves", 10,
                 "model", model,
                 "fileName", "truth.newick");
         treeSim.initStateNodes();
@@ -333,9 +334,9 @@ public class SMCTreeDensity extends Distribution {
                 "model", model,
                 "nParticles", 100);
         
-        for (int bidx=-5; bidx<=5; bidx++) {
-            double beta = 0.001*Math.pow(1.3, bidx);
-        //double beta = 0.001;
+//        for (int bidx=-5; bidx<=5; bidx++) {
+//            double beta = 0.001*Math.pow(1.3, bidx);
+        double beta = 0.001;
             
             model.initByName(
                 "S0", new IntegerParameter("999"),
@@ -349,6 +350,6 @@ public class SMCTreeDensity extends Distribution {
             
             System.out.println("beta: " + beta
                     + " logP: " + treeDensity.calculateLogP());
-        }
+//        }
     }
 }

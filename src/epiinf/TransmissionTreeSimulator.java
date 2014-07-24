@@ -71,7 +71,6 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
     private EpidemicTrajectory traj;
     private EpidemicModel model;
     private int nLeaves = -1;
-    private double sampleBeforeTime;
     private boolean truncateTrajectory;
     private boolean contempSampling;
     
@@ -94,16 +93,10 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
     @Override
     public void initStateNodes() throws Exception {
         
-        double epidemicDuration = traj.getEventList()
-                .get(traj.getEventList().size()-1).time;
-        
-        double samplingTime = sampleBeforeTime*epidemicDuration;
-
         // Extract sampling events from trajectory
         List<EpidemicEvent> samplingEvents = Lists.newArrayList();
         for (EpidemicEvent event : traj.getEventList()) {
-            if (event.type == EpidemicEvent.Type.SAMPLE
-                    && event.time<=samplingTime)
+            if (event.type == EpidemicEvent.Type.SAMPLE)
                 samplingEvents.add(event);
         }
         

@@ -52,7 +52,7 @@ public class TrajectorySimulator extends EpidemicTrajectory implements StateNode
     
     public Input<Integer> nSerialSamplesInput = new Input<>(
             "nSerialSamples",
-            "Optional number of serial samples.");
+            "Optional number of serial samples.", 0);
     
     public Input<List<Double>> samplingTimesInput = new Input<>(
             "samplingTime", "Times (monotonically increasing) for contemporaneous sampling.",
@@ -106,7 +106,7 @@ public class TrajectorySimulator extends EpidemicTrajectory implements StateNode
             eventList.addAll(model.getEventList());
             stateList.addAll(model.getStateList());
             
-            currentState = model.getStateList().get(model.getStateList().size()-1);
+            currentState = model.getStateList().get(model.getStateList().size()-1).copy();
             t = sampleTime;
             
             // Perform contemporaneous sampling
