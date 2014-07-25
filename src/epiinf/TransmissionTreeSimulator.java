@@ -30,7 +30,6 @@ import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 import com.google.common.collect.Lists;
 import java.io.PrintStream;
-import java.util.Collections;
 import java.util.List;
 
 /**

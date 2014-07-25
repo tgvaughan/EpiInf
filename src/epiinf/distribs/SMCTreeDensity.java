@@ -294,7 +294,6 @@ public class SMCTreeDensity extends Distribution {
      * @throws java.lang.Exception 
      */
     public static void main (String [] args) throws Exception {
-        //Randomizer.setSeed(2785);
         
         
         SISModel model = new SISModel();
@@ -307,10 +306,8 @@ public class SMCTreeDensity extends Distribution {
         trajSim.initByName(
                 "model", model,
                 "maxDuration", 50.0,
-                "samplingTime", 20.0,
+                "samplingTime", 12.0,
                 "sampleSize", 100,
-                "samplingTime", 30.0,
-                "sampleSize", 50,
                 "fileName", "truth.txt");
         
         Tree tree = new Tree();
