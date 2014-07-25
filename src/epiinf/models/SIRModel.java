@@ -66,10 +66,8 @@ public class SIRModel extends EpidemicModel {
                 state.I += 1;
                 break;
             case RECOVERY:
-                state.I -= 1;
-                state.R += 1;
-                break;
             case SAMPLE:
+            case MULTISAMPLE:
                 state.I -= 1;
                 state.R += 1;
                 break;
@@ -85,12 +83,17 @@ public class SIRModel extends EpidemicModel {
         if (N<2)
             return 0.0;
         else
-            return (lineages)*(lineages-1)/(N*(N-1));
+            return 1.0/(N*(N-1));
     }
 
     @Override
     public double getProbNoCoalescence(EpidemicState state, int lineages) {
-        return 1.0 - getProbCoalescence(state, lineages);
+        double N = state.I;
+        
+        if (N<2)
+            return 0.0;
+        else
+            return 1.0 - lineages*(lineages-1)/(N*(N-1));
     }
 
 }

@@ -23,16 +23,11 @@ package epiinf;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class EpidemicEvent {
-    public enum Type { INFECTION, RECOVERY, SAMPLE, MIGRATION };
+    public enum Type { INFECTION, RECOVERY, SAMPLE, MULTISAMPLE};
     
     public double time;
     public Type type;
     
-    /**
-     * Source and destination for migration events.
-     */
-    public int from, to;
-
     @Override
     public String toString() {
         return "t: " + time + " type: " + type;

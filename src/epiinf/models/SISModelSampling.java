@@ -25,11 +25,12 @@ import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 
 /**
- * General stochastic SIS model of an epidemic.
+ * General stochastic SIS model of an epidemic, with explicit serial and
+ * contemporaneous sampling processes.
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class SISModel extends EpidemicModel {
+public class SISModelSampling extends EpidemicModel {
     
     public Input<IntegerParameter> S0Input = new Input<>(
             "S0", "Initial size of susceptible population.", Validate.REQUIRED);
@@ -83,7 +84,6 @@ public class SISModel extends EpidemicModel {
         if (N<2)
             return 0.0;
         else
-            //return (lineages)*(lineages-1)/(N*(N-1));
             return 2.0/(N*(N-1));
     }
 
@@ -91,7 +91,6 @@ public class SISModel extends EpidemicModel {
     public double getProbNoCoalescence(EpidemicState state, int lineages) {
         double N = state.I;
         
-        //return 1.0 - getProbCoalescence(state, lineages);
         return 1.0 - lineages*(lineages-1)/(N*(N-1));
     }
 }

@@ -18,7 +18,7 @@ import epiinf.EpidemicState;
  * 
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class SIRSampleModel extends EpidemicModel {
+public class SIRModelSampling extends EpidemicModel {
     
     public Input<IntegerParameter> S0Input = new Input<>(
             "S0", "Initial size of susceptible population.", Validate.REQUIRED);
@@ -65,12 +65,11 @@ public class SIRSampleModel extends EpidemicModel {
                 state.I += 1;
                 break;
             case RECOVERY:
+            case SAMPLE:
+            case MULTISAMPLE:
                 state.I -= 1;
                 state.R += 1;
                 break;
-            case SAMPLE:
-                state.I -= 1;
-                state.R += 1;
             default:
                 break;
         }
@@ -83,12 +82,17 @@ public class SIRSampleModel extends EpidemicModel {
         if (N<2)
             return 0.0;
         else
-            return lineages*(lineages-1)/(N*(N-1));
+            return 1.0/(N*(N-1));
     }
 
     @Override
     public double getProbNoCoalescence(EpidemicState state, int lineages) {
-        return 1.0 - getProbCoalescence(state, lineages);
+        double N = state.I;
+        
+        if (N<2)
+            return 0.0;
+        else
+            return lineages*(lineages-1)/(N*(N-1));
     }
     
 }

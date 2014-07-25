@@ -24,17 +24,14 @@ import beast.core.Input.Validate;
 import beast.core.State;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
+import beast.util.TreeParser;
 import com.google.common.collect.Lists;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
-import epiinf.TrajectorySimulator;
-import epiinf.TransmissionTreeSimulator;
 import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
-import epiinf.models.SIRModel;
 import epiinf.models.SISModel;
 import java.io.PrintStream;
 import java.util.List;
@@ -166,11 +163,6 @@ public class SMCTreeDensity extends Distribution {
         // DEBUG
         debugOut.println("}");
         
-        double sumOfWeights = 0.0;
-        for (double weight : particleWeights)
-            sumOfWeights += weight;
-        
-        logP = Math.log(sumOfWeights/nParticles);
         return logP;
     }
 
@@ -295,60 +287,73 @@ public class SMCTreeDensity extends Distribution {
      */
     public static void main (String [] args) throws Exception {
         
+        Randomizer.setSeed(42);
         
         SISModel model = new SISModel();
-        model.initByName(
-                "S0", new IntegerParameter("999"),
-                "infectionRate", new RealParameter("0.001"),
-                "recoveryRate", new RealParameter("0.2"));
+//        model.initByName(
+//                "S0", new IntegerParameter("99"),
+//                "infectionRate", new RealParameter("0.01"),
+//                "recoveryRate", new RealParameter("0.2"));
         
-        TrajectorySimulator trajSim = new TrajectorySimulator();
-        trajSim.initByName(
-                "model", model,
-                "maxDuration", 50.0,
-                "samplingTime", 12.0,
-                "sampleSize", 100,
-                "fileName", "truth.txt");
+//        TrajectorySimulator trajSim = new TrajectorySimulator();
+//        trajSim.initByName(
+//                "model", model,
+//                "maxDuration", 50.0,
+//                "samplingTime", 12.0,
+//                "sampleSize", 1000,
+//                "allowOversampling", true,
+//                "fileName", "truth.txt");
+//        
+        //Tree tree = new Tree();
+//        TreeParser tree = new TreeParser(
+//                Files.toString(new File("tims_tree.newick"),
+//                        Charset.defaultCharset()));
+        TreeParser tree = new TreeParser("((((((((54:0.760457025379198,(71:0.3437653858620582,45:0.3437653858620582)88:0.41669163951713983)97:2.474504945642595,((33:0.22603166792133855,1:0.22603166792133855)85:0.30931274992853375,48:0.5353444178498723)92:2.6996175531719206)121:0.20881179211241552,(62:0.02595425535515794,46:0.02595425535515794)78:3.4178195077790505)126:0.4721680834751627,((77:1.6361436522189265,(14:0.9873792093350531,22:0.9873792093350531)99:0.6487644428838735)108:0.3184342009557124,68:1.954577853174639)110:1.9613639934347322)130:2.6167030830107665,(4:1.2581270629966461,64:1.2581270629966461)103:5.2745178666234915)149:1.0127382692963423,(((12:0.041072598449853004,20:0.041072598449853004)79:2.8358789249741783,(32:0.48795777428765064,60:0.48795777428765064)91:2.3889937491363806)117:3.7409358636461736,((((55:1.4571583187659982,(63:1.302517704430663,34:1.302517704430663)104:0.15464061433533516)106:2.296218949145983,51:3.753377267911981)128:0.8065529497682551,(29:2.8831257023612995,43:2.8831257023612995)118:1.6768045153189366)135:1.405501594523245,((((19:2.207130466714924,44:2.207130466714924)113:1.75510934483348,10:3.962239811548404)131:0.8809458098515037,36:4.843185621399908)137:0.7862471727125779,42:5.6294327941124855)142:0.3359990180909955)145:0.6524555748667238)150:0.927495811846275)152:0.11318080604516556,(((((7:3.271502511116257,38:3.271502511116257)124:1.1332999977293925,(15:3.2397158923520575,31:3.2397158923520575)122:1.1650866164935918)134:1.2596142049326975,(58:5.311608185574999,(69:0.36602016135929283,6:0.36602016135929283)89:4.945588024215706)141:0.3528085282033482)143:0.03915719171337617,(((49:0.3167594954859947,59:0.3167594954859947)87:2.237346290073294,(((40:1.0756924007215378,((57:0.07076529412625554,2:0.07076529412625554)82:0.5690125241767827,(74:0.48388643224580186,17:0.48388643224580186)90:0.1558913860572364)93:0.43591458241849956)101:0.2561193641195256,(47:0.6404674774833179,(5:0.06345364386015184,65:0.06345364386015184)81:0.577013833623166)95:0.6913442873577456)105:0.15610896879505098,30:1.4879207336361144)107:1.0661850519231741)115:0.716140695075616,41:3.2702464806349045)123:2.4333274248568184)144:1.3167141933052244,((0:5.245522850006264,(37:3.151882105988957,(9:1.9589888304643797,(75:1.1489114505705604,76:1.1489114505705604)102:0.8100773798938192)111:1.1928932755245771)120:2.093640744017307)140:0.9661343340944768,((((((52:3.295386949497356,(72:1.6745218383528186,13:1.6745218383528186)109:1.6208651111445374)125:0.5951066972135521,(70:2.9204238091372456,(28:2.1979703746349912,61:2.1979703746349912)112:0.7224534345022544)119:0.9700698375736625)129:0.27526927078601204,24:4.16576291749692)132:0.6267752062569878,73:4.792538123753908)136:1.3461730402299255,((66:0.9600862830787236,39:0.9600862830787236)98:1.7138455443812006,((26:0.23744322469280377,18:0.23744322469280377)86:0.4207826951031848,3:0.6582259197959885)96:2.0157059076639356)116:3.4647793365239092)146:0.049851489369084234,((((27:0.04314073518095718,25:0.04314073518095718)80:2.224023195570995,8:2.267163930751952)114:1.3453438646189113,56:3.6125077953708633)127:1.4799551124012975,(35:0.6399728736472543,21:0.6399728736472543)94:4.4524900341249065)139:1.0960997455807568)147:0.023094530747822972)148:0.8086309146962067)151:0.6382759061646981)153:3.1840316089012273,(((67:1.0107319187570187,23:1.0107319187570187)100:3.161465828804345,11:4.172197747561364)133:0.7779517346178721,(50:0.20453084663303578,(53:0.09996733089231746,16:0.09996733089231746)83:0.10456351574071832)84:4.7456186355462)138:5.892446131683637)154:0.0");
+        RealParameter treeOrigin = new RealParameter("1.1574043861371273");
         
-        Tree tree = new Tree();
-        RealParameter treeOrigin = new RealParameter();
-        
-        TransmissionTreeSimulator treeSim = new TransmissionTreeSimulator();
-        treeSim.initByName(
-                "tree", tree,
-                "treeOrigin", treeOrigin,
-                "epidemicTrajectory", trajSim,
-                "model", model,
-                "fileName", "truth.newick");
-        treeSim.initStateNodes();
+//        TransmissionTreeSimulator treeSim = new TransmissionTreeSimulator();
+//        treeSim.initByName(
+//                "tree", tree,
+//                "treeOrigin", treeOrigin,
+//                "epidemicTrajectory", trajSim,
+//                "model", model,
+//                "fileName", "truth.newick");
+//        treeSim.initStateNodes();
         
         TreeEventList treeEventList = new TreeEventList();
         treeEventList.initByName(
                 "tree", tree,
                 "treeOrigin", treeOrigin); 
         
-        SMCTreeDensity treeDensity = new SMCTreeDensity();
-        treeDensity.initByName(
-                "treeEventList", treeEventList,
-                "model", model,
-                "nParticles", 100);
+        try (PrintStream ps = new PrintStream("tims_tree.txt")) {
+            treeEventList.writeExpoTreeFile(ps);
+        }
         
-//        for (int bidx=-5; bidx<=5; bidx++) {
-//            double beta = 0.001*Math.pow(1.3, bidx);
-        double beta = 0.001;
-            
-            model.initByName(
-                "S0", new IntegerParameter("999"),
-                "infectionRate", new RealParameter(String.valueOf(beta)),
-                "recoveryRate", new RealParameter("0.2"));
-            
-            treeDensity.initByName(
-                "treeEventList", treeEventList,
-                "model", model,
-                "nParticles", 100);
-            
-            System.out.println("beta: " + beta
-                    + " logP: " + treeDensity.calculateLogP());
-//        }
+        SMCTreeDensity treeDensity = new SMCTreeDensity();
+        
+        Randomizer.setSeed(4321);
+        try (PrintStream ps = new PrintStream("logLik.txt")) {
+            ps.println("beta logP");
+            for (double beta=0.005; beta<0.015; beta += 0.0005) {
+                //double beta = 0.01*Math.pow(1.3, bidx);
+                //double beta = 0.01;
+                
+                model.initByName(
+                        "S0", new IntegerParameter("99"),
+                        "infectionRate", new RealParameter(String.valueOf(beta)),
+                        "recoveryRate", new RealParameter("0.2"));
+                
+                treeDensity.initByName(
+                        "treeEventList", treeEventList,
+                        "model", model,
+                        "nParticles", 1000);
+                
+                double logP = treeDensity.calculateLogP();
+                
+                System.out.println("beta: " + beta
+                        + " logP: " + logP);
+                ps.println(beta + " " + logP);
+            }
+        }
     }
 }
