@@ -36,6 +36,8 @@ import epiinf.models.SISModel;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
+import org.apache.commons.math.distribution.BinomialDistribution;
+import org.apache.commons.math.distribution.BinomialDistributionImpl;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
@@ -255,7 +257,8 @@ public class SMCTreeDensity extends Distribution {
                     double rhoTime = model.rhoSamplingTimeInput.get().get(i);
                     
                     if (Math.abs(rhoTime - finalTreeEvent.time)<model.getTolerance()) {
-                        
+                        BinomialDistribution binom = new BinomialDistributionImpl((int) Math.round(particleState.I), rhoProb);
+                        sampleProb += binom.probability(finalTreeEvent.multiplicity);
                     }
                 }
                 
@@ -264,9 +267,11 @@ public class SMCTreeDensity extends Distribution {
                 
                 if (finalTreeEvent.multiplicity==1 && model.psiSamplingProbInput.get()>0.0) {
                     model.calculatePropensities(particleState);
-                    conditionalP *= model.getPropensities().get(EpidemicEvent.Type.RECOVERY)
+                    sampleProb += model.getPropensities().get(EpidemicEvent.Type.RECOVERY)
                             *model.psiSamplingProbInput.get();
                 }
+                
+                conditionalP *= sampleProb;
 
             }
             
