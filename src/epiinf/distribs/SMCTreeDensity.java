@@ -240,35 +240,42 @@ public class SMCTreeDensity extends Distribution {
             conditionalP *= model.getProbCoalescence(particleState, lineages+1)
                     *model.getPropensities().get(EpidemicEvent.Type.INFECTION);
         } else {
+            
+            // If the model contains an explicit sampling process, evaluate the
+            // probability of the sampling event on the tree
+            if (!model.rhoSamplingProbInput.get().isEmpty() || model.psiSamplingProbInput.get()>0) {
+            
+                double sampleProb = 0.0;
+                
+                // If model contains a rho sampling event at this time, calculate the probability
+                // of sampling the number of samples in finalTreeEvent given the current
+                // state.
+                for (int i=0; i<model.rhoSamplingProbInput.get().size(); i++) {
+                    double rhoProb = model.rhoSamplingProbInput.get().get(i);
+                    double rhoTime = model.rhoSamplingTimeInput.get().get(i);
+                    
+                    if (Math.abs(rhoTime - finalTreeEvent.time)<model.getTolerance()) {
+                        
+                    }
+                }
+                
+                // If the model contains a non-zero psi sampling rate, calculate the
+                // probability of a sampled recovery occuring at the time of finalTreeEvent
+                
+                if (finalTreeEvent.multiplicity==1 && model.psiSamplingProbInput.get()>0.0) {
+                    model.calculatePropensities(particleState);
+                    conditionalP *= model.getPropensities().get(EpidemicEvent.Type.RECOVERY)
+                            *model.psiSamplingProbInput.get();
+                }
+
+            }
+            
             model.incrementState(particleState,
                     EpidemicEvent.MultipleSamples(finalTreeEvent.multiplicity));
             
-            // Zero particle weight if we can't sample require number of lineages
+            // Zero particle weight if we can't sample required number of lineages
             if (!particleState.isValid())
                 return 0.0;
-
-            // If model contains a rho sampling event at this time, calculate the probability
-            // of sampling the number of samples in finalTreeEvent given the current
-            // state.
-            for (int i=0; i<model.rhoSamplingProbInput.get().size(); i++) {
-                double rhoProb = model.rhoSamplingProbInput.get().get(i);
-                double rhoTime = model.rhoSamplingTimeInput.get().get(i);
-                
-                if (Math.abs(rhoTime - finalTreeEvent.time)<model.getTolerance()) {
-                    
-                }
-            }
-            
-            // If the model contains a non-zero psi sampling rate, calculate the
-            // probability of a sampled recovery occuring at the time of finalTreeEvent
-            
-            if (finalTreeEvent.multiplicity==1 && model.psiSamplingProbInput.get()>0.0) {
-                model.calculatePropensities(particleState);
-                conditionalP *= model.getPropensities().get(EpidemicEvent.Type.RECOVERY)
-                        *model.psiSamplingProbInput.get();
-            }
-            
-            // Actually need to sum the two sampling event probabilities together
         }
         
         // DEBUG
