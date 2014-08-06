@@ -59,17 +59,16 @@ public class SIRModel extends EpidemicModel {
     }
 
     @Override
-    public void incrementState(EpidemicState state, EpidemicEvent.Type type) {
-        switch(type) {
+    public void incrementState(EpidemicState state, EpidemicEvent event) {
+        switch(event.type) {
             case INFECTION:
-                state.S -= 1;
-                state.I += 1;
+                state.S -= event.multiplicity;
+                state.I += event.multiplicity;
                 break;
             case RECOVERY:
             case SAMPLE:
-            case MULTISAMPLE:
-                state.I -= 1;
-                state.R += 1;
+                state.I -= event.multiplicity;
+                state.R += event.multiplicity;
                 break;
             default:
                 break;
@@ -83,7 +82,7 @@ public class SIRModel extends EpidemicModel {
         if (N<2)
             return 0.0;
         else
-            return 1.0/(N*(N-1));
+            return 2.0/(N*(N-1));
     }
 
     @Override

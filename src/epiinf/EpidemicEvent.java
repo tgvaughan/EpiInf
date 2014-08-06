@@ -23,10 +23,11 @@ package epiinf;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class EpidemicEvent {
-    public enum Type { INFECTION, RECOVERY, SAMPLE, MULTISAMPLE};
+    public enum Type { INFECTION, RECOVERY, SAMPLE };
     
     public double time;
     public Type type;
+    public int multiplicity;
     
     @Override
     public String toString() {

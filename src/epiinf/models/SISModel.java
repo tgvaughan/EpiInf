@@ -59,17 +59,16 @@ public class SISModel extends EpidemicModel {
     }
 
     @Override
-    public void incrementState(EpidemicState state, EpidemicEvent.Type type) {
-        switch(type) {
+    public void incrementState(EpidemicState state, EpidemicEvent event) {
+        switch(event.type) {
             case INFECTION:
-                state.S -= 1;
-                state.I += 1;
+                state.S -= event.multiplicity;
+                state.I += event.multiplicity;
                 break;
             case RECOVERY:
             case SAMPLE:
-            case MULTISAMPLE:
-                state.I -= 1;
-                state.S += 1;
+                state.I -= event.multiplicity;
+                state.S += event.multiplicity;
                 break;
             default:
                 break;

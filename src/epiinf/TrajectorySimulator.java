@@ -50,22 +50,6 @@ public class TrajectorySimulator extends EpidemicTrajectory implements StateNode
             "fileName",
             "Optional name of file to write simulated trajectory to.");
     
-    public Input<Integer> nSerialSamplesInput = new Input<>(
-            "nSerialSamples",
-            "Optional number of serial samples.", 0);
-    
-    public Input<List<Double>> samplingTimesInput = new Input<>(
-            "samplingTime", "Times (monotonically increasing) for contemporaneous sampling.",
-            new ArrayList<>());
-    
-    public Input<List<Integer>> sampleSizesInput = new Input<>(
-            "sampleSize", "Sizes of contemporaneous samples.",
-            new ArrayList<>());
-    
-    public Input<Boolean> allowOversamplingInput = new Input<>(
-            "allowOversampling", "Simply truncate number of samples if less "
-                    + "than number of infecteds at sampling time.", false);
-    
     EpidemicModel model;
     double duration;
     
@@ -77,11 +61,7 @@ public class TrajectorySimulator extends EpidemicTrajectory implements StateNode
         
         model = modelInput.get();
         duration = durationInput.get();
-        
-        if (samplingTimesInput.get().size() != sampleSizesInput.get().size())
-            throw new IllegalArgumentException(
-                    "Number of sample times and sample size entries do not match.");
-        
+
         simulate();
         
         if (fileNameInput.get() != null) {
@@ -97,69 +77,12 @@ public class TrajectorySimulator extends EpidemicTrajectory implements StateNode
         eventList.clear();
         stateList.clear();
         
-        stateList.add(model.getInitialState());
-        
         double t = 0.0;
         EpidemicState currentState = model.getInitialState();
         
-        // Simulate portion of trajectory incorporating serial samples.
-        for (int i=0; i<samplingTimesInput.get().size(); i++) {
-            double sampleTime = samplingTimesInput.get().get(i);
-            
-            model.generateTrajectory(currentState, t, sampleTime);
-            eventList.addAll(model.getEventList());
-            stateList.addAll(model.getStateList().subList(1, model.getStateList().size()));
-            
-            currentState = model.getStateList().get(model.getStateList().size()-1).copy();
-            t = sampleTime;
-            
-            // Perform contemporaneous sampling
-            for (int s=0; s<sampleSizesInput.get().get(i); s++) {
-                if (currentState.I==0) {
-                    if (allowOversamplingInput.get())
-                        break;
-                    else
-                        throw new IllegalStateException("Contemporaneous sampling "
-                            + "failed due to insufficient number of infecteds "
-                            + "at time " + t);
-                }
-                model.incrementState(currentState, EpidemicEvent.Type.MULTISAMPLE);
-                
-                EpidemicEvent samplingEvent = new EpidemicEvent();
-                samplingEvent.time = t;
-                samplingEvent.type = EpidemicEvent.Type.MULTISAMPLE;
-                eventList.add(samplingEvent);
-                stateList.add(currentState.copy());
-            }
-        }
-        
-        // Simulate rest of trajectory
         model.generateTrajectory(currentState, t, duration);
         eventList.addAll(model.getEventList());
-        stateList.addAll(model.getStateList().subList(1, model.getStateList().size()));
-        
-        // Sample nSamples uniformly from amongst recovery events.
-        if (nSerialSamplesInput.get()>0) {
-            List<EpidemicEvent> recovEvents = new ArrayList<>();
-            for (EpidemicEvent event : eventList)
-                if (event.type == EpidemicEvent.Type.RECOVERY)
-                    recovEvents.add(event);
-            
-            for (int i=0; i<nSerialSamplesInput.get(); i++) {
-                if (recovEvents.size()==0) {
-                    if (allowOversamplingInput.get())
-                        break;
-                    else
-                        throw new IllegalStateException("Sample number requested "
-                                + "greater than number of recovery events.");
-
-                }
-                
-                EpidemicEvent event = recovEvents.get(Randomizer.nextInt(recovEvents.size()));
-                event.type = EpidemicEvent.Type.SAMPLE;
-                recovEvents.remove(event);
-            }
-        }
+        stateList.addAll(model.getStateList().subList(0, model.getStateList().size()));
     }
     
     @Override

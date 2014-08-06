@@ -59,16 +59,14 @@ public class BirthDeathModel extends EpidemicModel {
     }
 
     @Override
-    public void incrementState(EpidemicState state, EpidemicEvent.Type type) {
-        switch(type) {
+    public void incrementState(EpidemicState state, EpidemicEvent event) {
+        switch(event.type) {
             case INFECTION:
-                state.I += 1;
+                state.I += event.multiplicity;
                 break;
             case RECOVERY:
-                state.I -= 1;
-                break;
             case SAMPLE:
-                state.I -= 1;
+                state.I -= event.multiplicity;
                 break;
             default:
                 break;

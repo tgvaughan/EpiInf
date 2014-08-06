@@ -16,7 +16,7 @@ import beast.evolution.tree.Node;
 public class TreeEvent {
     public enum Type { COALESCENCE, LEAF };
     
-    public Node node;
     public Type type;
+    public int multiplicity = 1;
     public double time;
 }

@@ -25,6 +25,7 @@ import com.google.common.collect.Maps;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.TreeEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,17 @@ import java.util.Map;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public abstract class EpidemicModel extends CalculationNode {
+    
+    public Input<Double> psiSamplingProbInput = new Input<>("psiSamplingProb",
+            "Probability with which recoveries are translated into samples",
+            0.0);
+    
+    public Input<List<Double>> rhoSamplingProbInput = new Input<>("rhoSamplingProb",
+            "Probability with which a lineage at the corresponding time"
+                    + "is sampled.", new ArrayList<>());
+    
+    public Input<List<Double>> rhoSamplingTimeInput = new Input<>("rhoSamplingTime",
+            "Times at which rho sampling takes place", new ArrayList<>());
     
     public Input<Double> toleranceInput = new Input<>("tolerance",
             "Maximum absolute time difference between events on tree and "
@@ -94,10 +106,10 @@ public abstract class EpidemicModel extends CalculationNode {
      * Increment state according to reaction of chosen type.
      * 
      * @param state state to update
-     * @param type type of reaction to implement
+     * @param event
      */
     public abstract void incrementState(EpidemicState state,
-            EpidemicEvent.Type type);
+            EpidemicEvent event);
     
 
     /**
@@ -174,7 +186,7 @@ public abstract class EpidemicModel extends CalculationNode {
                 
                 if (u<0) {
                     nextEvent.type = type;
-                    incrementState(thisState, type);
+                    incrementState(thisState, nextEvent);
                     logP += Math.log(propensities.get(type));
                     break;
                 }
@@ -200,78 +212,4 @@ public abstract class EpidemicModel extends CalculationNode {
     public List<EpidemicState> getStateList() {
         return stateList;
     }
-    
-    /**
-     * Probability density of a path under this model, where the path is
-     * defined by the parameters.
-     * 
-     * @param startTime start time of the path
-     * @param endTime end time of the path
-     * @param startState state at the beginning of the path
-     * @param eventList list of events along the path
-     * @return log of probability density
-     */
-    public double getPathProbability(double startTime, double endTime,
-            EpidemicState startState, List<EpidemicEvent> eventList) {
-        double logP = 0.0;
-        
-        double t = startTime;
-        EpidemicState thisState = startState.copy();
-        
-        for (EpidemicEvent event : eventList) {
-            
-            calculatePropensities(thisState);
-            logP += -totalPropensity*(event.time-t);
-            if (propensities.containsKey(event.type))
-                    logP += Math.log(propensities.get(event.type));
-            
-            incrementState(thisState, event.type);
-            t = event.time;
-        }
-        
-        calculatePropensities(thisState);
-        if (totalPropensity>0.0)
-            logP += -totalPropensity*(endTime-t);
-        
-        return logP;
-    }
-    
-    /**
-     * Probability of a given interval length under model.
-     * 
-     * @param state state of the system within interval
-     * @param waitingTime length of interval
-     * @return log of probability density
-     */
-    public double getIntervalProbability(EpidemicState state,
-            double waitingTime) {
-
-        calculatePropensities(state);
-        return -totalPropensity*waitingTime;
-        
-    }
-    
-    /**
-     * Determine whether a given tree event and epidemic event are compatible
-     * under the this model.
-     * 
-     * @param treeEvent 
-     * @param epidemicEvent 
-     * @return true if events are compatible
-     */
-    public boolean eventsMatch(TreeEvent treeEvent, EpidemicEvent epidemicEvent) {
-        if (Math.abs(treeEvent.time-epidemicEvent.time)>tolerance)
-            return false;
-        
-        if ((treeEvent.type == TreeEvent.Type.COALESCENCE)
-                && (epidemicEvent.type != EpidemicEvent.Type.INFECTION))
-            return false;
-        
-        if ((treeEvent.type == TreeEvent.Type.LEAF)
-                && (epidemicEvent.type != EpidemicEvent.Type.SAMPLE))
-            return false;
-        
-        return true;
-    }
-
 }

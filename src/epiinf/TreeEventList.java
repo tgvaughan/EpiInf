@@ -24,6 +24,7 @@ import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
+import beast.math.MachineAccuracy;
 import com.google.common.collect.Lists;
 import java.io.PrintStream;
 import java.util.Collections;
@@ -85,7 +86,6 @@ public class TreeEventList extends CalculationNode {
                 event.type = TreeEvent.Type.COALESCENCE;
        
             event.time = getTimeFromHeight(node.getHeight());
-            event.node = node;
             
             eventList.add(event);
         }
@@ -100,6 +100,16 @@ public class TreeEventList extends CalculationNode {
             
             return 0;
         });
+        
+        // Collate concurrent events
+        for (int i=1; i<eventList.size(); i++) {
+            if (Math.abs(eventList.get(i).time-eventList.get(i-1).time)<tolerance
+                    && eventList.get(i).type == eventList.get(i-1).type) {
+                eventList.get(i-1).multiplicity += 1;
+                eventList.remove(i);
+                i -= 1;
+            }
+        }
 
         dirty = false;
     }
