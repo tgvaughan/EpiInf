@@ -198,30 +198,38 @@ public class SMCTreeDensity extends Distribution {
             if (t>finalTreeEvent.time)
                 break;
             
+            // Check for missed rho sampling event
+            if (t > model.getNextRhoSamplingTime(t))
+                return 0.0;
+            
             double u = model.getTotalPropensity()*Randomizer.nextDouble();
             
-            EpidemicEvent.Type eventType = null;
+            EpidemicEvent event = new EpidemicEvent();
             for (EpidemicEvent.Type type : model.getPropensities().keySet()) {
                 u -= model.getPropensities().get(type);
                 
                 if (u<0) {
-                    eventType = type;
+                    event.type = type;
                     break;
                 }
             }
             
-            model.incrementState(particleState, eventType);
+            // Psi-sampling converts constant fraction of recoveries to samples.
+            // If a sample occurs within this interval, the particle will be
+            // rejected.
+            if (event.type == EpidemicEvent.Type.RECOVERY &&
+                    1.0+u/model.getPropensities().get(event.type)<model.psiSamplingProbInput.get())
+                return 0.0;
+            
+            model.incrementState(particleState, event);
             
             // Early exit if invalid state:
             if (particleState.I<lineages)
                 return 0.0;
             
             // Increment conditional prob
-            if (eventType == EpidemicEvent.Type.INFECTION)
+            if (event.type == EpidemicEvent.Type.INFECTION)
                 conditionalP *= model.getProbNoCoalescence(particleState, lineages);
-            
-            if (eventType == EpidemicEvent.Type.SAMPLE)
-                return 0.0;
             
             // DEBUG
             tList.add(t);

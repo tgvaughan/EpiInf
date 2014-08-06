@@ -134,6 +134,21 @@ public abstract class EpidemicModel extends CalculationNode {
     public abstract double getProbNoCoalescence(EpidemicState state, int lineages);
     
     /**
+     * Retrieve the rho sampling time immediately following t.
+     * 
+     * @param t
+     * @return next rho sampling time (+infinity if there is none)
+     */
+    public double getNextRhoSamplingTime(double t) {
+        for (int i=0; i<rhoSamplingTimeInput.get().size(); i++) {
+            if (rhoSamplingTimeInput.get().get(i)>t)
+                return rhoSamplingTimeInput.get().get(i);
+        }
+        
+        return Double.POSITIVE_INFINITY;
+    }
+    
+    /**
      * Generate a sequence of events between startTime and endTime conditional
      * on the startState.  The results are retrieved using subsequent calls
      * to getEventList() and getStateList().  Note that the latter only provides
