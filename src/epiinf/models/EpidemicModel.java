@@ -72,6 +72,16 @@ public abstract class EpidemicModel extends CalculationNode {
     };
     
     /**
+     * Retrieve tolerance with respect to difference between epidemic
+     * and tree event times.
+     * 
+     * @return tolerance
+     */
+    public double getTolerance() {
+        return tolerance;
+    }
+    
+    /**
      * @return initial state of epidemic
      */
     public abstract EpidemicState getInitialState();

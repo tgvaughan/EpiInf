@@ -28,9 +28,25 @@ public class EpidemicEvent {
     public double time;
     public Type type;
     public int multiplicity;
+
+    public EpidemicEvent() { }
     
+    public EpidemicEvent(double time, Type type, int multiplicity) {
+        this.time = time;
+        this.type = type;
+        this.multiplicity = multiplicity;
+    }
+
     @Override
     public String toString() {
         return "t: " + time + " type: " + type;
+    }
+    
+    public static EpidemicEvent Infection = new EpidemicEvent(-1, Type.INFECTION, 1);
+    public static EpidemicEvent Recovery = new EpidemicEvent(-1, Type.RECOVERY, 1);
+    public static EpidemicEvent Sample = new EpidemicEvent(-1, Type.SAMPLE, 1);
+    
+    public static EpidemicEvent MultipleSamples(int multiplicity) {
+        return new EpidemicEvent(-1, Type.SAMPLE, multiplicity);
     }
 }

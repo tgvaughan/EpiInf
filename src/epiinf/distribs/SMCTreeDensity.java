@@ -214,13 +214,6 @@ public class SMCTreeDensity extends Distribution {
                 }
             }
             
-            // Psi-sampling converts constant fraction of recoveries to samples.
-            // If a sample occurs within this interval, the particle will be
-            // rejected.
-            if (event.type == EpidemicEvent.Type.RECOVERY &&
-                    1.0+u/model.getPropensities().get(event.type)<model.psiSamplingProbInput.get())
-                return 0.0;
-            
             model.incrementState(particleState, event);
             
             // Early exit if invalid state:
@@ -231,6 +224,9 @@ public class SMCTreeDensity extends Distribution {
             if (event.type == EpidemicEvent.Type.INFECTION)
                 conditionalP *= model.getProbNoCoalescence(particleState, lineages);
             
+            if (event.type == EpidemicEvent.Type.RECOVERY)
+                conditionalP *= 1.0 - model.psiSamplingProbInput.get();
+            
             // DEBUG
             tList.add(t);
             nList.add(particleState.I);
@@ -239,15 +235,40 @@ public class SMCTreeDensity extends Distribution {
         
         // Include probability of tree event
         if (finalTreeEvent.type == TreeEvent.Type.COALESCENCE) {
-            model.incrementState(particleState, EpidemicEvent.Type.INFECTION);
+            model.incrementState(particleState, EpidemicEvent.Infection);
             model.calculatePropensities(particleState);
             conditionalP *= model.getProbCoalescence(particleState, lineages+1)
                     *model.getPropensities().get(EpidemicEvent.Type.INFECTION);
         } else {
-            model.incrementState(particleState, EpidemicEvent.Type.SAMPLE);
-            model.calculatePropensities(particleState);
-            if (model.getPropensities().containsKey(EpidemicEvent.Type.SAMPLE))
-                conditionalP *= model.getPropensities().get(EpidemicEvent.Type.SAMPLE);
+            model.incrementState(particleState,
+                    EpidemicEvent.MultipleSamples(finalTreeEvent.multiplicity));
+            
+            // Zero particle weight if we can't sample require number of lineages
+            if (!particleState.isValid())
+                return 0.0;
+
+            // If model contains a rho sampling event at this time, calculate the probability
+            // of sampling the number of samples in finalTreeEvent given the current
+            // state.
+            for (int i=0; i<model.rhoSamplingProbInput.get().size(); i++) {
+                double rhoProb = model.rhoSamplingProbInput.get().get(i);
+                double rhoTime = model.rhoSamplingTimeInput.get().get(i);
+                
+                if (Math.abs(rhoTime - finalTreeEvent.time)<model.getTolerance()) {
+                    
+                }
+            }
+            
+            // If the model contains a non-zero psi sampling rate, calculate the
+            // probability of a sampled recovery occuring at the time of finalTreeEvent
+            
+            if (finalTreeEvent.multiplicity==1 && model.psiSamplingProbInput.get()>0.0) {
+                model.calculatePropensities(particleState);
+                conditionalP *= model.getPropensities().get(EpidemicEvent.Type.RECOVERY)
+                        *model.psiSamplingProbInput.get();
+            }
+            
+            // Actually need to sum the two sampling event probabilities together
         }
         
         // DEBUG

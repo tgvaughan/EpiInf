@@ -6,8 +6,6 @@
 
 package epiinf;
 
-import beast.evolution.tree.Node;
-
 /**
  * Class representing events on a transmission tree.
  *
