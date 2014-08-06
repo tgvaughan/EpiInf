@@ -19,6 +19,8 @@ package epiinf.models;
 
 import beast.core.CalculationNode;
 import beast.core.Input;
+import beast.core.Input.Validate;
+import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -37,16 +39,20 @@ import java.util.Map;
  */
 public abstract class EpidemicModel extends CalculationNode {
     
-    public Input<Double> psiSamplingProbInput = new Input<>("psiSamplingProb",
-            "Probability with which recoveries are translated into samples",
-            0.0);
+    public Input<RealParameter> psiSamplingProbInput = new Input<>(
+            "psiSamplingProb",
+            "Probability with which recoveries are translated into samples");
     
-    public Input<List<Double>> rhoSamplingProbInput = new Input<>("rhoSamplingProb",
+    public Input<List<RealParameter>> rhoSamplingProbInput = new Input<>(
+            "rhoSamplingProb",
             "Probability with which a lineage at the corresponding time"
-                    + "is sampled.", new ArrayList<>());
+                    + "is sampled.",
+            new ArrayList<RealParameter>());
     
-    public Input<List<Double>> rhoSamplingTimeInput = new Input<>("rhoSamplingTime",
-            "Times at which rho sampling takes place", new ArrayList<>());
+    public Input<List<RealParameter>> rhoSamplingTimeInput = new Input<>(
+            "rhoSamplingTime",
+            "Times at which rho sampling takes place",
+            new ArrayList<RealParameter>());
     
     public Input<Double> toleranceInput = new Input<>("tolerance",
             "Maximum absolute time difference between events on tree and "
@@ -151,8 +157,8 @@ public abstract class EpidemicModel extends CalculationNode {
      */
     public double getNextRhoSamplingTime(double t) {
         for (int i=0; i<rhoSamplingTimeInput.get().size(); i++) {
-            if (rhoSamplingTimeInput.get().get(i)>t)
-                return rhoSamplingTimeInput.get().get(i);
+            if (rhoSamplingTimeInput.get().get(i).getValue()>t)
+                return rhoSamplingTimeInput.get().get(i).getValue();
         }
         
         return Double.POSITIVE_INFINITY;
@@ -182,8 +188,8 @@ public abstract class EpidemicModel extends CalculationNode {
 
         double nextRhoSamplingTime = Double.POSITIVE_INFINITY;
         int nextRhoSamplingIndex = -1;
-        if (rhoSamplingTimeInput.get().isEmpty()) {
-            nextRhoSamplingTime = rhoSamplingTimeInput.get().get(0);
+        if (!rhoSamplingTimeInput.get().isEmpty()) {
+            nextRhoSamplingTime = rhoSamplingTimeInput.get().get(0).getValue();
             nextRhoSamplingIndex = 0;
         }
 
@@ -212,14 +218,14 @@ public abstract class EpidemicModel extends CalculationNode {
                 // Got to be a better way of sampling from a binomial distribution
                 nextEvent.multiplicity = 0;
                 for (int i=0; i<thisState.I; i++) {
-                    if (Randomizer.nextDouble()<rhoSamplingProbInput.get().get(nextRhoSamplingIndex))
+                    if (Randomizer.nextDouble()<rhoSamplingProbInput.get().get(nextRhoSamplingIndex).getValue())
                         nextEvent.multiplicity += 1;
                 }
                 
                 nextRhoSamplingIndex += 1;
                 
                 if (nextRhoSamplingIndex<rhoSamplingTimeInput.get().size())
-                    nextRhoSamplingTime = rhoSamplingTimeInput.get().get(nextRhoSamplingIndex);
+                    nextRhoSamplingTime = rhoSamplingTimeInput.get().get(nextRhoSamplingIndex).getValue();
                 else
                     nextRhoSamplingTime = Double.POSITIVE_INFINITY;
 
@@ -239,8 +245,9 @@ public abstract class EpidemicModel extends CalculationNode {
                 }
 
                 // Replace recovery events with sampling events with fixed probability
-                if (nextEvent.type == EpidemicEvent.Type.RECOVERY
-                        && Randomizer.nextDouble()<psiSamplingProbInput.get())
+                if (psiSamplingProbInput.get() != null
+                        && nextEvent.type == EpidemicEvent.Type.RECOVERY
+                        && Randomizer.nextDouble()<psiSamplingProbInput.get().getValue())
                     nextEvent.type = EpidemicEvent.Type.SAMPLE;
             }
             
