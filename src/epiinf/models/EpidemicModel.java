@@ -24,7 +24,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
-import epiinf.TreeEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -144,13 +143,9 @@ public abstract class EpidemicModel extends CalculationNode {
      * @param startState Starting state of trajectory
      * @param startTime Starting time of trajectory
      * @param endTime End time of trajectory
-     * 
-     * @return log of path probability
      */
-    public double generateTrajectory(EpidemicState startState,
+    public void generateTrajectory(EpidemicState startState,
             double startTime, double endTime) {
-        
-        double logP = 0.0;
         
         eventList.clear();
         stateList.clear();
@@ -159,6 +154,14 @@ public abstract class EpidemicModel extends CalculationNode {
         
         EpidemicState thisState = startState.copy();
         thisState.time = startTime;
+
+        double nextRhoSamplingTime = Double.POSITIVE_INFINITY;
+        int nextRhoSamplingIndex = -1;
+        if (rhoSamplingTimeInput.get().isEmpty()) {
+            nextRhoSamplingTime = rhoSamplingTimeInput.get().get(0);
+            nextRhoSamplingIndex = 0;
+        }
+
 
         while (true) {
             calculatePropensities(thisState);
@@ -169,34 +172,57 @@ public abstract class EpidemicModel extends CalculationNode {
             else
                 dt = Double.POSITIVE_INFINITY;
             
-            logP += -Math.min(dt, endTime-thisState.time)*totalPropensity;
-            
             thisState.time += dt;
                     
             if (thisState.time>=endTime)
                 break;
             
             EpidemicEvent nextEvent = new EpidemicEvent();
-            nextEvent.time = thisState.time;
             
-            double u = totalPropensity*Randomizer.nextDouble();
-            
-            for (EpidemicEvent.Type type : propensities.keySet()) {
-                u -= propensities.get(type);
-                
-                if (u<0) {
-                    nextEvent.type = type;
-                    incrementState(thisState, nextEvent);
-                    logP += Math.log(propensities.get(type));
-                    break;
+            if (thisState.time > nextRhoSamplingTime) {
+                // Simultaneous sampling from the extant population
+
+                nextEvent.type = EpidemicEvent.Type.SAMPLE;
+
+                // Got to be a better way of sampling from a binomial distribution
+                nextEvent.multiplicity = 0;
+                for (int i=0; i<thisState.I; i++) {
+                    if (Randomizer.nextDouble()<rhoSamplingProbInput.get().get(nextRhoSamplingIndex))
+                        nextEvent.multiplicity += 1;
                 }
+                
+                nextRhoSamplingIndex += 1;
+                
+                if (nextRhoSamplingIndex<rhoSamplingTimeInput.get().size())
+                    nextRhoSamplingTime = rhoSamplingTimeInput.get().get(nextRhoSamplingIndex);
+                else
+                    nextRhoSamplingTime = Double.POSITIVE_INFINITY;
+
+            } else {
+
+                nextEvent.time = thisState.time;
+            
+                double u = totalPropensity*Randomizer.nextDouble();
+                
+                for (EpidemicEvent.Type type : propensities.keySet()) {
+                    u -= propensities.get(type);
+                    
+                    if (u<0) {
+                        nextEvent.type = type;
+                        break;
+                    }
+                }
+
+                // Replace recovery events with sampling events with fixed probability
+                if (nextEvent.type == EpidemicEvent.Type.RECOVERY
+                        && Randomizer.nextDouble()<psiSamplingProbInput.get())
+                    nextEvent.type = EpidemicEvent.Type.SAMPLE;
             }
             
+            incrementState(thisState, nextEvent);                
             eventList.add(nextEvent);
             stateList.add(thisState.copy());
         }
-        
-        return logP;
     }
     
     /**
