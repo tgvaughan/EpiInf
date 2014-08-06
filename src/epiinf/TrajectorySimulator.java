@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Tim Vaughan <tgvaughan@gmail.com>
+ * Copyright (C) 2014 Tim Vaughan <tgvaughan@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,28 +17,17 @@
 
 package epiinf;
 
-import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
-import beast.core.StateNode;
-import beast.core.StateNodeInitialiser;
-import beast.util.Randomizer;
 import epiinf.models.EpidemicModel;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
- * Simulate an epidemic trajectory under a stochastic SIR model.
+ * Simulate an epidemic trajectory under the same model used for inference.
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-@Description("Simulate an epidemic trajectory under a stochastic SIR model.")
-public class TrajectorySimulator extends EpidemicTrajectory implements StateNodeInitialiser {
-    
+public class TrajectorySimulator extends beast.core.Runnable {
+
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
     
@@ -48,51 +37,18 @@ public class TrajectorySimulator extends EpidemicTrajectory implements StateNode
     
     public Input<String> fileNameInput = new Input<>(
             "fileName",
-            "Optional name of file to write simulated trajectory to.");
-    
-    EpidemicModel model;
-    double duration;
-    
-    public TrajectorySimulator() { }
+            "Name of file to write simulated trajectory to.", Validate.REQUIRED);
     
     @Override
-    public void initAndValidate() {
-        super.initAndValidate();
-        
-        model = modelInput.get();
-        duration = durationInput.get();
-
-        simulate();
-        
-        if (fileNameInput.get() != null) {
-            try (PrintStream ps = new PrintStream(fileNameInput.get())) {
-                    dumpTrajectory(ps);
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(TrajectorySimulator.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    }
-    
-    private void simulate() {
-        eventList.clear();
-        stateList.clear();
-        
-        double t = 0.0;
-        EpidemicState currentState = model.getInitialState();
-        
-        model.generateTrajectory(currentState, t, duration);
-        eventList.addAll(model.getEventList());
-        stateList.addAll(model.getStateList().subList(0, model.getStateList().size()));
-    }
+    public void initAndValidate() { }
     
     @Override
-    public void initStateNodes() throws Exception {
-        //simulate();
+    public void run() throws Exception {
+        
+        SimulatedTrajectory traj = new SimulatedTrajectory();
+        traj.initByName(
+                "model", modelInput.get(),
+                "maxDuration", durationInput.get(),
+                "fileName", fileNameInput.get());
     }
-
-    @Override
-    public void getInitialisedStateNodes(List<StateNode> stateNodes) {
-        stateNodes.add(this);
-    }
-    
 }

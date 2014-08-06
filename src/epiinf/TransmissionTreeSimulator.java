@@ -45,12 +45,7 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
             "tree",
             "Tree to initialize",
             Validate.REQUIRED);
-    
-    public Input<RealParameter> treeOriginInput = new Input<>(
-            "treeOrigin",
-            "Difference between start of epidemic and MRCA.",
-            Validate.REQUIRED);
-    
+
     public Input<EpidemicTrajectory> trajInput = new Input<>(
             "epidemicTrajectory",
             "Epidemic trajectory object.",
@@ -66,12 +61,8 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
             "Truncate trajectory at most recent sample. (Default true.)", true);
 
     private Tree tree;
-    private RealParameter treeOrigin;
     private EpidemicTrajectory traj;
-    private EpidemicModel model;
-    private int nLeaves = -1;
     private boolean truncateTrajectory;
-    private boolean contempSampling;
     
     public TransmissionTreeSimulator() {this.modelInput = new Input<>(
             "model",
@@ -82,9 +73,7 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
     @Override
     public void initAndValidate() throws Exception {
         tree = treeInput.get();
-        treeOrigin = treeOriginInput.get();
         traj = trajInput.get();
-        model = modelInput.get();
         
         truncateTrajectory = truncateTrajectoryInput.get();
     }
@@ -164,13 +153,12 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
         // Initialise state nodes
         Node root = activeNodes.get(0);
         tree.assignFromWithoutID(new Tree(root));
-        treeOrigin.assignFromWithoutID(new RealParameter(String.valueOf(youngestSamp-root.getHeight())));
         
         // Write tree to disk if requested:
         if (fileNameInput.get() != null) {
             try (PrintStream ps = new PrintStream(fileNameInput.get())) {
                 String newick = tree.toString().concat(";");
-                ps.println(newick.replace(":0.0;", ":" + treeOrigin.getValue() + ";"));
+                ps.println(newick.replace(":0.0;", ":" + (youngestSamp-root.getHeight()) + ";"));
             }
         }
     }
@@ -178,7 +166,6 @@ public class TransmissionTreeSimulator extends BEASTObject implements StateNodeI
     @Override
     public void getInitialisedStateNodes(List<StateNode> stateNodes) {
         stateNodes.add(tree);
-        stateNodes.add(treeOrigin);
         stateNodes.add(traj);
     }
     

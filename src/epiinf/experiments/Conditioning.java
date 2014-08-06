@@ -10,7 +10,7 @@ import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
-import epiinf.TrajectorySimulator;
+import epiinf.SimulatedTrajectory;
 import epiinf.TransmissionTreeSimulator;
 import epiinf.models.SIRModel;
 import java.io.PrintStream;
@@ -39,7 +39,7 @@ public class Conditioning {
                 "infectionRate", new RealParameter("0.001"),
                 "recoveryRate", new RealParameter("0.2"));
         
-        TrajectorySimulator trajSim = new TrajectorySimulator();
+        SimulatedTrajectory trajSim = new SimulatedTrajectory();
         
         Tree tree = new Tree();
         RealParameter treeOrigin = new RealParameter();

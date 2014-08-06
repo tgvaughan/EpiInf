@@ -40,8 +40,8 @@ public class TreeEventList extends CalculationNode {
             "Transmission tree.", Validate.REQUIRED);
     
     public Input<RealParameter> treeOriginInput = new Input<>(
-            "treeOrigin", "Difference between time of MRCA and start of "
-                    + "epidemic.", Validate.REQUIRED);
+            "treeOrigin", "Age of the epidemic measured relative to the"
+                    + "most recent sample on the tree.", Validate.REQUIRED);
     
     private Tree tree;
     private RealParameter treeOrigin;
@@ -121,7 +121,7 @@ public class TreeEventList extends CalculationNode {
      * @return time
      */
     public double getTimeFromHeight (double height) {
-        return treeOrigin.getValue() + tree.getRoot().getHeight() - height;
+        return treeOrigin.getValue() - height;
     }
     
     /**

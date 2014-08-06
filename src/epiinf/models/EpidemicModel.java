@@ -19,7 +19,6 @@ package epiinf.models;
 
 import beast.core.CalculationNode;
 import beast.core.Input;
-import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
 import com.google.common.collect.Lists;
