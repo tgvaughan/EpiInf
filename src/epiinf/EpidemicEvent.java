@@ -29,17 +29,29 @@ public class EpidemicEvent {
     public Type type;
     public int multiplicity;
 
-    public EpidemicEvent() { }
+    public EpidemicEvent() {
+        multiplicity = 1;
+    }
     
     public EpidemicEvent(double time, Type type, int multiplicity) {
         this.time = time;
         this.type = type;
         this.multiplicity = multiplicity;
     }
+    
+    /**
+     * Get record describing this event for use in constructing
+     * R-compatible text files.
+     * 
+     * @return record
+     */
+    public String getRecord() {
+        return type + " " + multiplicity;
+    }
 
     @Override
     public String toString() {
-        return "t: " + time + " type: " + type;
+        return "t: " + time + " type: " + type + " mult: " + multiplicity;
     }
     
     public static EpidemicEvent Infection = new EpidemicEvent(-1, Type.INFECTION, 1);

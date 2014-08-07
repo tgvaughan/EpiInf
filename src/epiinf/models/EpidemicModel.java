@@ -212,6 +212,7 @@ public abstract class EpidemicModel extends CalculationNode {
             if (thisState.time > nextRhoSamplingTime) {
                 // Simultaneous sampling from the extant population
 
+                nextEvent.time = nextRhoSamplingTime;
                 nextEvent.type = EpidemicEvent.Type.SAMPLE;
 
                 // Got to be a better way of sampling from a binomial distribution
