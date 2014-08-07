@@ -25,6 +25,7 @@ import beast.core.State;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.math.Binomial;
+import beast.math.GammaFunction;
 import beast.util.Randomizer;
 import beast.util.TreeParser;
 import com.google.common.collect.Lists;
@@ -62,7 +63,7 @@ public class SMCTreeDensity extends Distribution {
     int nParticles;
     
     // DEBUG
-    PrintStream debugOut;
+//    PrintStream debugOut;
 
     public SMCTreeDensity() { }
 
@@ -77,8 +78,8 @@ public class SMCTreeDensity extends Distribution {
     public double calculateLogP() throws Exception {
         
         // DEBUG
-        debugOut = new PrintStream("SMCdebug.json");
-        debugOut.println("{");
+//        debugOut = new PrintStream("SMCdebug.json");
+//        debugOut.println("{");
         
         logP = 0.0;
         
@@ -92,13 +93,13 @@ public class SMCTreeDensity extends Distribution {
         
         double t = 0.0;
         int k = 1;
-        int interval = 0;
+//        int interval = 0;
         for (TreeEvent treeEvent : eventList.getEventList()) {
             
             // DEBUG
-            if (interval>0)
-                debugOut.println(",");
-            debugOut.println("\"interval" + interval + "\": {");
+//            if (interval>0)
+//                debugOut.println(",");
+//            debugOut.println("\"interval" + interval + "\": {");
             
             // Update particles
             particleWeights.clear();
@@ -106,9 +107,9 @@ public class SMCTreeDensity extends Distribution {
             for (int p=0; p<nParticles; p++) {
                 
                 // DEBUG
-                if (p>0)
-                    debugOut.println(", ");
-                debugOut.println("\"p" + p + "\": {");
+//                if (p>0)
+//                    debugOut.println(", ");
+//                debugOut.println("\"p" + p + "\": {");
                 
                 double newWeight = updateParticle(particleStates.get(p), t, k, treeEvent);
                 
@@ -116,11 +117,11 @@ public class SMCTreeDensity extends Distribution {
                 sumOfWeights += newWeight;
                 
                 // DEBUG
-                debugOut.print("\n}");
+//                debugOut.print("\n}");
             }
             
             // DEBUG
-            debugOut.print("}");
+//            debugOut.print("}");
             
             // Update marginal likelihood estimate
             logP += Math.log(sumOfWeights/nParticles);
@@ -155,16 +156,16 @@ public class SMCTreeDensity extends Distribution {
             if (treeEvent.type == TreeEvent.Type.COALESCENCE)
                 k += 1;
             else
-                k -= 1;
+                k -= treeEvent.multiplicity;
             
             // Update start interval time
             t = treeEvent.time;
             
-            interval += 1;
+//            interval += 1;
         }
         
         // DEBUG
-        debugOut.println("}");
+//        debugOut.println("}");
         
         return logP;
     }
@@ -185,10 +186,10 @@ public class SMCTreeDensity extends Distribution {
         double t = startTime;
         
         // DEBUG
-        List<Double> tList = Lists.newArrayList();
-        List<Double> nList = Lists.newArrayList();
-        tList.add(t);
-        nList.add(particleState.I);
+//        List<Double> tList = Lists.newArrayList();
+//        List<Double> nList = Lists.newArrayList();
+//        tList.add(t);
+//        nList.add(particleState.I);
         
         while (true) {
             model.calculatePropensities(particleState);
@@ -217,6 +218,13 @@ public class SMCTreeDensity extends Distribution {
                 }
             }
             
+                        
+            if (event.type == EpidemicEvent.Type.RECOVERY) {
+                conditionalP *= 1.0 - lineages/particleState.I; // prob not on this lineage
+                if (model.psiSamplingProbInput.get() != null)
+                    conditionalP *= 1.0 - model.psiSamplingProbInput.get().getValue();
+            }
+            
             model.incrementState(particleState, event);
             
             // Early exit if invalid state:
@@ -226,14 +234,11 @@ public class SMCTreeDensity extends Distribution {
             // Increment conditional prob
             if (event.type == EpidemicEvent.Type.INFECTION)
                 conditionalP *= model.getProbNoCoalescence(particleState, lineages);
-            
-            if (model.psiSamplingProbInput.get() != null
-                    && event.type == EpidemicEvent.Type.RECOVERY)
-                conditionalP *= 1.0 - model.psiSamplingProbInput.get().getValue();
+
             
             // DEBUG
-            tList.add(t);
-            nList.add(particleState.I);
+//            tList.add(t);
+//            nList.add(particleState.I);
             
         }
         
@@ -277,35 +282,32 @@ public class SMCTreeDensity extends Distribution {
                             *model.psiSamplingProbInput.get().getValue();
                 }
                 
-                conditionalP *= sampleProb;
+                conditionalP *= sampleProb;//*Math.exp(GammaFunction.lnGamma(1+finalTreeEvent.multiplicity));
 
             }
             
             model.incrementState(particleState,
                     EpidemicEvent.MultipleSamples(finalTreeEvent.multiplicity));
-            
-            // Zero particle weight if we can't sample required number of lineages
-            if (!particleState.isValid())
-                return 0.0;
+
         }
         
         // DEBUG
-        tList.add(finalTreeEvent.time);
-        nList.add(particleState.I);
-        debugOut.print("\"t\": [");
-        for (int s=0; s<tList.size(); s++) {
-            if (s>0)
-                debugOut.print(",");
-            debugOut.print(tList.get(s));
-        }
-        debugOut.print("], \"n\": [");
-        for (int s=0; s<nList.size(); s++) {
-            if (s>0)
-                debugOut.print(",");
-            debugOut.print(nList.get(s));
-        }
-        debugOut.print("]");
-        
+//        tList.add(finalTreeEvent.time);
+//        nList.add(particleState.I);
+//        debugOut.print("\"t\": [");
+//        for (int s=0; s<tList.size(); s++) {
+//            if (s>0)
+//                debugOut.print(",");
+//            debugOut.print(tList.get(s));
+//        }
+//        debugOut.print("], \"n\": [");
+//        for (int s=0; s<nList.size(); s++) {
+//            if (s>0)
+//                debugOut.print(",");
+//            debugOut.print(nList.get(s));
+//        }
+//        debugOut.print("]");
+
         if (!particleState.isValid())
             return 0.0;
         else
@@ -334,7 +336,7 @@ public class SMCTreeDensity extends Distribution {
      */
     public static void main (String [] args) throws Exception {
         
-        Randomizer.setSeed(42);
+        //Randomizer.setSeed(42);
         
         SISModel model = new SISModel();
 //        model.initByName(
@@ -378,7 +380,6 @@ public class SMCTreeDensity extends Distribution {
         
         SMCTreeDensity treeDensity = new SMCTreeDensity();
         
-        Randomizer.setSeed(4321);
         try (PrintStream ps = new PrintStream("logLik.txt")) {
             ps.println("beta logP");
             for (double beta=0.005; beta<0.015; beta += 0.0005) {
@@ -388,12 +389,14 @@ public class SMCTreeDensity extends Distribution {
                 model.initByName(
                         "S0", new IntegerParameter("99"),
                         "infectionRate", new RealParameter(String.valueOf(beta)),
-                        "recoveryRate", new RealParameter("0.2"));
+                        "recoveryRate", new RealParameter("0.2"),
+                        "rhoSamplingProb", new RealParameter("1.0"),
+                        "rhoSamplingTime", new RealParameter("12.0"));
                 
                 treeDensity.initByName(
                         "treeEventList", treeEventList,
                         "model", model,
-                        "nParticles", 1000);
+                        "nParticles", 4000);
                 
                 double logP = treeDensity.calculateLogP();
                 
