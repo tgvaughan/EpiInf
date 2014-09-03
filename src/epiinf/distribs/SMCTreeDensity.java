@@ -215,13 +215,17 @@ public class SMCTreeDensity extends Distribution {
                 }
             }
             
-                        
             if (event.type == EpidemicEvent.Type.RECOVERY) {
-                conditionalP *= 1.0 - lineages/particleState.I; // prob not on this lineage
+                conditionalP *= 1.0 - lineages/particleState.I; // prob not on sampled lineage
+
+		// Prob that given recovery is not on sampled lineage, sampling
+		// did not occur.
+                if (model.psiSamplingProbInput.get() != null)
+                    conditionalP *= 1.0 - model.psiSamplingProbInput.get().getValue();
             }
-            
+
             model.incrementState(particleState, event);
-            
+
             // Early exit if invalid state:
             if (particleState.I<lineages)
                 return 0.0;
