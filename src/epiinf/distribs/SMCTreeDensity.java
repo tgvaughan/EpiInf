@@ -25,7 +25,6 @@ import beast.core.State;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.math.Binomial;
-import beast.math.GammaFunction;
 import beast.util.Randomizer;
 import beast.util.TreeParser;
 import com.google.common.collect.Lists;
@@ -38,8 +37,6 @@ import epiinf.models.SISModel;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
-import org.apache.commons.math.distribution.BinomialDistribution;
-import org.apache.commons.math.distribution.BinomialDistributionImpl;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
@@ -221,8 +218,6 @@ public class SMCTreeDensity extends Distribution {
                         
             if (event.type == EpidemicEvent.Type.RECOVERY) {
                 conditionalP *= 1.0 - lineages/particleState.I; // prob not on this lineage
-                if (model.psiSamplingProbInput.get() != null)
-                    conditionalP *= 1.0 - model.psiSamplingProbInput.get().getValue();
             }
             
             model.incrementState(particleState, event);
