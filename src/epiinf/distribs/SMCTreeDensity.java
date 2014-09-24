@@ -34,6 +34,7 @@ import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
 import epiinf.models.SISModel;
+import epiinf.util.EpiInfUtilityMethods;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
@@ -182,25 +183,30 @@ public class SMCTreeDensity extends Distribution {
                     break;
                 }
             }
-            
-            if (event.type == EpidemicEvent.Type.RECOVERY) {
-                //conditionalP *= 1.0 - lineages/particleState.I; // prob not on sampled lineage
-                
-                // Prob that given recovery is not on sampled lineage, sampling
-                // did not occur.
-                if (model.psiSamplingProbInput.get() != null)
-                    conditionalP *= 1.0 - model.psiSamplingProbInput.get().getValue();
+
+            switch(event.type) {
+                case INFECTION:
+                    conditionalP *= 1.0 - lineages*(lineages-1)/particleState.I/(particleState.I+1);
+                    break;
+
+                case RECOVERY:
+                    //conditionalP *= 1.0 - lineages/particleState.I;
+
+                    // Prob that given recovery is not on sampled lineage, sampling
+                    // did not occur.
+                    if (model.psiSamplingProbInput.get() != null)
+                        conditionalP *= 1.0 - model.psiSamplingProbInput.get().getValue();
+                    break;
             }
             
             model.incrementState(particleState, event);
             
             // Early exit if invalid state:
-            if (particleState.I<lineages)
+            if (conditionalP==0)
                 return 0.0;
-            
-            // Increment conditional prob
-            if (event.type == EpidemicEvent.Type.INFECTION)
-                conditionalP *= model.getProbNoCoalescence(particleState, lineages);
+
+            if (particleState.I<lineages)
+               return 0.0;
             
         }
         
@@ -208,7 +214,7 @@ public class SMCTreeDensity extends Distribution {
         if (finalTreeEvent.type == TreeEvent.Type.COALESCENCE) {
             model.incrementState(particleState, EpidemicEvent.Infection);
             model.calculatePropensities(particleState);
-            conditionalP *= model.getProbCoalescence(particleState, lineages+1)
+            conditionalP *= 2.0/particleState.I/(particleState.I+1)
                 *model.getPropensities().get(EpidemicEvent.Type.INFECTION);
         } else {
             
@@ -283,17 +289,17 @@ public class SMCTreeDensity extends Distribution {
         
         EpidemicModel model;
         
-        TreeParser tree = new TreeParser("0:0.0");
-        RealParameter treeOrigin = new RealParameter("3.0");
+        TreeParser tree = new TreeParser("(((((12:0.16253425192740156,10:0.16253425192740156):0.09067554877004858,(6:0.01587434597456161,5:0.01587434597456161):0.23733545472288853):0.11984574022938732,4:0.37305554092683746):1.3021238654375438,3:1.6751794063643812):2.020606418863401,(((2:0.13745521402630523,13:0.13745521402630523):1.1243877941346536,((((8:0.10069667442877872,9:0.10069667442877872):0.1289742011175865,11:0.22967087554636523):0.31185256235307524,7:0.5415234378994405):0.2717105004391298,1:0.8132339383385703):0.4486090698223886):0.241617606938048,14:1.5034606150990069):2.1923252101287756):0.30421417477221757");
+        RealParameter treeOrigin = new RealParameter("4.0");
+
+        try (PrintStream ps = new PrintStream("expotree.txt")) {
+            EpiInfUtilityMethods.writeExpoTreeFile(tree, treeOrigin.getValue(), ps);
+        }
         
         TreeEventList treeEventList = new TreeEventList();
         treeEventList.initByName(
             "tree", tree,
             "treeOrigin", treeOrigin);
-        
-        try (PrintStream ps = new PrintStream("tims_tree.txt")) {
-            treeEventList.writeExpoTreeFile(ps);
-        }
         
         SMCTreeDensity treeDensity = new SMCTreeDensity();
         
@@ -307,7 +313,7 @@ public class SMCTreeDensity extends Distribution {
                     "infectionRate", new RealParameter(String.valueOf(beta)),
                     "recoveryRate", new RealParameter("0.2"),
                     "rhoSamplingProb", new RealParameter("1.0"),
-                    "rhoSamplingTime", new RealParameter("3.0"));
+                    "rhoSamplingTime", new RealParameter("4.0"));
                 
                 treeDensity.initByName(
                     "treeEventList", treeEventList,

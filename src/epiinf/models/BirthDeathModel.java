@@ -72,19 +72,4 @@ public class BirthDeathModel extends EpidemicModel {
                 break;
         }
     }
-
-    @Override
-    public double getProbCoalescence(EpidemicState state, int lineages) {
-        double N = state.I;
-        
-        if (N<2)
-            return 0.0;
-        else
-            return lineages*(lineages-1)/(N*(N-1));
-    }
-
-    @Override
-    public double getProbNoCoalescence(EpidemicState state, int lineages) {
-        return 1.0 - getProbCoalescence(state, lineages);
-    }
 }

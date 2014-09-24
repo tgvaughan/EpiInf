@@ -158,28 +158,4 @@ public class TreeEventList extends CalculationNode {
         
         super.restore();
     }
-    
-    /**
-     * Translate event list into something that Gabriel's ExpoTree can read.
-     * 
-     * @param ps printstream object
-     */
-    public void writeExpoTreeFile(PrintStream ps) {
-        updateEventList();
-        List<TreeEvent> eventListRev = Lists.reverse(eventList);
-        
-        for (int i=0; i<eventListRev.size(); i++) {
-            TreeEvent event = eventListRev.get(i);
-            double t = eventListRev.get(0).time - event.time;
-            ps.print(t + " ");
-            if (i==0)
-                ps.println("99");
-            else {
-                if (event.type == TreeEvent.Type.COALESCENCE)
-                    ps.println("1");
-                else
-                    ps.println("0");
-            }
-        }
-    }
 }

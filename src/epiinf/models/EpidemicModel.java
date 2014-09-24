@@ -127,28 +127,6 @@ public abstract class EpidemicModel extends CalculationNode {
     
 
     /**
-     * Obtain probability of coalescence occurring on tree given a compatible
-     * event occurred in the epidemic trajectory and conditional on the number
-     * of extant lineages.
-     * 
-     * @param state
-     * @param lineages
-     * @return probability of coalescence event on the tree
-     */
-    public abstract double getProbCoalescence(EpidemicState state, int lineages);
-    
-    /**
-     * Obtain probability of coalescence NOT occurring on tree given a compatible
-     * event occurred in the epidemic trajectory and conditional on the number
-     * of extant lineages.
-     * 
-     * @param state
-     * @param lineages
-     * @return probability of NO coalescence event on the tree
-     */
-    public abstract double getProbNoCoalescence(EpidemicState state, int lineages);
-    
-    /**
      * Retrieve the rho sampling time immediately following t.
      * 
      * @param t
