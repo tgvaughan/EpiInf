@@ -24,12 +24,16 @@ import beast.core.Input.Validate;
 import beast.core.State;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
+import beast.evolution.tree.Tree;
 import beast.math.Binomial;
 import beast.util.Randomizer;
 import beast.util.TreeParser;
 import com.google.common.collect.Lists;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
+import epiinf.EpidemicTrajectory;
+import epiinf.SimulatedTrajectory;
+import epiinf.SimulatedTransmissionTree;
 import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
@@ -288,8 +292,25 @@ public class SMCTreeDensity extends Distribution {
     public static void main (String [] args) throws Exception {
         
         EpidemicModel model;
+
+        model = new SISModel();
+        model.initByName(
+            "S0", new IntegerParameter("99"),
+            "infectionRate", new RealParameter("0.01"),
+            "recoveryRate", new RealParameter("0.2"),
+            "rhoSamplingProb", new RealParameter("0.5"),
+            "rhoSamplingTime", new RealParameter("4.0"));
+
+        EpidemicTrajectory traj = new SimulatedTrajectory();
+        traj.initByName(
+            "model", model,
+            "maxDuration", 5.0);
+
+        Tree tree = new SimulatedTransmissionTree();
+        tree.initByName(
+            "epidemicTrajectory", traj,
+            "fileName", "tree.newick");
         
-        TreeParser tree = new TreeParser("(((((12:0.16253425192740156,10:0.16253425192740156):0.09067554877004858,(6:0.01587434597456161,5:0.01587434597456161):0.23733545472288853):0.11984574022938732,4:0.37305554092683746):1.3021238654375438,3:1.6751794063643812):2.020606418863401,(((2:0.13745521402630523,13:0.13745521402630523):1.1243877941346536,((((8:0.10069667442877872,9:0.10069667442877872):0.1289742011175865,11:0.22967087554636523):0.31185256235307524,7:0.5415234378994405):0.2717105004391298,1:0.8132339383385703):0.4486090698223886):0.241617606938048,14:1.5034606150990069):2.1923252101287756):0.30421417477221757");
         RealParameter treeOrigin = new RealParameter("4.0");
 
         try (PrintStream ps = new PrintStream("expotree.txt")) {
@@ -312,7 +333,7 @@ public class SMCTreeDensity extends Distribution {
                     "S0", new IntegerParameter("99"),
                     "infectionRate", new RealParameter(String.valueOf(beta)),
                     "recoveryRate", new RealParameter("0.2"),
-                    "rhoSamplingProb", new RealParameter("1.0"),
+                    "rhoSamplingProb", new RealParameter("0.5"),
                     "rhoSamplingTime", new RealParameter("4.0"));
                 
                 treeDensity.initByName(
