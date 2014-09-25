@@ -190,6 +190,7 @@ public abstract class EpidemicModel extends CalculationNode {
             if (thisState.time > nextRhoSamplingTime) {
                 // Simultaneous sampling from the extant population
 
+                thisState.time = nextRhoSamplingTime;
                 nextEvent.time = nextRhoSamplingTime;
                 nextEvent.type = EpidemicEvent.Type.SAMPLE;
 
@@ -199,7 +200,7 @@ public abstract class EpidemicModel extends CalculationNode {
                     if (Randomizer.nextDouble()<rhoSamplingProbInput.get().get(nextRhoSamplingIndex).getValue())
                         nextEvent.multiplicity += 1;
                 }
-                
+
                 nextRhoSamplingIndex += 1;
                 
                 if (nextRhoSamplingIndex<rhoSamplingTimeInput.get().size())
@@ -229,7 +230,7 @@ public abstract class EpidemicModel extends CalculationNode {
                     nextEvent.type = EpidemicEvent.Type.SAMPLE;
             }
             
-            incrementState(thisState, nextEvent);                
+            incrementState(thisState, nextEvent);
             eventList.add(nextEvent);
             stateList.add(thisState.copy());
         }

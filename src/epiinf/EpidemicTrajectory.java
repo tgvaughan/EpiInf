@@ -88,6 +88,18 @@ public class EpidemicTrajectory extends StateNode {
     public double getDuration() {
         return eventList.get(eventList.size()-1).time;
     }
+
+    /**
+     * @return true iff the trajectory contains one or more sampling events.
+     */
+    public boolean hasSample() {
+        for (EpidemicEvent event : getEventList())
+            if (event.type == EpidemicEvent.Type.SAMPLE
+                && event.multiplicity > 0)
+                return true;
+
+        return false;
+    }
     
     /**
      * Write trajectory state sequence to PrintStream.

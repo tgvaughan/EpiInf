@@ -26,8 +26,8 @@ import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Tree;
 import beast.math.Binomial;
+import beast.math.GammaFunction;
 import beast.util.Randomizer;
-import beast.util.TreeParser;
 import com.google.common.collect.Lists;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
@@ -37,6 +37,7 @@ import epiinf.SimulatedTransmissionTree;
 import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
+import epiinf.models.SIRModel;
 import epiinf.models.SISModel;
 import epiinf.util.EpiInfUtilityMethods;
 import java.io.PrintStream;
@@ -194,8 +195,6 @@ public class SMCTreeDensity extends Distribution {
                     break;
 
                 case RECOVERY:
-                    //conditionalP *= 1.0 - lineages/particleState.I;
-
                     // Prob that given recovery is not on sampled lineage, sampling
                     // did not occur.
                     if (model.psiSamplingProbInput.get() != null)
@@ -216,9 +215,9 @@ public class SMCTreeDensity extends Distribution {
         
         // Include probability of tree event
         if (finalTreeEvent.type == TreeEvent.Type.COALESCENCE) {
-            model.incrementState(particleState, EpidemicEvent.Infection);
             model.calculatePropensities(particleState);
-            conditionalP *= 2.0/particleState.I/(particleState.I+1)
+            model.incrementState(particleState, EpidemicEvent.Infection);
+            conditionalP *= 2.0/particleState.I/(particleState.I-1)
                 *model.getPropensities().get(EpidemicEvent.Type.INFECTION);
         } else {
             
@@ -254,7 +253,7 @@ public class SMCTreeDensity extends Distribution {
                         *model.psiSamplingProbInput.get().getValue();
                 }
                 
-                conditionalP *= sampleProb;//*Math.exp(GammaFunction.lnGamma(1+finalTreeEvent.multiplicity));
+                conditionalP *= sampleProb*Math.exp(GammaFunction.lnGamma(1+finalTreeEvent.multiplicity));
                 
             }
             
@@ -290,6 +289,8 @@ public class SMCTreeDensity extends Distribution {
      * @throws java.lang.Exception
      */
     public static void main (String [] args) throws Exception {
+
+//        Randomizer.setSeed(5);
         
         EpidemicModel model;
 
@@ -298,18 +299,25 @@ public class SMCTreeDensity extends Distribution {
             "S0", new IntegerParameter("99"),
             "infectionRate", new RealParameter("0.01"),
             "recoveryRate", new RealParameter("0.2"),
-            "rhoSamplingProb", new RealParameter("0.5"),
+            "rhoSamplingProb", new RealParameter("0.3"),
             "rhoSamplingTime", new RealParameter("4.0"));
 
-        EpidemicTrajectory traj = new SimulatedTrajectory();
-        traj.initByName(
-            "model", model,
-            "maxDuration", 5.0);
+        EpidemicTrajectory traj;
+        Tree tree;
 
-        Tree tree = new SimulatedTransmissionTree();
-        tree.initByName(
-            "epidemicTrajectory", traj,
-            "fileName", "tree.newick");
+        do {
+            do {
+                traj = new SimulatedTrajectory();
+                traj.initByName(
+                    "model", model,
+                    "maxDuration", 5.0);
+            } while (!traj.hasSample());
+
+            tree = new SimulatedTransmissionTree();
+            tree.initByName(
+                "epidemicTrajectory", traj,
+                "fileName", "tree.newick");
+        } while (false); //tree.getLeafNodeCount() != 10);
         
         RealParameter treeOrigin = new RealParameter("4.0");
 
@@ -333,7 +341,7 @@ public class SMCTreeDensity extends Distribution {
                     "S0", new IntegerParameter("99"),
                     "infectionRate", new RealParameter(String.valueOf(beta)),
                     "recoveryRate", new RealParameter("0.2"),
-                    "rhoSamplingProb", new RealParameter("0.5"),
+                    "rhoSamplingProb", new RealParameter("0.3"),
                     "rhoSamplingTime", new RealParameter("4.0"));
                 
                 treeDensity.initByName(
