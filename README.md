@@ -30,6 +30,6 @@ Development Roadmap
     - [x] TrajectorySimulator
     - [x] SimulatedTrajectory
 
-- [ ] PF/SMC likelihood class
+- [x] PF/SMC likelihood class
     - [x] Draft implementation
-    - [ ] Passes comparison with ExpoTree
+    - [x] Passes comparison with ExpoTree
