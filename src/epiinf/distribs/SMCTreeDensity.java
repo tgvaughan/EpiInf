@@ -37,7 +37,6 @@ import epiinf.SimulatedTransmissionTree;
 import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
-import epiinf.models.SIRModel;
 import epiinf.models.SISModel;
 import epiinf.util.EpiInfUtilityMethods;
 import java.io.PrintStream;
