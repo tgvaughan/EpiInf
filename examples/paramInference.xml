@@ -8,6 +8,7 @@
                 :beast.evolution.sitemodel
                 :beast.evolution.substitutionmodel
                 :beast.evolution.likelihood
+                :beast.math.distributions
                 :epiinf
                 :epiinf.distribs
                 :epiinf.models
@@ -24,12 +25,12 @@
 
     <input spec='SIRModel' id="model">
         <!--psiSamplingProb spec='RealParameter' id="samplingProb" value="0.1"/-->
-        <infectionRate spec='RealParameter' id="gamma" value="0.1" />
-        <recoveryRate spec='RealParameter' id="beta" value="0.001" />
-        <S0 spec='IntegerParameter' id="S0" value="9999" />
+        <infectionRate spec='RealParameter' id="gamma" value="0.00001" />
+        <recoveryRate spec='RealParameter' id="beta" value="0.01" />
+        <S0 spec='IntegerParameter' id="S0" value="8000" />
     </input>
 
-    <run spec="MCMC" id="mcmc" chainLength="1"> <!--autoOptimize="true"-->
+    <run spec="MCMC" id="mcmc" chainLength="100000000"> <!--autoOptimize="true"-->
         <state>
             <input name='stateNode' idref='gamma'/>
             <input name='stateNode' idref='beta'/>
@@ -43,20 +44,42 @@
                 <treeEventList spec="TreeEventList" tree="@tree"
                                treeOrigin="@originTime"/>
             </distribution>
+            <distribution spec='Prior' x="@gamma">
+                <distr spec='OneOnX'/>
+            </distribution>
+            <distribution spec='Prior' x="@beta">
+                <distr spec='OneOnX'/>
+            </distribution>
+            <distribution spec='Prior' x="@originTime">
+                <distr spec='OneOnX'/>
+            </distribution>
         </distribution>
 
-        <operator spec='ScaleOperator' parameter="@gamma"  scaleFactor="0.8" weight="1.0"/>
-        <operator spec='ScaleOperator' parameter="@beta"  scaleFactor="0.8" weight="1.0"/>
-        <operator spec='ScaleOperator' parameter="@originTime"  scaleFactor="0.8" weight="1.0"/>
+        <operator spec='ScaleOperator' parameter="@gamma"  scaleFactor="0.9"
+                  weight="1.0"/>
+        <operator spec='ScaleOperator' parameter="@beta"  scaleFactor="0.9"
+                  weight="1.0"/>
+        <operator spec='ScaleOperator' parameter="@originTime"  scaleFactor="0.8"
+                  weight="1.0"/>
+        <!--operator spec='IntRandomWalkOperator' windowSize="10" parameter="@S0"
+                  weight="1.0"/-->
 
-        <logger logEvery="10000" fileName="$(filebase).log">
+        <logger logEvery="1" fileName="$(filebase).log">
             <log idref="posterior"/>
+            <log idref="beta"/>
+            <log idref="gamma"/>
+            <log idref="originTime"/>
+            <log idref="S0"/>
         </logger>
-        <logger logEvery="10000" fileName="$(filebase).trees">
+        <!--logger logEvery="10000" fileName="$(filebase).trees">
             <log idref="tree"/>
-        </logger>
-        <logger logEvery="10000">
+        </logger-->
+        <logger logEvery="100">
             <log idref="posterior"/>
+            <log idref="beta"/>
+            <log idref="gamma"/>
+            <log idref="originTime"/>
+            <log idref="S0"/>
         </logger>
     </run>
 

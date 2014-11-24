@@ -80,7 +80,12 @@ public class SMCTreeDensity extends Distribution {
     public double calculateLogP() throws Exception {
         
         logP = 0.0;
-        
+
+        if(eventList.getEventList().get(0).time<0) {
+            logP = Double.NEGATIVE_INFINITY;
+            return logP;
+        }
+
         List<Double> particleWeights = Lists.newArrayList();
         List<EpidemicState> particleStates = Lists.newArrayList();
         List<EpidemicState> particleStatesNew = Lists.newArrayList();
@@ -142,7 +147,7 @@ public class SMCTreeDensity extends Distribution {
             // Update start interval time
             t = treeEvent.time;
         }
-        
+
         return logP;
     }
     
@@ -279,6 +284,11 @@ public class SMCTreeDensity extends Distribution {
     
     @Override
     public void sample(State state, Random random) {
+    }
+
+    @Override
+    public boolean isStochastic() {
+        return true;
     }
     
     /**
