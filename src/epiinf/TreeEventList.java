@@ -24,9 +24,7 @@ import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
-import beast.math.MachineAccuracy;
 import com.google.common.collect.Lists;
-import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;
 
@@ -79,6 +77,14 @@ public class TreeEventList extends CalculationNode {
 
         // Assemble event list
         for (Node node : tree.getNodesAsArray()) {
+
+            if (node.isDirectAncestor()
+                || (!node.isLeaf() &&
+                    (node.getLeft().isDirectAncestor()
+                    || node.getRight().isDirectAncestor())))
+                continue;
+
+
             TreeEvent event = new TreeEvent();
             if (node.isLeaf())
                 event.type = TreeEvent.Type.LEAF;
@@ -89,7 +95,7 @@ public class TreeEventList extends CalculationNode {
             
             eventList.add(event);
         }
-        
+
         // Sort events in order of absolute time
         Collections.sort(eventList, (TreeEvent e1, TreeEvent e2) -> {
             if (e1.time < e2.time)
