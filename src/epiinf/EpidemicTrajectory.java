@@ -88,6 +88,22 @@ public class EpidemicTrajectory extends StateNode {
     public double getDuration() {
         return eventList.get(eventList.size()-1).time;
     }
+    
+    /**
+     * Retrieve length of time between start of epidemic and final sample.
+     * Returns -1 if no sample is found.
+     * 
+     * @return origin of epidemic relative to tree leaves.
+     */
+    public double getOrigin() {
+        for (int i=getEventList().size()-1; i>=0; i--) {
+            EpidemicEvent event = getEventList().get(i);
+            if (event.type == EpidemicEvent.Type.SAMPLE)
+                return event.time;
+        }
+
+        return -1;
+    }
 
     /**
      * @return true iff the trajectory contains one or more sampling events.

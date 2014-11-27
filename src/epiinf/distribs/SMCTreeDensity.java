@@ -199,8 +199,7 @@ public class SMCTreeDensity extends Distribution {
                     break;
 
                 case RECOVERY:
-                    // Prob that given recovery is not on sampled lineage, sampling
-                    // did not occur.
+                    // Prob that sampling did not occur
                     if (model.psiSamplingProbInput.get() != null)
                         conditionalP *= 1.0 - model.psiSamplingProbInput.get().getValue();
                     break;
@@ -308,8 +307,9 @@ public class SMCTreeDensity extends Distribution {
             "S0", new IntegerParameter("99"),
             "infectionRate", new RealParameter("0.01"),
             "recoveryRate", new RealParameter("0.2"),
-            "rhoSamplingProb", new RealParameter("0.3"),
-            "rhoSamplingTime", new RealParameter("4.0"));
+            "psiSamplingProb", new RealParameter("0.5"));
+            //"rhoSamplingProb", new RealParameter("0.3"),
+            //"rhoSamplingTime", new RealParameter("4.0"));
 
         EpidemicTrajectory traj;
         Tree tree;
@@ -328,7 +328,9 @@ public class SMCTreeDensity extends Distribution {
                 "fileName", "tree.newick");
         } while (false); //tree.getLeafNodeCount() != 10);
         
-        RealParameter treeOrigin = new RealParameter("4.0");
+        //RealParameter treeOrigin = new RealParameter("4.0");
+        RealParameter treeOrigin = new RealParameter(Double.toString(traj.getOrigin()));
+        System.out.println("Tree origin: " + traj.getOrigin());
 
         try (PrintStream ps = new PrintStream("expotree.txt")) {
             EpiInfUtilityMethods.writeExpoTreeFile(tree, treeOrigin.getValue(), ps);
@@ -342,16 +344,20 @@ public class SMCTreeDensity extends Distribution {
         SMCTreeDensity treeDensity = new SMCTreeDensity();
         
         try (PrintStream ps = new PrintStream("logLik.txt")) {
-            ps.println("beta logP");
-            for (double beta=0.005; beta<0.015; beta += 0.0005) {
+            //ps.println("beta logP");
+            //for (double beta=0.005; beta<0.015; beta += 0.0005) {
+            ps.println("psi logP");
+            for (double psi=0.1; psi<0.9; psi += 0.05) {
                 
                 model = new SISModel();
                 model.initByName(
                     "S0", new IntegerParameter("99"),
-                    "infectionRate", new RealParameter(String.valueOf(beta)),
+                    //"infectionRate", new RealParameter(String.valueOf(beta)),
+                    "infectionRate", new RealParameter("0.01"),
                     "recoveryRate", new RealParameter("0.2"),
-                    "rhoSamplingProb", new RealParameter("0.3"),
-                    "rhoSamplingTime", new RealParameter("4.0"));
+                    "psiSamplingProb", new RealParameter(String.valueOf(psi)));
+                    //"rhoSamplingProb", new RealParameter("0.3"),
+                    //"rhoSamplingTime", new RealParameter("4.0"));
                 
                 treeDensity.initByName(
                     "treeEventList", treeEventList,
@@ -360,9 +366,13 @@ public class SMCTreeDensity extends Distribution {
                 
                 double logP = treeDensity.calculateLogP();
                 
-                System.out.println("beta: " + beta
+                //System.out.println("beta: " + beta
+                //    + " logP: " + logP);
+                //ps.println(beta + " " + logP);
+
+                System.out.println("psi: " + psi
                     + " logP: " + logP);
-                ps.println(beta + " " + logP);
+                ps.println(psi + " " + logP);
             }
         }
     }
