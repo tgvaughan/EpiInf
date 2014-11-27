@@ -41,6 +41,10 @@ public abstract class EpidemicModel extends CalculationNode {
     public Input<RealParameter> psiSamplingProbInput = new Input<>(
             "psiSamplingProb",
             "Probability with which recoveries are translated into samples");
+
+    public Input<RealParameter> psiSamplingStartHeightInput = new Input<>(
+        "psiSamplingStartTime",
+        "Time (height) at which psi sampling begins.");
     
     public Input<List<RealParameter>> rhoSamplingProbInput = new Input<>(
             "rhoSamplingProb",
@@ -48,11 +52,11 @@ public abstract class EpidemicModel extends CalculationNode {
                     + "is sampled.",
             new ArrayList<RealParameter>());
     
-    public Input<List<RealParameter>> rhoSamplingTimeInput = new Input<>(
+    public Input<List<RealParameter>> rhoSamplingHeightsInput = new Input<>(
             "rhoSamplingTime",
-            "Times at which rho sampling takes place",
+            "Times (or rather heights) at which rho sampling takes place",
             new ArrayList<RealParameter>());
-    
+
     public Input<Double> toleranceInput = new Input<>("tolerance",
             "Maximum absolute time difference between events on tree and "
                     + "events in epidemic trajectory for events to be"
@@ -130,12 +134,14 @@ public abstract class EpidemicModel extends CalculationNode {
      * Retrieve the rho sampling time immediately following t.
      * 
      * @param t
+     * @param origin
      * @return next rho sampling time (+infinity if there is none)
      */
-    public double getNextRhoSamplingTime(double t) {
-        for (int i=0; i<rhoSamplingTimeInput.get().size(); i++) {
-            if (rhoSamplingTimeInput.get().get(i).getValue()>t)
-                return rhoSamplingTimeInput.get().get(i).getValue();
+    public double getNextRhoSamplingTime(double t, double origin) {
+        for (int i=0; i<rhoSamplingHeightsInput.get().size(); i++) {
+            double thisTime = origin - rhoSamplingHeightsInput.get().get(i).getValue();
+            if (thisTime>t)
+                return thisTime;
         }
         
         return Double.POSITIVE_INFINITY;
@@ -165,8 +171,8 @@ public abstract class EpidemicModel extends CalculationNode {
 
         double nextRhoSamplingTime = Double.POSITIVE_INFINITY;
         int nextRhoSamplingIndex = -1;
-        if (!rhoSamplingTimeInput.get().isEmpty()) {
-            nextRhoSamplingTime = rhoSamplingTimeInput.get().get(0).getValue();
+        if (!rhoSamplingHeightsInput.get().isEmpty()) {
+            nextRhoSamplingTime = rhoSamplingHeightsInput.get().get(0).getValue();
             nextRhoSamplingIndex = 0;
         }
 
@@ -203,8 +209,8 @@ public abstract class EpidemicModel extends CalculationNode {
 
                 nextRhoSamplingIndex += 1;
                 
-                if (nextRhoSamplingIndex<rhoSamplingTimeInput.get().size())
-                    nextRhoSamplingTime = rhoSamplingTimeInput.get().get(nextRhoSamplingIndex).getValue();
+                if (nextRhoSamplingIndex<rhoSamplingHeightsInput.get().size())
+                    nextRhoSamplingTime = rhoSamplingHeightsInput.get().get(nextRhoSamplingIndex).getValue();
                 else
                     nextRhoSamplingTime = Double.POSITIVE_INFINITY;
 

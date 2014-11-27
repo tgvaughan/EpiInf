@@ -37,6 +37,7 @@ import epiinf.SimulatedTransmissionTree;
 import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
+import epiinf.models.SIRModel;
 import epiinf.models.SISModel;
 import epiinf.util.EpiInfUtilityMethods;
 import java.io.PrintStream;
@@ -178,7 +179,7 @@ public class SMCTreeDensity extends Distribution {
                 break;
             
             // Check for missed rho sampling event
-            if (t > model.getNextRhoSamplingTime(t))
+            if (t > model.getNextRhoSamplingTime(t, eventList.getTreeOrigin()))
                 return 0.0;
             
             double u = model.getTotalPropensity()*Randomizer.nextDouble();
@@ -236,7 +237,7 @@ public class SMCTreeDensity extends Distribution {
                 // state.
                 for (int i=0; i<model.rhoSamplingProbInput.get().size(); i++) {
                     double rhoProb = model.rhoSamplingProbInput.get().get(i).getValue();
-                    double rhoTime = model.rhoSamplingTimeInput.get().get(i).getValue();
+                    double rhoTime = model.rhoSamplingHeightsInput.get().get(i).getValue();
                     
                     if (Math.abs(rhoTime - finalTreeEvent.time)<model.getTolerance()) {
                         int I = (int)Math.round(particleState.I);
@@ -302,14 +303,14 @@ public class SMCTreeDensity extends Distribution {
         
         EpidemicModel model;
 
-        model = new SISModel();
+        model = new SIRModel();
         model.initByName(
             "S0", new IntegerParameter("99"),
             "infectionRate", new RealParameter("0.01"),
             "recoveryRate", new RealParameter("0.2"),
-            "psiSamplingProb", new RealParameter("0.5"));
+            "psiSamplingProb", new RealParameter("0.4"));
             //"rhoSamplingProb", new RealParameter("0.3"),
-            //"rhoSamplingTime", new RealParameter("4.0"));
+            //"rhoSamplingTime", new RealParameter("0.0"));
 
         EpidemicTrajectory traj;
         Tree tree;
@@ -319,7 +320,7 @@ public class SMCTreeDensity extends Distribution {
                 traj = new SimulatedTrajectory();
                 traj.initByName(
                     "model", model,
-                    "maxDuration", 5.0);
+                    "maxDuration", 1000.0);
             } while (!traj.hasSample());
 
             tree = new SimulatedTransmissionTree();
@@ -349,7 +350,7 @@ public class SMCTreeDensity extends Distribution {
             ps.println("psi logP");
             for (double psi=0.1; psi<0.9; psi += 0.05) {
                 
-                model = new SISModel();
+                model = new SIRModel();
                 model.initByName(
                     "S0", new IntegerParameter("99"),
                     //"infectionRate", new RealParameter(String.valueOf(beta)),
@@ -362,7 +363,7 @@ public class SMCTreeDensity extends Distribution {
                 treeDensity.initByName(
                     "treeEventList", treeEventList,
                     "model", model,
-                    "nParticles", 10000);
+                    "nParticles", 1000);
                 
                 double logP = treeDensity.calculateLogP();
                 

@@ -129,6 +129,13 @@ public class TreeEventList extends CalculationNode {
     public double getTimeFromHeight (double height) {
         return treeOrigin.getValue() - height;
     }
+
+    /**
+     * @return height of epidemic origin above most recent sample.
+     */
+    public double getTreeOrigin() {
+        return treeOrigin.getValue();
+    }
     
     /**
      * Retrieve list of events on tree.
