@@ -66,9 +66,6 @@ public class SMCTreeDensity extends Distribution {
     TreeEventList eventList;
     int nParticles;
     
-    // DEBUG
-//    PrintStream debugOut;
-    
     public SMCTreeDensity() { }
     
     @Override
@@ -346,35 +343,36 @@ public class SMCTreeDensity extends Distribution {
         SMCTreeDensity treeDensity = new SMCTreeDensity();
         
         try (PrintStream ps = new PrintStream("logLik.txt")) {
-            //ps.println("beta logP");
-            //for (double beta=0.005; beta<0.015; beta += 0.0005) {
-            ps.println("psi logP");
-            for (double psi=0.1; psi<0.9; psi += 0.05) {
+            ps.println("beta logP");
+            for (double beta=0.005; beta<0.015; beta += 0.0005) {
+            //ps.println("psi logP");
+            //for (double psi=0.1; psi<0.9; psi += 0.05) {
                 
                 model = new SIRModel();
                 model.initByName(
                     "S0", new IntegerParameter("99"),
-                    //"infectionRate", new RealParameter(String.valueOf(beta)),
-                    "infectionRate", new RealParameter("0.01"),
+                    "infectionRate", new RealParameter(String.valueOf(beta)),
+                    //"infectionRate", new RealParameter("0.01"),
                     "recoveryRate", new RealParameter("0.2"),
-                    "psiSamplingProb", new RealParameter(String.valueOf(psi)));
+                    //"psiSamplingProb", new RealParameter(String.valueOf(psi)));
+                    "psiSamplingProb", new RealParameter("0.4"));
                     //"rhoSamplingProb", new RealParameter("0.3"),
                     //"rhoSamplingHeight", new RealParameter("0.0"));
                 
                 treeDensity.initByName(
                     "treeEventList", treeEventList,
                     "model", model,
-                    "nParticles", 1000);
+                    "nParticles", 2000);
                 
                 double logP = treeDensity.calculateLogP();
                 
-                //System.out.println("beta: " + beta
-                //    + " logP: " + logP);
-                //ps.println(beta + " " + logP);
-
-                System.out.println("psi: " + psi
+                System.out.println("beta: " + beta
                     + " logP: " + logP);
-                ps.println(psi + " " + logP);
+                ps.println(beta + " " + logP);
+
+                //System.out.println("psi: " + psi
+                //    + " logP: " + logP);
+                //ps.println(psi + " " + logP);
             }
         }
     }

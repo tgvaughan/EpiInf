@@ -39,9 +39,9 @@ import java.util.Map;
  */
 public abstract class EpidemicModel extends CalculationNode {
     
-    public Input<RealParameter> psiSamplingProbInput = new Input<>(
-            "psiSamplingProb",
-            "Probability with which recoveries are translated into samples");
+    public Input<RealParameter> psiSamplingRateInput = new Input<>(
+            "psiSamplingRate",
+            "Rate for linear sampling process.");
 
     public Input<RealParameter> psiSamplingStartHeightInput = new Input<>(
         "psiSamplingStartTime",
@@ -111,7 +111,36 @@ public abstract class EpidemicModel extends CalculationNode {
     public Map<EpidemicEvent.Type, Double> getPropensities() {
         return propensities;
     }
-    
+
+    /**
+     * Return time at which psi sampling switches on.
+     * 
+     * @param origin
+     * @return psi sampling start time.
+     */
+    public double getPsiSamplingTime(double origin) {
+        if (psiSamplingStartHeightInput.get() == null)
+            return 0.0;
+        else
+            return origin - psiSamplingStartHeightInput.get().getValue();
+    }
+
+    /**
+     * Return psi sampling propensity at given time for given state and with
+     * given origin.
+     * 
+     * @param state
+     * @param time
+     * @param origin
+     * @return psi sampling propensity
+     */
+    public double getPsiSamplingPropensity(EpidemicState state, double time, double origin) {
+        if (time >= getPsiSamplingTime(origin))
+            return state.I*psiSamplingRateInput.get().getValue();
+        else
+            return 0.0;
+    }
+
     /**
      * Obtain most recently calculated total reaction propensity.
      * 
@@ -151,28 +180,28 @@ public abstract class EpidemicModel extends CalculationNode {
         
         return new Pair(nextTime, nextProb);
     }
-    
+
     /**
      * Generate a sequence of events between startTime and endTime conditional
-     * on the startState.  The results are retrieved using subsequent calls
-     * to getEventList() and getStateList().  Note that the latter only provides
-     * the list of states _following_ startState: i.e. there are as many states
-     * as events in this list.
-     * 
-     * Interestingly, a trajectory with rho samples cannot be simulated
-     * without additional information, tantamount to providing the "origin".
-     * This information isn't part of the model because fixing this value
-     * would make it impossible to infer the origin of contemporaneously
-     * sampled epidemics.
-     * 
+     * on the startState. The results are retrieved using subsequent calls to
+     * getEventList() and getStateList(). Note that the latter only provides the
+     * list of states _following_ startState: i.e. there are as many states as
+     * events in this list.
+     *
+     * Interestingly, a trajectory with rho samples or a finite psi sampling
+     * start height cannot be simulated without additional information,
+     * tantamount to providing the "origin". This information isn't part of the
+     * model because fixing this value would make it impossible to infer the
+     * origin of contemporaneously sampled epidemics.
+     *
      * @param startState Starting state of trajectory
      * @param startTime Starting time of trajectory
      * @param endTime End time of trajectory
-     * @param rhoSamplingOffset
+     * @param samplingTimesOffset
      */
     public void generateTrajectory(EpidemicState startState,
-            double startTime, double endTime, double rhoSamplingOffset) {
-        
+        double startTime, double endTime, double samplingTimesOffset) {
+
         eventList.clear();
         stateList.clear();
         
@@ -181,39 +210,35 @@ public abstract class EpidemicModel extends CalculationNode {
         EpidemicState thisState = startState.copy();
         thisState.time = startTime;
 
-        /*
-        double nextRhoSamplingTime = Double.POSITIVE_INFINITY;
-        int nextRhoSamplingIndex = -1;
-        if (!rhoSamplingHeightsInput.get().isEmpty()) {
-            nextRhoSamplingTime = rhoSamplingHeightsInput.get().get(0).getValue();
-            nextRhoSamplingIndex = 0;
-        }
-        */
-
         while (true) {
             calculatePropensities(thisState);
 
-            Pair<Double,Double> nextRhoSampling = getNextRhoSampling(thisState.time, rhoSamplingOffset);
+            Pair<Double,Double> nextRhoSampling = getNextRhoSampling(thisState.time, samplingTimesOffset);
             double nextRhoSamplingTime = nextRhoSampling.one;
             double nextRhoSamplingProb = nextRhoSampling.two;
+
+            double psiSamplingPropensity = getPsiSamplingPropensity(thisState, thisState.time, samplingTimesOffset);
            
             double dt;
-            if (totalPropensity>0.0)
-                dt = Randomizer.nextExponential(totalPropensity);
+            if (totalPropensity + psiSamplingPropensity >0.0)
+                dt = Randomizer.nextExponential(totalPropensity + psiSamplingPropensity);
             else
                 dt = Double.POSITIVE_INFINITY;
+
+            if (thisState.time<getPsiSamplingTime(samplingTimesOffset))
+                thisState.time = Math.min(thisState.time+dt, getPsiSamplingTime(samplingTimesOffset));
+
+            thisState.time = Math.min(thisState.time, nextRhoSamplingTime);
+            thisState.time = Math.min(thisState.time, endTime);
             
-            thisState.time += dt;
-                    
-            if (thisState.time>=endTime)
+            if (thisState.time==endTime)
                 break;
             
             EpidemicEvent nextEvent = new EpidemicEvent();
             
-            if (thisState.time > nextRhoSamplingTime) {
+            if (thisState.time == nextRhoSamplingTime) {
                 // Simultaneous sampling from the extant population
 
-                thisState.time = nextRhoSamplingTime;
                 nextEvent.time = nextRhoSamplingTime;
                 nextEvent.type = EpidemicEvent.Type.SAMPLE;
 
@@ -224,26 +249,41 @@ public abstract class EpidemicModel extends CalculationNode {
                         nextEvent.multiplicity += 1;
                 }
 
-            } else {
+                incrementState(thisState, nextEvent);
+                eventList.add(nextEvent);
+                stateList.add(thisState.copy());
+                continue;
 
-                nextEvent.time = thisState.time;
+            } 
+
+            if (thisState.time == getPsiSamplingTime(samplingTimesOffset))
+                continue;
+
+            if (thisState.time == endTime)
+                break;
+
+
+            nextEvent.time = thisState.time;
             
-                double u = totalPropensity*Randomizer.nextDouble();
+            double u = (totalPropensity + psiSamplingPropensity)*Randomizer.nextDouble();
                 
-                for (EpidemicEvent.Type type : propensities.keySet()) {
-                    u -= propensities.get(type);
+            for (EpidemicEvent.Type type : propensities.keySet()) {
+                u -= propensities.get(type);
                     
-                    if (u<0) {
-                        nextEvent.type = type;
-                        break;
-                    }
+                if (u<0) {
+                    nextEvent.type = type;
+                    break;
                 }
+            }
 
-                // Replace recovery events with sampling events with fixed probability
-                if (psiSamplingProbInput.get() != null
-                        && nextEvent.type == EpidemicEvent.Type.RECOVERY
-                        && Randomizer.nextDouble()<psiSamplingProbInput.get().getValue())
-                    nextEvent.type = EpidemicEvent.Type.SAMPLE;
+
+
+            // Replace recovery events with sampling events with fixed probability
+            if (psiSamplingProbInput.get() != null
+                && nextEvent.type == EpidemicEvent.Type.RECOVERY
+                && Randomizer.nextDouble()<psiSamplingProbInput.get().getValue())
+                nextEvent.type = EpidemicEvent.Type.SAMPLE;
+
             }
             
             incrementState(thisState, nextEvent);
