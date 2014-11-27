@@ -41,6 +41,10 @@ public class SimulatedTrajectory extends EpidemicTrajectory implements StateNode
     
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
+
+    public Input<Double> rhoSamplingOriginInput = new Input<>(
+            "rhoSamplingOrigin",
+            "Offset to use to locate rho sampling events on epidemic timeline.");
     
     public Input<Double> durationInput = new Input<>(
             "maxDuration", "Maximum duration of epidemic to simulate. "
@@ -52,6 +56,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory implements StateNode
     
     EpidemicModel model;
     double duration;
+    double rhoSamplingOrigin;
     
     public SimulatedTrajectory() { }
     
@@ -61,6 +66,15 @@ public class SimulatedTrajectory extends EpidemicTrajectory implements StateNode
         
         model = modelInput.get();
         duration = durationInput.get();
+
+        if (rhoSamplingOriginInput.get() != null)
+            rhoSamplingOrigin = rhoSamplingOriginInput.get();
+        else {
+            if (!model.rhoSamplingHeightsInput.get().isEmpty())
+                throw new IllegalArgumentException("Must specify rhoSamplingOrigin!");
+            else
+                rhoSamplingOrigin = 0.0;
+        }
 
         simulate();
         
@@ -80,7 +94,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory implements StateNode
         double t = 0.0;
         EpidemicState currentState = model.getInitialState();
         
-        model.generateTrajectory(currentState, t, duration);
+        model.generateTrajectory(currentState, t, duration, rhoSamplingOrigin);
         eventList.addAll(model.getEventList());
         stateList.addAll(model.getStateList().subList(0, model.getStateList().size()));
     }

@@ -40,6 +40,7 @@ import epiinf.models.EpidemicModel;
 import epiinf.models.SIRModel;
 import epiinf.models.SISModel;
 import epiinf.util.EpiInfUtilityMethods;
+import epiinf.util.Pair;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
@@ -166,6 +167,10 @@ public class SMCTreeDensity extends Distribution {
         double conditionalP = 1.0;
         
         double t = startTime;
+
+        Pair<Double,Double> nextRhoSampling = model.getNextRhoSampling(t, eventList.getTreeOrigin());
+        double nextRhoSamplingTime = nextRhoSampling.one;
+        double nextRhoSamplingProb = nextRhoSampling.two;
         
         while (true) {
             model.calculatePropensities(particleState);
@@ -179,7 +184,7 @@ public class SMCTreeDensity extends Distribution {
                 break;
             
             // Check for missed rho sampling event
-            if (t > model.getNextRhoSamplingTime(t, eventList.getTreeOrigin()))
+            if (t > nextRhoSamplingTime)
                 return 0.0;
             
             double u = model.getTotalPropensity()*Randomizer.nextDouble();
@@ -235,16 +240,12 @@ public class SMCTreeDensity extends Distribution {
                 // If model contains a rho sampling event at this time, calculate the probability
                 // of sampling the number of samples in finalTreeEvent given the current
                 // state.
-                for (int i=0; i<model.rhoSamplingProbInput.get().size(); i++) {
-                    double rhoProb = model.rhoSamplingProbInput.get().get(i).getValue();
-                    double rhoTime = model.rhoSamplingHeightsInput.get().get(i).getValue();
                     
-                    if (Math.abs(rhoTime - finalTreeEvent.time)<model.getTolerance()) {
-                        int I = (int)Math.round(particleState.I);
+                if (Math.abs(nextRhoSamplingTime - finalTreeEvent.time)<model.getTolerance()) {
+                    int I = (int)Math.round(particleState.I);
                         int k = finalTreeEvent.multiplicity;
                         sampleProb += Binomial.choose(I, k)
-                            *Math.pow(rhoProb, k)*Math.pow(1.0-rhoProb, I-k);
-                    }
+                            *Math.pow(nextRhoSamplingProb, k)*Math.pow(1.0-nextRhoSamplingProb, I-k);
                 }
                 
                 // If the model contains a non-zero psi sampling rate, calculate the
@@ -358,7 +359,7 @@ public class SMCTreeDensity extends Distribution {
                     "recoveryRate", new RealParameter("0.2"),
                     "psiSamplingProb", new RealParameter(String.valueOf(psi)));
                     //"rhoSamplingProb", new RealParameter("0.3"),
-                    //"rhoSamplingTime", new RealParameter("4.0"));
+                    //"rhoSamplingHeight", new RealParameter("0.0"));
                 
                 treeDensity.initByName(
                     "treeEventList", treeEventList,

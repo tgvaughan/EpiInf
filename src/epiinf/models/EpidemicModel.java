@@ -25,6 +25,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
+import epiinf.util.Pair;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -137,14 +138,18 @@ public abstract class EpidemicModel extends CalculationNode {
      * @param origin
      * @return next rho sampling time (+infinity if there is none)
      */
-    public double getNextRhoSamplingTime(double t, double origin) {
+    public Pair<Double, Double> getNextRhoSampling(double t, double origin) {
+        double nextTime = Double.POSITIVE_INFINITY;
+        double nextProb = 0.0;
         for (int i=0; i<rhoSamplingHeightsInput.get().size(); i++) {
             double thisTime = origin - rhoSamplingHeightsInput.get().get(i).getValue();
-            if (thisTime>t)
-                return thisTime;
+            if (thisTime>t && thisTime<nextTime) {
+                nextTime = thisTime;
+                nextProb = rhoSamplingProbInput.get().get(i).getValue();
+            }
         }
         
-        return Double.POSITIVE_INFINITY;
+        return new Pair(nextTime, nextProb);
     }
     
     /**
@@ -154,12 +159,19 @@ public abstract class EpidemicModel extends CalculationNode {
      * the list of states _following_ startState: i.e. there are as many states
      * as events in this list.
      * 
+     * Interestingly, a trajectory with rho samples cannot be simulated
+     * without additional information, tantamount to providing the "origin".
+     * This information isn't part of the model because fixing this value
+     * would make it impossible to infer the origin of contemporaneously
+     * sampled epidemics.
+     * 
      * @param startState Starting state of trajectory
      * @param startTime Starting time of trajectory
      * @param endTime End time of trajectory
+     * @param rhoSamplingOffset
      */
     public void generateTrajectory(EpidemicState startState,
-            double startTime, double endTime) {
+            double startTime, double endTime, double rhoSamplingOffset) {
         
         eventList.clear();
         stateList.clear();
@@ -169,17 +181,22 @@ public abstract class EpidemicModel extends CalculationNode {
         EpidemicState thisState = startState.copy();
         thisState.time = startTime;
 
+        /*
         double nextRhoSamplingTime = Double.POSITIVE_INFINITY;
         int nextRhoSamplingIndex = -1;
         if (!rhoSamplingHeightsInput.get().isEmpty()) {
             nextRhoSamplingTime = rhoSamplingHeightsInput.get().get(0).getValue();
             nextRhoSamplingIndex = 0;
         }
-
+        */
 
         while (true) {
             calculatePropensities(thisState);
-            
+
+            Pair<Double,Double> nextRhoSampling = getNextRhoSampling(thisState.time, rhoSamplingOffset);
+            double nextRhoSamplingTime = nextRhoSampling.one;
+            double nextRhoSamplingProb = nextRhoSampling.two;
+           
             double dt;
             if (totalPropensity>0.0)
                 dt = Randomizer.nextExponential(totalPropensity);
@@ -203,16 +220,9 @@ public abstract class EpidemicModel extends CalculationNode {
                 // Got to be a better way of sampling from a binomial distribution
                 nextEvent.multiplicity = 0;
                 for (int i=0; i<thisState.I; i++) {
-                    if (Randomizer.nextDouble()<rhoSamplingProbInput.get().get(nextRhoSamplingIndex).getValue())
+                    if (Randomizer.nextDouble()<nextRhoSamplingProb)
                         nextEvent.multiplicity += 1;
                 }
-
-                nextRhoSamplingIndex += 1;
-                
-                if (nextRhoSamplingIndex<rhoSamplingHeightsInput.get().size())
-                    nextRhoSamplingTime = rhoSamplingHeightsInput.get().get(nextRhoSamplingIndex).getValue();
-                else
-                    nextRhoSamplingTime = Double.POSITIVE_INFINITY;
 
             } else {
 
