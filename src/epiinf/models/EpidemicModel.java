@@ -25,7 +25,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
-import epiinf.util.Pair;
+import epiinf.util.Triple;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +69,8 @@ public abstract class EpidemicModel extends CalculationNode {
     protected Map<EpidemicEvent.Type, Double> propensities;
     protected double totalPropensity;
     protected double tolerance;
+
+
     
     EpidemicModel() {
         eventList = Lists.newArrayList();
@@ -158,27 +160,42 @@ public abstract class EpidemicModel extends CalculationNode {
      */
     public abstract void incrementState(EpidemicState state,
             EpidemicEvent event);
-    
 
     /**
-     * Retrieve the rho sampling time immediately following t.
-     * 
-     * @param t
-     * @param origin
-     * @return next rho sampling time (+infinity if there is none)
+     * Enum representing type of boundary.
      */
-    public Pair<Double, Double> getNextRhoSampling(double t, double origin) {
-        double nextTime = Double.POSITIVE_INFINITY;
-        double nextProb = 0.0;
-        for (int i=0; i<rhoSamplingHeightsInput.get().size(); i++) {
-            double thisTime = origin - rhoSamplingHeightsInput.get().get(i).getValue();
-            if (thisTime>t && thisTime<nextTime) {
-                nextTime = thisTime;
-                nextProb = rhoSamplingProbInput.get().get(i).getValue();
-            }
-        }
-        
-        return new Pair(nextTime, nextProb);
+    public static enum BoundaryType { RHOSAMPLE, PSISAMPLEON, ENDTIME };
+
+    /**
+     * Retrieve sorted list of boundary types and times.
+     * 
+     * @param origin
+     * @return List of Pairs of (type, time).
+     */
+    public List<Triple<BoundaryType, Double, Double>> getSortedBoundaryList(double origin) {
+        List<Triple<BoundaryType, Double, Double>> boundaryList = new ArrayList<>();
+
+        for (int i=0; i<rhoSamplingHeightsInput.get().size(); i++)
+            boundaryList.add(new Triple(BoundaryType.RHOSAMPLE,
+                    origin - rhoSamplingHeightsInput.get().get(i).getValue(),
+                    rhoSamplingProbInput.get().get(i)));
+
+        if (psiSamplingStartHeightInput.get() != null)
+            boundaryList.add(new Triple(BoundaryType.PSISAMPLEON,
+                    origin - psiSamplingStartHeightInput.get().getValue(), 0));
+
+        boundaryList.sort((Triple<BoundaryType, Double, Double> o1,
+                Triple<BoundaryType, Double, Double> o2) -> {
+            if (o1.two < o2.two)
+                return -1;
+            
+            if (o1.two > o2.two)
+                return 1;
+            
+            return 0;
+        });
+
+        return boundaryList;
     }
 
     /**
@@ -210,14 +227,16 @@ public abstract class EpidemicModel extends CalculationNode {
         EpidemicState thisState = startState.copy();
         thisState.time = startTime;
 
+        List<Triple<BoundaryType,Double,Double>> boundaryList = getSortedBoundaryList(samplingTimesOffset);
+        while (!boundaryList.isEmpty() && boundaryList.get(0).two<startTime) {
+            boundaryList.remove(0);
+        }
+
         while (true) {
             calculatePropensities(thisState);
 
-            Pair<Double,Double> nextRhoSampling = getNextRhoSampling(thisState.time, samplingTimesOffset);
-            double nextRhoSamplingTime = nextRhoSampling.one;
-            double nextRhoSamplingProb = nextRhoSampling.two;
-
-            double psiSamplingPropensity = getPsiSamplingPropensity(thisState, thisState.time, samplingTimesOffset);
+            double psiSamplingPropensity = getPsiSamplingPropensity(thisState,
+                    thisState.time, samplingTimesOffset);
            
             double dt;
             if (totalPropensity + psiSamplingPropensity >0.0)
@@ -225,44 +244,42 @@ public abstract class EpidemicModel extends CalculationNode {
             else
                 dt = Double.POSITIVE_INFINITY;
 
-            if (thisState.time<getPsiSamplingTime(samplingTimesOffset))
-                thisState.time = Math.min(thisState.time+dt, getPsiSamplingTime(samplingTimesOffset));
+            if (!boundaryList.isEmpty() && thisState.time+dt>boundaryList.get(0).two) {
+                thisState.time = boundaryList.get(0).two;
 
-            thisState.time = Math.min(thisState.time, nextRhoSamplingTime);
-            thisState.time = Math.min(thisState.time, endTime);
-            
+                switch (boundaryList.get(0).one) {
+                    case ENDTIME:
+                        boundaryList.remove(0);
+                        break;
+
+                    case PSISAMPLEON:
+                        boundaryList.remove(0);
+                        continue;
+
+                    case RHOSAMPLE:
+                        EpidemicEvent nextEvent = new EpidemicEvent();
+                        nextEvent.time = thisState.time;
+                        nextEvent.type = EpidemicEvent.Type.SAMPLE;
+                        nextEvent.multiplicity = 0;
+
+                        for (int i=0; i<thisState.I; i++) {
+                            if (Randomizer.nextDouble()<boundaryList.get(0).three)
+                                nextEvent.multiplicity += 1;
+                        }
+
+                        incrementState(thisState, nextEvent);
+                        eventList.add(nextEvent);
+                        stateList.add(thisState.copy());
+
+                        boundaryList.remove(0);
+                        continue;
+                }
+            }
+
             if (thisState.time==endTime)
                 break;
             
             EpidemicEvent nextEvent = new EpidemicEvent();
-            
-            if (thisState.time == nextRhoSamplingTime) {
-                // Simultaneous sampling from the extant population
-
-                nextEvent.time = nextRhoSamplingTime;
-                nextEvent.type = EpidemicEvent.Type.SAMPLE;
-
-                // Got to be a better way of sampling from a binomial distribution
-                nextEvent.multiplicity = 0;
-                for (int i=0; i<thisState.I; i++) {
-                    if (Randomizer.nextDouble()<nextRhoSamplingProb)
-                        nextEvent.multiplicity += 1;
-                }
-
-                incrementState(thisState, nextEvent);
-                eventList.add(nextEvent);
-                stateList.add(thisState.copy());
-                continue;
-
-            } 
-
-            if (thisState.time == getPsiSamplingTime(samplingTimesOffset))
-                continue;
-
-            if (thisState.time == endTime)
-                break;
-
-
             nextEvent.time = thisState.time;
             
             double u = (totalPropensity + psiSamplingPropensity)*Randomizer.nextDouble();
@@ -276,14 +293,9 @@ public abstract class EpidemicModel extends CalculationNode {
                 }
             }
 
-
-
-            // Replace recovery events with sampling events with fixed probability
-            if (psiSamplingProbInput.get() != null
-                && nextEvent.type == EpidemicEvent.Type.RECOVERY
-                && Randomizer.nextDouble()<psiSamplingProbInput.get().getValue())
+            // If the loop fell through, must have a sample.
+            if (nextEvent.type == null) {
                 nextEvent.type = EpidemicEvent.Type.SAMPLE;
-
             }
             
             incrementState(thisState, nextEvent);
