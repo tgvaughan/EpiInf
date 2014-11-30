@@ -3,7 +3,7 @@
 <beast version='2.0' namespace='master:master.model:master.conditions:master.outputs:master.postprocessors'>
     <run spec='InheritanceTrajectory'
         samplePopulationSizes="true"
-        simulationTime="50"
+        simulationTime="10"
         verbosity="1">
 
         <model spec='Model' id='model'>
@@ -32,7 +32,7 @@
         </initialState>
 
         <inheritancePostProcessor spec='LineageFilter' reactionName="Sampling"/>
-        <postSimCondition spec='LeafCountPostSimCondition' nLeaves="20" exact="true"/>
+        <postSimCondition spec='LeafCountPostSimCondition' nLeaves="2" exact="true"/>
 
         <output spec='NexusOutput' fileName='$(filebase)_output.nexus'/>
         <output spec='JsonOutput' fileName='$(filebase)_output.json'/>

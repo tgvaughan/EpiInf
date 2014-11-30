@@ -1,0 +1,5 @@
+#nexus
+
+Begin trees;
+tree TREE = ((((2[&type="I",reaction="Sampling",time=9.210027175913604]:0.20840393607309693)[&type="E",reaction="Activation",time=9.001623239840507]:2.9786727110170608)[&type="I",reaction="Infection",time=6.022950528823446]:0.8301980241553775)[&type="E",reaction="Activation",time=5.192752504668069]:1.5704416799477512,1[&type="I",reaction="Sampling",time=7.24976827499572]:3.6274574502754025)[&type="I",reaction="Infection",time=3.6223108247203175]:3.6223108247203175;
+End;
