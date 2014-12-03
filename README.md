@@ -19,9 +19,11 @@ Development Roadmap
 
 - [x] Model classes
     - [x] EpidemicModel
+    - [x] BirthDeathModel
     - [x] SIRModel
     - [x] SISModel
-    - [x] BirthDeathModel
+    - [ ] SEISModel
+    - [ ] SEIRModel
 
 - [x] Simulation classes
     - [x] TransmissionTreeSimulator
