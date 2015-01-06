@@ -2,6 +2,7 @@
 
 from argparse import ArgumentParser, FileType
 from sys import argv, exit
+from s
 
 class TreeEvent:
     def __init__(self, age, isLeaf):
@@ -48,56 +49,102 @@ class Params:
 
 class ParticleState:
     def __init__(self, S, E, I, R, kE, kI):
-        self.S = S
-        self.I = I
-        self.R = R
-        self.kE = kE
-        self.kI = kI
+        self.S, self.E, self.I, self.R = S, E, I, R
+        self.kE, self.KI = kE, kI
 
-    def getInfectionProp(params):
-        return params.beta*self.I*self.S
+    def updatePropensities(self, params):
+        self.infectionProp = params.beta*self.I*self.S
+        self.activationProp = params.alpha*self.E
+        self.recoveryProp = params.gamma*self.I
+        self.samplingProp = params.psi*self.I
+        self.totalProp = self.infectionProp +
+            self.activationProp +
+            self.recoveryProp +
+            self.samplingProp
 
-    def getActivationProp(params):
-        return params.alpha*self.E
-
-    def getRecoveryProp(params):
-        return params.gamma*self.I
-
-    def getSamplingProp(params):
-        return params.psi*self.I
-
-    def getTotalProp(params):
-        return getInfectionProp(params) + getActivationProp(params) + getRecoveryProp(params) + getSamplingProp(params)
+    def replaceWith(self, other):
+        self.S, self.E, self.I, self.R = other.S, other.E, other.I, other.R
+        self.kE, self.kI = other.kE, other.kI
 
 
 def updateParticle(particleState, params, t0, finalTreeEvent):
+    """Updates a single particle by simulating its trajectory over
+    a tree interval and computing its weight."""
+
     P = 1.0
+    t = t0
+
+    while True:
+        particleState.updatePropensities()
+
+        if particleState.totalProp > 0.0:
+            t += scipy.random.exponential(scale=1.0/particleState.totalProp)
+        else:
+            t += float("inf")
+
+        if t>finalTreeEvent.time:
+            break
+
+        u = scipy.random.(low=0.0, high=particleState.totalProp)
+
+        # Infection
+        u -= particleState.infectionProp
+        if u < 0.0:
+            continue
+
+        # Activation
+        u -= particleState.activationProp
+        if u < 0.0:
+            continue
+
+        # Recovery
+        u -= particleState.recoveryProp
+        if u < 0.0:
+            continue
+
+        # Sampling
+        u -= particleState.samplingProp
+        if u < 0.0:
+            continue
 
     return P
 
 
 def computeLikelihood(treeEvents, params, Nparticles=1000):
+    """Computes the likelihood of the model parameters given the tree."""
 
     logP = 0.0
 
     # Initialize particles
     particles = []
+    particlesPrime = []
     for pidx in range(Nparticles):
         particles.append(ParticleState(params.N-1, 0, 1, 0, 0, 1))
+        particlesPrime.append(ParticleState(params.N-1, 0, 1, 0, 0, 1))
 
     # Initialize weights
     weights = ones(Nparticles)
 
     for i in range(1,len(treeEvents)):
 
+        # Update particles
         for pidx, pState in enumerate(particles):
             weights[pidx] = updateParticle(pState, params, treeEvents[i-1].time, treeEvents[i])
 
+        # Update likelihood
         logP += np.log(np.mean(weights))
+
+        weights = weights/sum(weights)
+
+        # Resample particles
+        for newParticle in enumerate(particlesPrime):
+            newParticle.replaceWith(scipy.random.choice(particles, p=weights))
+        particles, particlesPrime = particlesPrime, particles
 
     return logP
 
 
+### MAIN ###
 if __name__ == '__main__':
 
     parser = ArgumentParser(description="Compute parameter likelihood of SEIS transmission tree.")
