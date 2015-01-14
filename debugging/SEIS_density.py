@@ -2,7 +2,6 @@
 
 from argparse import ArgumentParser, FileType
 from sys import argv, exit
-from s
 
 class TreeEvent:
     def __init__(self, age, isLeaf):
@@ -57,10 +56,7 @@ class ParticleState:
         self.activationProp = params.alpha*self.E
         self.recoveryProp = params.gamma*self.I
         self.samplingProp = params.psi*self.I
-        self.totalProp = self.infectionProp +
-            self.activationProp +
-            self.recoveryProp +
-            self.samplingProp
+        self.totalNonSamplingProp = self.infectionProp + self.activationProp + self.recoveryProp
 
     def replaceWith(self, other):
         self.S, self.E, self.I, self.R = other.S, other.E, other.I, other.R
@@ -85,7 +81,7 @@ def updateParticle(particleState, params, t0, finalTreeEvent):
         if t>finalTreeEvent.time:
             break
 
-        u = scipy.random.(low=0.0, high=particleState.totalProp)
+        u = scipy.random.uniform(low=0.0, high=particleState.totalProp)
 
         # Infection
         u -= particleState.infectionProp
@@ -99,11 +95,6 @@ def updateParticle(particleState, params, t0, finalTreeEvent):
 
         # Recovery
         u -= particleState.recoveryProp
-        if u < 0.0:
-            continue
-
-        # Sampling
-        u -= particleState.samplingProp
         if u < 0.0:
             continue
 
