@@ -89,7 +89,7 @@ def updateParticle(particleState, params, t0, finalTreeEvent):
             endReached = False
 
         # Incorporate probability of no sampling into weight.
-        #P *= sp.exp(-deltat*particleState.samplingProp)
+        P *= sp.exp(-deltat*particleState.samplingProp)
 
         t += deltat
 
@@ -118,6 +118,8 @@ def updateParticle(particleState, params, t0, finalTreeEvent):
             particleState.I -= 1
             particleState.R += 1
             continue
+
+        raise Exception("Event selection fell through.")
 
     return P
 
