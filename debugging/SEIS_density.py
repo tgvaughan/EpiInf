@@ -3,6 +3,8 @@
 from argparse import ArgumentParser, FileType
 from sys import argv, exit
 
+import scipy as sp
+
 class TreeEvent:
     def __init__(self, age, isLeaf):
         self.age = age
@@ -19,6 +21,8 @@ class TreeEvent:
 
 
 def loadTreeEvents(treefile):
+    """Load tree events from an expotree-formatted file."""
+
     treeEvents = []
 
     for line in treefile.readlines():
@@ -49,7 +53,7 @@ class Params:
 class ParticleState:
     def __init__(self, S, E, I, R, kE, kI):
         self.S, self.E, self.I, self.R = S, E, I, R
-        self.kE, self.KI = kE, kI
+        self.kE, self.kI = kE, kI
 
     def updatePropensities(self, params):
         self.infectionProp = params.beta*self.I*self.S
@@ -71,31 +75,48 @@ def updateParticle(particleState, params, t0, finalTreeEvent):
     t = t0
 
     while True:
-        particleState.updatePropensities()
+        particleState.updatePropensities(params)
 
-        if particleState.totalProp > 0.0:
-            t += scipy.random.exponential(scale=1.0/particleState.totalProp)
+        if particleState.totalNonSamplingProp > 0.0:
+            deltat = sp.random.exponential(scale=1.0/particleState.totalNonSamplingProp)
         else:
-            t += float("inf")
+            deltat = float("inf")
 
-        if t>finalTreeEvent.time:
-            break
+        if t + deltat>finalTreeEvent.time:
+            deltat = finalTreeEvent.time - t
+            endReached = True
+        else:
+            endReached = False
 
-        u = scipy.random.uniform(low=0.0, high=particleState.totalProp)
+        # Incorporate probability of no sampling into weight.
+        #P *= sp.exp(-deltat*particleState.samplingProp)
+
+        t += deltat
+
+        if endReached:
+            break;
+
+        u = sp.random.uniform(low=0.0, high=particleState.totalNonSamplingProp)
 
         # Infection
         u -= particleState.infectionProp
         if u < 0.0:
+            particleState.S -= 1
+            particleState.E += 1
             continue
 
         # Activation
         u -= particleState.activationProp
         if u < 0.0:
+            particleState.E -= 1
+            particleState.I += 1
             continue
 
         # Recovery
         u -= particleState.recoveryProp
         if u < 0.0:
+            particleState.I -= 1
+            particleState.R += 1
             continue
 
     return P
@@ -114,22 +135,24 @@ def computeLikelihood(treeEvents, params, Nparticles=1000):
         particlesPrime.append(ParticleState(params.N-1, 0, 1, 0, 0, 1))
 
     # Initialize weights
-    weights = ones(Nparticles)
+    weights = sp.ones(Nparticles)
 
     for i in range(1,len(treeEvents)):
+
+        print treeEvents[i]
 
         # Update particles
         for pidx, pState in enumerate(particles):
             weights[pidx] = updateParticle(pState, params, treeEvents[i-1].time, treeEvents[i])
 
         # Update likelihood
-        logP += np.log(np.mean(weights))
+        logP += sp.log(sp.mean(weights))
 
         weights = weights/sum(weights)
 
         # Resample particles
-        for newParticle in enumerate(particlesPrime):
-            newParticle.replaceWith(scipy.random.choice(particles, p=weights))
+        for newParticle in particlesPrime:
+            newParticle.replaceWith(sp.random.choice(particles, p=weights))
         particles, particlesPrime = particlesPrime, particles
 
     return logP
