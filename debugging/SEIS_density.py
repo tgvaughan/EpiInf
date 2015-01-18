@@ -52,9 +52,8 @@ class Params:
 
 
 class ParticleState:
-    def __init__(self, S, E, I, R, kE, kI):
+    def __init__(self, S, E, I, R):
         self.S, self.E, self.I, self.R = S, E, I, R
-        self.kE, self.kI = kE, kI
 
     def updatePropensities(self, params):
         self.infectionProp = params.beta*self.I*self.S
@@ -65,7 +64,6 @@ class ParticleState:
 
     def replaceWith(self, other):
         self.S, self.E, self.I, self.R = other.S, other.E, other.I, other.R
-        self.kE, self.kI = other.kE, other.kI
 
     def initTraj(self):
         return {'t': [], 'S': [], 'I': [], 'E': [], 'R': []}
@@ -104,7 +102,7 @@ def updateParticle(particleState, params, t0, finalTreeEvent):
             endReached = False
 
         # Incorporate probability of no sampling into weight.
-        #P *= sp.exp(-deltat*particleState.samplingProp)
+        P *= sp.exp(-deltat*particleState.samplingProp)
 
         t += deltat
 
@@ -136,6 +134,13 @@ def updateParticle(particleState, params, t0, finalTreeEvent):
 
         raise Exception("Event selection fell through.")
 
+    if finalTreeEvent.nodeType == "Sample":
+        # Sample
+        P *= params.psi
+    else:
+        # Coalescence
+        P *= 
+            
     return (P, thisTraj)
 
 
