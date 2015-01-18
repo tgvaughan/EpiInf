@@ -2,6 +2,7 @@
 
 from argparse import ArgumentParser, FileType
 from sys import argv, exit
+import json
 
 import scipy as sp
 
@@ -66,6 +67,16 @@ class ParticleState:
         self.S, self.E, self.I, self.R = other.S, other.E, other.I, other.R
         self.kE, self.kI = other.kE, other.kI
 
+    def initTraj(self):
+        return {'t': [], 'S': [], 'I': [], 'E': [], 'R': []}
+
+    def updateTraj(self, t, traj):
+        traj['t'].append(t)
+        traj['S'].append(self.S)
+        traj['E'].append(self.E)
+        traj['I'].append(self.I)
+        traj['R'].append(self.R)
+
 
 def updateParticle(particleState, params, t0, finalTreeEvent):
     """Updates a single particle by simulating its trajectory over
@@ -74,7 +85,11 @@ def updateParticle(particleState, params, t0, finalTreeEvent):
     P = 1.0
     t = t0
 
+    thisTraj = particleState.initTraj()
+
     while True:
+        particleState.updateTraj(t, thisTraj)
+
         particleState.updatePropensities(params)
 
         if particleState.totalNonSamplingProp > 0.0:
@@ -89,7 +104,7 @@ def updateParticle(particleState, params, t0, finalTreeEvent):
             endReached = False
 
         # Incorporate probability of no sampling into weight.
-        P *= sp.exp(-deltat*particleState.samplingProp)
+        #P *= sp.exp(-deltat*particleState.samplingProp)
 
         t += deltat
 
@@ -121,7 +136,7 @@ def updateParticle(particleState, params, t0, finalTreeEvent):
 
         raise Exception("Event selection fell through.")
 
-    return P
+    return (P, thisTraj)
 
 
 def computeLikelihood(treeEvents, params, Nparticles=1000):
@@ -139,13 +154,16 @@ def computeLikelihood(treeEvents, params, Nparticles=1000):
     # Initialize weights
     weights = sp.ones(Nparticles)
 
+    forJson = {'intervals': []}
     for i in range(1,len(treeEvents)):
 
         print treeEvents[i]
+        forJson['intervals'].append([])
 
         # Update particles
         for pidx, pState in enumerate(particles):
-            weights[pidx] = updateParticle(pState, params, treeEvents[i-1].time, treeEvents[i])
+            (weights[pidx], traj) = updateParticle(pState, params, treeEvents[i-1].time, treeEvents[i])
+            forJson['intervals'][i-1].append(traj)
 
         # Update likelihood
         logP += sp.log(sp.mean(weights))
@@ -157,7 +175,7 @@ def computeLikelihood(treeEvents, params, Nparticles=1000):
             newParticle.replaceWith(sp.random.choice(particles, p=weights))
         particles, particlesPrime = particlesPrime, particles
 
-    return logP
+    return (logP, forJson)
 
 
 ### MAIN ###
@@ -171,6 +189,8 @@ if __name__ == '__main__':
     parser.add_argument("-s", type=float, dest='psi', default=0.1, help="Psi sampling rate")
     parser.add_argument("-N", type=int, dest='N', default=100, help="Population size")
     parser.add_argument("--particles", type=int, default=1000, help="Number of particles to use in PF algorithm.")
+    parser.add_argument("--jsonOutputFile", type=FileType('w'), help="File to which particle trajectories are written"
+            "in JSON format")
 
     args = parser.parse_args()
 
@@ -178,6 +198,10 @@ if __name__ == '__main__':
 
     params = Params(args.beta, args.alpha, args.gamma, args.psi, args.N)
 
-    print computeLikelihood(eventList, params)
+    logP, forJson = computeLikelihood(eventList, params)
 
+    print logP
+
+    if args.jsonOutputFile != None:
+        json.dump(forJson, args.jsonOutputFile)
 
