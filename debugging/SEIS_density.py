@@ -3,8 +3,9 @@
 from argparse import ArgumentParser, FileType
 from sys import argv, exit
 import json
-
 import scipy as sp
+
+from Tree import *
 
 class TreeEvent:
     def __init__(self, age, isLeaf):
@@ -139,7 +140,7 @@ def updateParticle(particleState, params, t0, finalTreeEvent):
         P *= params.psi
     else:
         # Coalescence
-        P *= 
+        P *= 1
             
     return (P, thisTraj)
 
@@ -187,7 +188,7 @@ def computeLikelihood(treeEvents, params, Nparticles=1000):
 if __name__ == '__main__':
 
     parser = ArgumentParser(description="Compute parameter likelihood of SEIS transmission tree.")
-    parser.add_argument("treefile", type=FileType('r'), help="File containing transmission tree (ExpoTree format)")
+    parser.add_argument("treefile", type=FileType('r'), help="File containing transmission tree (newick format)")
     parser.add_argument("-b", type=float, dest='beta', default=0.01, help="Infection rate")
     parser.add_argument("-a", type=float, dest='alpha', default=0.1, help="Activation rate")
     parser.add_argument("-g", type=float, dest='gamma', default=0.1, help="Recovery rate")
@@ -199,7 +200,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    eventList = loadTreeEvents(args.treefile)
+    #eventList = loadTreeEvents(args.treefile)
+    print Tree(args.treefile)
+    
+    exit(0)
 
     params = Params(args.beta, args.alpha, args.gamma, args.psi, args.N)
 
