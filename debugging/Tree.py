@@ -21,6 +21,13 @@ class Node:
         self.children.append(newChild)
         newChild.parent = self
 
+    def getAllChildren(self):
+        childList = [self]
+        for child in self.children:
+            childList.extend(child.getAllChildren())
+
+        return childList
+
     def getNewick(self):
         newick = ""
         if len(self.children)>0:
@@ -42,7 +49,7 @@ class Node:
                     isFirst = False
                 else:
                     newick += ","
-                newick += "{}={}".format(k,v)
+                newick += '{}="{}"'.format(k,v)
             newick += ']'
 
         if self.parent == None:
@@ -55,17 +62,11 @@ class Node:
 
         return newick
 
-    def getAllChildren(self):
-        childList = [self]
-        for child in self.children:
-            childList.extend(child.getAllChildren())
-
-        return childList
-
     def computeTimes(self, offset):
         self.time = offset + self.branchLength
         for child in self.children:
             child.computeTimes(self.time)
+
 
 class Tree:
 
@@ -175,7 +176,14 @@ class Tree:
                     idx += len(match.group(0))
 
                     if tokens[k][0] == 'STRING':
-                        valueList.append(match.group(0))
+                        value = match.group(0)
+                        if len(value)>2:
+                            if value[0]=='"' and value[len(value)-1]=='"':
+                                value = value[1:(len(value)-1)]
+                            else:
+                                if value[0]=="'" and value[len(value)-1]=="'":
+                                    value = value[1:(len(value)-1)]
+                        valueList.append(value)
                     else:
                         valueList.append(None)
 
