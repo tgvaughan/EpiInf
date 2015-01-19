@@ -1,6 +1,9 @@
+# Basic phylogenetic tree manipulation module
+
 import re
 
 class Node:
+    """A node in a phylogenetic tree."""
 
     def __init__(self):
         self.height = None
@@ -22,6 +25,8 @@ class Node:
         newChild.parent = self
 
     def getAllChildren(self):
+        """Retrieve a list including this node and all of its decendents."""
+
         childList = [self]
         for child in self.children:
             childList.extend(child.getAllChildren())
@@ -29,6 +34,8 @@ class Node:
         return childList
 
     def getNewick(self):
+        """Retrieve a Newick representation of the tree below this node."""
+
         newick = ""
         if len(self.children)>0:
             newick += "("
@@ -63,12 +70,16 @@ class Node:
         return newick
 
     def computeTimes(self, offset):
+        """Set up time attribute of this node and each node below it.  The offset
+        parameter indicates the time of this node's parent."""
+
         self.time = offset + self.branchLength
         for child in self.children:
             child.computeTimes(self.time)
 
 
 class Tree:
+    """A phylogenetic tree."""
 
     root = None
 
@@ -94,26 +105,18 @@ class Tree:
             else:
                 newickString = firstLine
 
-        ctx = self.doLex(newickString)
-        self.root = self.doRecursiveDecent(ctx)
-        self.root.computeTimes(0.0)
+        self.root = self.loadFromString(newickString)
 
-        maxTime = 0.0
-        for node in self.getNodes():
-            maxTime = max(maxTime, node.time)
-
-        for node in self.getNodes():
-            node.height = maxTime - node.time
-
-        self.root.origin = self.root.height + self.root.branchLength
 
     def __repr__(self):
         return self.root.getNewick() + ";"
+
 
     # Basic tree queries
 
     def getNodes(self):
         return self.root.getAllChildren()
+
 
     # Tree parsing code
 
@@ -144,7 +147,9 @@ class Tree:
             return self.valueList[self.idx-1]
 
 
-    def doLex(self, string):
+    def loadFromString(self, string):
+
+        # Lexical analysis
 
         tokens = [
                 ('LPAREN',  '\('),
@@ -193,12 +198,24 @@ class Tree:
             if noMatch:
                 raise Tree.ParseError('Unrecognized character at position ' + str(idx) + ': \'' + string[idx] + '\'')
 
-        return Tree.ParseContext(tokenList, valueList)
+        # Recursive decent parser
 
-
-    def doRecursiveDecent(self, ctx):
+        ctx = Tree.ParseContext(tokenList, valueList)
         root = self.ruleN(None, ctx, 0)
         ctx.acceptToken("SEMI", manditory=True)
+
+        # Compute node heights and times:
+
+        root.computeTimes(0.0)
+
+        maxTime = 0.0
+        for node in root.getAllChildren():
+            maxTime = max(maxTime, node.time)
+
+        for node in root.getAllChildren():
+            node.height = maxTime - node.time
+
+        root.origin = root.height + root.branchLength
 
         return root
 
