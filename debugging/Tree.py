@@ -297,7 +297,7 @@ class Tree:
         
         leaves = self.getLeaves()
         nodes = self.getNodes()
-        pos = sp.zeros(len(leaves))
+        pos = sp.zeros(len(nodes))
         
         def computePos(node):
             idx = nodes.index(node)
@@ -309,7 +309,13 @@ class Tree:
                 pos[idx] /= len(node.children)
 
             return pos[idx]
-
         computePos(self.root)
-        print pos
+
+        for i in range(len(nodes)):
+
+            if nodes[i].parent == None:
+                plt.pylab.plot([nodes[i].height, nodes[i].height+nodes[i].branchLength], [pos[i], pos[i]], color="black")
+            else:
+                pi = nodes.index(nodes[i].parent)
+                plt.pylab.plot([nodes[i].height, nodes[i].parent.height, nodes[i].parent.height], [pos[i], pos[i], pos[pi]], color="black")
 
