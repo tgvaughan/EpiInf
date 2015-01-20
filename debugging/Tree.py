@@ -33,6 +33,17 @@ class Node:
 
         return childList
 
+    def getLeaves(self):
+        """Retrieve the list of leaves descending from this node."""
+
+        if self.isLeaf():
+            return [self]
+        else:
+            leaves = []
+            for child in self.children:
+                leaves.extend(child.getLeaves())
+            return leaves
+
     def getNewick(self):
         """Retrieve a Newick representation of the tree below this node."""
 
@@ -103,7 +114,7 @@ class Tree:
                         newickString = line[(line.find("=")+1):].strip()
                         break
             else:
-                newickString = firstLine
+                newickString = firstLine.strip()
 
         self.root = self.loadFromString(newickString)
 
@@ -117,6 +128,8 @@ class Tree:
     def getNodes(self):
         return self.root.getAllChildren()
 
+    def getLeaves(self):
+        return self.root.getLeaves()
 
     # Tree parsing code
 
@@ -273,3 +286,30 @@ class Tree:
         if ctx.acceptToken('COLON'):
             ctx.acceptToken('STRING', manditory=True)
             node.branchLength = float(ctx.getLastValue())
+
+
+    # Plotting code
+
+    def plot(self):
+
+        import matplotlib as plt
+        import scipy as sp
+        
+        leaves = self.getLeaves()
+        nodes = self.getNodes()
+        pos = sp.zeros(len(leaves))
+        
+        def computePos(node):
+            idx = nodes.index(node)
+            if node.isLeaf():
+                pos[idx] = idx
+            else:
+                for child in node.children:
+                    pos[idx] += computePos(child)
+                pos[idx] /= len(node.children)
+
+            return pos[idx]
+
+        computePos(self.root)
+        print pos
+

@@ -7,41 +7,6 @@ import scipy as sp
 
 from Tree import *
 
-class TreeEvent:
-    def __init__(self, age, isLeaf):
-        self.age = age
-        self.isLeaf = isLeaf
-        self.time = None
-
-    def __repr__(self):
-        if self.isLeaf:
-            nodeType = "Sample"
-        else:
-            nodeType = "Coalescence"
-
-        return nodeType + " at age={}, t={}".format(self.age, self.time) 
-
-
-def loadTreeEvents(treefile):
-    """Load tree events from an expotree-formatted file."""
-
-    treeEvents = []
-
-    for line in treefile.readlines():
-        lineElements = line.strip().split(" ")
-        age = float(lineElements[0])
-        isLeaf = (lineElements[1] == "0")
-        treeEvents.append(TreeEvent(age, isLeaf))
-
-    # Sort events in order of decreasing age
-    treeEvents.sort(key=lambda event: event.age, reverse=True)
-
-    # Add forward times
-    for event in treeEvents:
-        event.time = treeEvents[0].age - event.age
-
-    return treeEvents
-
 
 class Params:
     def __init__(self, beta, alpha, gamma, psi, N):
@@ -51,10 +16,10 @@ class Params:
         self.psi = psi
         self.N = N
 
-
 class ParticleState:
-    def __init__(self, S, E, I, R):
-        self.S, self.E, self.I, self.R = S, E, I, R
+    def __init__(self, S, E, I, lineages):
+        self.S, self.E, self.I = S, E, I
+        self.lineages = lineages
 
     def updatePropensities(self, params):
         self.infectionProp = params.beta*self.I*self.S
@@ -64,20 +29,20 @@ class ParticleState:
         self.totalNonSamplingProp = self.infectionProp + self.activationProp + self.recoveryProp
 
     def replaceWith(self, other):
-        self.S, self.E, self.I, self.R = other.S, other.E, other.I, other.R
+        self.S, self.E, self.I = other.S, other.E, other.I
+        self.lineages = other.lineages
 
     def initTraj(self):
-        return {'t': [], 'S': [], 'I': [], 'E': [], 'R': []}
+        return {'t': [], 'S': [], 'I': [], 'E': []}
 
     def updateTraj(self, t, traj):
         traj['t'].append(t)
         traj['S'].append(self.S)
         traj['E'].append(self.E)
         traj['I'].append(self.I)
-        traj['R'].append(self.R)
 
 
-def updateParticle(particleState, params, t0, finalTreeEvent):
+def updateParticle(particleState, params, t0, node):
     """Updates a single particle by simulating its trajectory over
     a tree interval and computing its weight."""
 
@@ -96,8 +61,8 @@ def updateParticle(particleState, params, t0, finalTreeEvent):
         else:
             deltat = float("inf")
 
-        if t + deltat>finalTreeEvent.time:
-            deltat = finalTreeEvent.time - t
+        if t + deltat>node.time:
+            deltat = node.time - t
             endReached = True
         else:
             endReached = False
@@ -130,12 +95,12 @@ def updateParticle(particleState, params, t0, finalTreeEvent):
         u -= particleState.recoveryProp
         if u < 0.0:
             particleState.I -= 1
-            particleState.R += 1
+            particleState.S += 1
             continue
 
         raise Exception("Event selection fell through.")
 
-    if finalTreeEvent.nodeType == "Sample":
+    if node.isLeaf():
         # Sample
         P *= params.psi
     else:
@@ -145,31 +110,41 @@ def updateParticle(particleState, params, t0, finalTreeEvent):
     return (P, thisTraj)
 
 
-def computeLikelihood(treeEvents, params, Nparticles=1000):
+def computeLikelihood(tree, params, Nparticles=1000):
     """Computes the likelihood of the model parameters given the tree."""
 
     logP = 0.0
+
+    # Get sorted list of tree nodes:
+    def cmpFunc(n1, n2):
+        if n1.time < n2.time:
+            return -1
+        if n1.time > n2.time:
+            return 1
+        return 0
+    nodeList = sorted(tree.getNodes(), cmp=cmpFunc)
 
     # Initialize particles
     particles = []
     particlesPrime = []
     for pidx in range(Nparticles):
-        particles.append(ParticleState(params.N-1, 0, 1, 0, 0, 1))
-        particlesPrime.append(ParticleState(params.N-1, 0, 1, 0, 0, 1))
+        particles.append(ParticleState(params.N-1, 0, 1,  {'I': [nodeList[0]]}))
+        particlesPrime.append(ParticleState(params.N-1, 0, 1, {'I': [nodeList[0]]}))
 
     # Initialize weights
     weights = sp.ones(Nparticles)
 
     forJson = {'intervals': []}
-    for i in range(1,len(treeEvents)):
+    lastTime = 0.0
+    for i in range(len(nodeList)):
 
-        print treeEvents[i]
+        print nodeList[i].time
         forJson['intervals'].append([])
 
         # Update particles
         for pidx, pState in enumerate(particles):
-            (weights[pidx], traj) = updateParticle(pState, params, treeEvents[i-1].time, treeEvents[i])
-            forJson['intervals'][i-1].append(traj)
+            (weights[pidx], traj) = updateParticle(pState, params, lastTime, nodeList[i])
+            forJson['intervals'][i].append(traj)
 
         # Update likelihood
         logP += sp.log(sp.mean(weights))
@@ -181,6 +156,8 @@ def computeLikelihood(treeEvents, params, Nparticles=1000):
             newParticle.replaceWith(sp.random.choice(particles, p=weights))
         particles, particlesPrime = particlesPrime, particles
 
+        lastTime = nodeList[i].time
+
     return (logP, forJson)
 
 
@@ -188,7 +165,7 @@ def computeLikelihood(treeEvents, params, Nparticles=1000):
 if __name__ == '__main__':
 
     parser = ArgumentParser(description="Compute parameter likelihood of SEIS transmission tree.")
-    parser.add_argument("treefile", type=FileType('r'), help="File containing transmission tree (newick format)")
+    parser.add_argument("treefile", type=FileType('r'), help="File containing transmission tree (nexus/newick format)")
     parser.add_argument("-b", type=float, dest='beta', default=0.01, help="Infection rate")
     parser.add_argument("-a", type=float, dest='alpha', default=0.1, help="Activation rate")
     parser.add_argument("-g", type=float, dest='gamma', default=0.1, help="Recovery rate")
@@ -200,14 +177,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    #eventList = loadTreeEvents(args.treefile)
-    print Tree(args.treefile)
-    
-    exit(0)
-
     params = Params(args.beta, args.alpha, args.gamma, args.psi, args.N)
 
-    logP, forJson = computeLikelihood(eventList, params)
+    logP, forJson = computeLikelihood(Tree(args.treefile), params, Nparticles=args.particles)
 
     print logP
 
