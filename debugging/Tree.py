@@ -290,10 +290,13 @@ class Tree:
 
     # Plotting code
 
-    def plot(self):
+    def plot(self, **kwargs):
 
-        import matplotlib as plt
+        from matplotlib.pylab import plot, text, gca, xlim, ylim
         import scipy as sp
+
+        if "color" not in kwargs.keys():
+            kwargs['color'] = 'black'
         
         leaves = self.getLeaves()
         nodes = self.getNodes()
@@ -302,7 +305,7 @@ class Tree:
         def computePos(node):
             idx = nodes.index(node)
             if node.isLeaf():
-                pos[idx] = idx
+                pos[idx] = leaves.index(node)
             else:
                 for child in node.children:
                     pos[idx] += computePos(child)
@@ -314,8 +317,21 @@ class Tree:
         for i in range(len(nodes)):
 
             if nodes[i].parent == None:
-                plt.pylab.plot([nodes[i].height, nodes[i].height+nodes[i].branchLength], [pos[i], pos[i]], color="black")
+                plot([nodes[i].height, nodes[i].height+nodes[i].branchLength],
+                        [pos[i], pos[i]], **kwargs)
             else:
                 pi = nodes.index(nodes[i].parent)
-                plt.pylab.plot([nodes[i].height, nodes[i].parent.height, nodes[i].parent.height], [pos[i], pos[i], pos[pi]], color="black")
+                plot([nodes[i].height, nodes[i].parent.height, nodes[i].parent.height],
+                        [pos[i], pos[i], pos[pi]], **kwargs)
 
+            if nodes[i].label != None:
+                text(nodes[i].height, pos[i], nodes[i].label, {'ha':'left', 'va':'bottom'}, rotation=45)
+
+        ylim(-0.05*len(leaves), 1.05*len(leaves)-1)
+        #xlim(-0.05*self.root.origin, 1.05*self.root.origin)
+
+        ax = gca()
+        ax.invert_xaxis()
+        ax.yaxis.set_visible(False)
+        ax.set_frame_on(False)
+        ax.grid()
