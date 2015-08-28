@@ -9,6 +9,7 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeDistribution;
 import beast.evolution.tree.TreeInterface;
+import beast.math.Binomial;
 import beast.math.statistic.DiscreteStatistics;
 import beast.util.Randomizer;
 import epiinf.EpidemicState;
@@ -106,6 +107,7 @@ public class SEISTreeDensity extends TreeDistribution {
         double rateActivate = activationRateInput.get().getValue();
         double rateRecover = recoveryRateInput.get().getValue();
         double rateSamp = psiSamplingRateInput.get().getValue();
+        double pSamp = rhoSamplingProbInput.get().getValue();
 
         List<Node> treeNodes = new ArrayList<>(Arrays.asList(tree.getNodesAsArray()));
         treeNodes.sort((Node n1, Node n2) -> {
@@ -228,10 +230,11 @@ public class SEISTreeDensity extends TreeDistribution {
                 if (node.isLeaf()) {
                     // Sampling event
 
-                    weights[i] *= rateSamp;
-                    particle.I[i] -= 1;
-                    particle.S += 1;
-
+                    if (rateSamp > 0.0) {
+                        weights[i] *= rateSamp;
+                        particle.I[i] -= 1;
+                        particle.S += 1;
+                    }
 
                 } else {
                     // Branching event
