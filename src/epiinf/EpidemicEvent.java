@@ -23,7 +23,7 @@ package epiinf;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class EpidemicEvent {
-    public enum Type { INFECTION, RECOVERY, SAMPLE };
+    public enum Type { INFECTION, ACTIVATION, RECOVERY, SAMPLE };
     
     public double time;
     public Type type;
