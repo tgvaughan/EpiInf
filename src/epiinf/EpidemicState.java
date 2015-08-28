@@ -18,18 +18,19 @@
 package epiinf;
 
 /**
- * A state of an SIR epidemic trajectory.
+ * A state of an epidemic trajectory.
  * 
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class EpidemicState {
-    public double S, I, R;
+    public double S, E, I, R;
     public double time;
     
     public EpidemicState() { }
     
-    public EpidemicState(double S, double I, double R) {
+    public EpidemicState(double S, double E, double I, double R) {
         this.S = S;
+        this.E = E;
         this.I = I;
         this.R = R;
         this.time = Double.NaN;
@@ -47,6 +48,7 @@ public class EpidemicState {
     public EpidemicState copy() {
         EpidemicState stateCopy = new EpidemicState();
         stateCopy.S = S;
+        stateCopy.E = E;
         stateCopy.I = I;
         stateCopy.R = R;
         stateCopy.time = time;
@@ -56,7 +58,7 @@ public class EpidemicState {
     
     @Override
     public String toString() {
-        return "S: " + S + ", I: " + I + ", R: " + R;
+        return "S: " + S + ", E:" + E + ", I: " + I + ", R: " + R;
     }
     
     /**
@@ -66,7 +68,7 @@ public class EpidemicState {
      * @return R input file header
      */
     public static String getHeader() {
-        return "S I R";
+        return "S E I R";
     }
     
     /**
@@ -75,6 +77,6 @@ public class EpidemicState {
      * @return R input file record.
      */
     public String getRecord() {
-        return (long)S + " " + (long)I + " " + (long)R;
+        return (long)S + " " + (long)E + " " + (long)I + " " + (long)R;
     }
 }

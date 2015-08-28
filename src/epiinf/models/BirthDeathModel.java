@@ -43,19 +43,16 @@ public class BirthDeathModel extends EpidemicModel {
 
     @Override
     public EpidemicState getInitialState() {
-        return new EpidemicState(0, 1, 0);
+        return new EpidemicState(0, 0, 1, 0);
     }
     
     @Override
-    public void calculatePropensities(EpidemicState state) {
+    public void calculateModelSpecificPropensities(EpidemicState state) {
         propensities.put(EpidemicEvent.Type.INFECTION,
                 birthRateInput.get().getValue()*state.I);
 
         propensities.put(EpidemicEvent.Type.RECOVERY,
                 deathRateInput.get().getValue()*state.I);
-
-        totalPropensity = propensities.get(EpidemicEvent.Type.INFECTION)
-                + propensities.get(EpidemicEvent.Type.RECOVERY);
     }
 
     @Override

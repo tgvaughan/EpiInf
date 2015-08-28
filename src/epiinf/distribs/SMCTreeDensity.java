@@ -208,25 +208,40 @@ public class SMCTreeDensity extends Distribution {
         while (true) {
             model.calculatePropensities(particleState);
 
-            if (model.getTotalPropensity() > 0.0) {
-                t += Randomizer.nextExponential(model.getTotalPropensity());
+            double dt;
+            if (model.getTotalNonSamplingPropensity() > 0.0) {
+                dt = Randomizer.nextExponential(model.getTotalNonSamplingPropensity());
             } else {
-                t = Double.POSITIVE_INFINITY;
+                dt = Double.POSITIVE_INFINITY;
             }
 
-            if (t > finalTreeEvent.time) {
+            if (t + dt > finalTreeEvent.time) {
+                if (model.getSamplingPropensity()>0.0) {
+                    dt = finalTreeEvent.time - t;
+                    conditionalP *= Math.exp(-dt * model.getSamplingPropensity());
+                }
                 break;
             }
 
             // Check for missed rho sampling event
-            if (t > model.getNextRhoSamplingTime(t)) {
+            if (t + dt> model.getNextRhoSamplingTime(t)) {
                 return 0.0;
             }
 
-            double u = model.getTotalPropensity() * Randomizer.nextDouble();
+            // Include probability of no psi-sampling:
+            if (model.getSamplingPropensity()>0.0)
+                conditionalP *= Math.exp(-dt * model.getSamplingPropensity());
+
+            // Update time
+            t += dt;
+
+            double u = model.getTotalNonSamplingPropensity()* Randomizer.nextDouble();
 
             EpidemicEvent event = new EpidemicEvent();
             for (EpidemicEvent.Type type : model.getPropensities().keySet()) {
+                if (type == EpidemicEvent.Type.SAMPLE)
+                    continue;
+
                 u -= model.getPropensities().get(type);
 
                 if (u < 0) {
@@ -235,18 +250,8 @@ public class SMCTreeDensity extends Distribution {
                 }
             }
 
-            switch (event.type) {
-                case INFECTION:
-                    conditionalP *= 1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1);
-                    break;
-
-                case RECOVERY:
-                    // Prob that sampling did not occur
-                    if (model.psiSamplingProbInput.get() != null) {
-                        conditionalP *= 1.0 - model.psiSamplingProbInput.get().getValue();
-                    }
-                    break;
-            }
+            if (event.type == EpidemicEvent.Type.INFECTION)
+                conditionalP *= 1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1);
 
             model.incrementState(particleState, event);
 
@@ -274,42 +279,35 @@ public class SMCTreeDensity extends Distribution {
 
             // If the model contains an explicit sampling process, evaluate the
             // probability of the sampling event on the tree
-            if (!model.rhoSamplingProbInput.get().isEmpty()
-                    || model.psiSamplingProbInput.get() != null) {
+            double sampleProb = 0.0;
 
-                double sampleProb = 0.0;
+            // If model contains a rho sampling event at this time, calculate the probability
+            // of sampling the number of samples in finalTreeEvent given the current
+            // state.
+            for (int i = 0; i < model.rhoSamplingProbInput.get().size(); i++) {
+                double rhoProb = model.rhoSamplingProbInput.get().get(i).getValue();
+                double rhoTime = model.rhoSamplingTimeInput.get().get(i).getValue();
 
-                // If model contains a rho sampling event at this time, calculate the probability
-                // of sampling the number of samples in finalTreeEvent given the current
-                // state.
-                for (int i = 0; i < model.rhoSamplingProbInput.get().size(); i++) {
-                    double rhoProb = model.rhoSamplingProbInput.get().get(i).getValue();
-                    double rhoTime = model.rhoSamplingTimeInput.get().get(i).getValue();
-
-                    if (Math.abs(rhoTime - finalTreeEvent.time) < model.getTolerance()) {
-                        int I = (int) Math.round(particleState.I);
-                        int k = finalTreeEvent.multiplicity;
-                        sampleProb += Binomial.choose(I, k)
-                                * Math.pow(rhoProb, k) * Math.pow(1.0 - rhoProb, I - k);
-                    }
+                if (Math.abs(rhoTime - finalTreeEvent.time) < model.getTolerance()) {
+                    int I = (int) Math.round(particleState.I);
+                    int k = finalTreeEvent.multiplicity;
+                    sampleProb += Binomial.choose(I, k)
+                            * Math.pow(rhoProb, k) * Math.pow(1.0 - rhoProb, I - k);
                 }
-
-                // If the model contains a non-zero psi sampling rate, calculate the
-                // probability of a sampled recovery occuring at the time of finalTreeEvent
-                if (finalTreeEvent.multiplicity == 1
-                        && model.psiSamplingProbInput.get() != null) {
-                    model.calculatePropensities(particleState);
-                    sampleProb += model.getPropensities().get(EpidemicEvent.Type.RECOVERY)
-                            * model.psiSamplingProbInput.get().getValue();
-                }
-
-                conditionalP *= sampleProb * Math.exp(GammaFunction.lnGamma(1 + finalTreeEvent.multiplicity));
-
             }
+
+            // If the model contains a non-zero psi sampling rate, calculate the
+            // probability of a sampled recovery occuring at the time of finalTreeEvent
+            if (finalTreeEvent.multiplicity == 1
+                        && model.psiSamplingRateInput.get().getValue()>0.0) {
+                    model.calculatePropensities(particleState);
+                    sampleProb += model.getSamplingPropensity();
+            }
+
+            conditionalP *= sampleProb * Math.exp(GammaFunction.lnGamma(1 + finalTreeEvent.multiplicity));
 
             model.incrementState(particleState,
                     EpidemicEvent.MultipleSamples(finalTreeEvent.multiplicity));
-
         }
 
         // DEBUG

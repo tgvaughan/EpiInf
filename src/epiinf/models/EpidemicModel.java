@@ -38,9 +38,10 @@ import java.util.Map;
  */
 public abstract class EpidemicModel extends CalculationNode {
     
-    public Input<RealParameter> psiSamplingProbInput = new Input<>(
-            "psiSamplingProb",
-            "Probability with which recoveries are translated into samples");
+    public Input<RealParameter> psiSamplingRateInput = new Input<>(
+            "psiSamplingRate",
+            "Probability with which recoveries are translated into samples",
+            Input.Validate.REQUIRED);
     
     public Input<List<RealParameter>> rhoSamplingProbInput = new Input<>(
             "rhoSamplingProb",
@@ -96,7 +97,19 @@ public abstract class EpidemicModel extends CalculationNode {
      * this model.
      * @param state state used to calculate propensities
      */
-    public abstract void calculatePropensities(EpidemicState state);
+    public final void calculatePropensities(EpidemicState state) {
+
+        calculateModelSpecificPropensities(state);
+
+        propensities.put(EpidemicEvent.Type.SAMPLE,
+                psiSamplingRateInput.get().getValue() * state.I);
+
+        totalPropensity = 0.0;
+        for (Double propensity : propensities.values())
+            totalPropensity += propensity;
+    };
+
+    public abstract void calculateModelSpecificPropensities(EpidemicState state);
     
     /**
      * Obtain the most recently calculated reaction propensities.
@@ -114,6 +127,25 @@ public abstract class EpidemicModel extends CalculationNode {
      */
     public double getTotalPropensity() {
         return totalPropensity;
+    }
+
+    /**
+     * Obtain most recently calculated psi-sampling reaction propensity.
+     *
+     * @return propensity
+     */
+    public double getSamplingPropensity() {
+        return propensities.get(EpidemicEvent.Type.SAMPLE);
+    }
+
+    /**
+     * Obtain most recently calculated total propensity of non-sampling
+     * reactions.
+     *
+     * @return propensity
+     */
+    public double getTotalNonSamplingPropensity() {
+        return totalPropensity - propensities.get(EpidemicEvent.Type.SAMPLE);
     }
     
     /**
@@ -222,12 +254,6 @@ public abstract class EpidemicModel extends CalculationNode {
                         break;
                     }
                 }
-
-                // Replace recovery events with sampling events with fixed probability
-                if (psiSamplingProbInput.get() != null
-                        && nextEvent.type == EpidemicEvent.Type.RECOVERY
-                        && Randomizer.nextDouble()<psiSamplingProbInput.get().getValue())
-                    nextEvent.type = EpidemicEvent.Type.SAMPLE;
             }
             
             incrementState(thisState, nextEvent);
