@@ -25,7 +25,7 @@ package epiinf;
 public class EpidemicState {
     public double S, E, I, R;
     public double time;
-    
+
     public EpidemicState() { }
     
     public EpidemicState(double S, double E, double I, double R) {

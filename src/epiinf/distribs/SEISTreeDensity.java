@@ -3,41 +3,207 @@ package epiinf.distribs;
 import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.State;
+import beast.core.parameter.IntegerParameter;
+import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeDistribution;
 import beast.evolution.tree.TreeInterface;
+import beast.util.Randomizer;
+import epiinf.EpidemicState;
 import epiinf.models.SEISModel;
 
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class SEISTreeDensity extends TreeDistribution {
 
-    public Input<SEISModel> modelInput = new Input<>(
-            "model",
-            "SEIS model under which to compute density.",
+    public Input<IntegerParameter> S0Input = new Input<>(
+            "S0", "Initial size of susceptible population.", Input.Validate.REQUIRED);
+
+    public Input<RealParameter> infectionRateInput = new Input<>(
+            "infectionRate", "Infection rate.", Input.Validate.REQUIRED);
+
+    public Input<RealParameter> activationRateInput = new Input<>(
+            "activationRate", "Activation rate.", Input.Validate.REQUIRED);
+
+    public Input<RealParameter> recoveryRateInput = new Input<>(
+            "recoveryRate", "Recovery rate.", Input.Validate.REQUIRED);
+
+    public Input<RealParameter> psiSamplingRateInput = new Input<>(
+            "psiSamplingRate",
+            "Probability with which recoveries are translated into samples",
             Input.Validate.REQUIRED);
 
+    public Input<RealParameter> rhoSamplingProbInput = new Input<>(
+            "rhoSamplingProb",
+            "Probability with which a lineage at the corresponding time"
+                    + "is sampled.",
+            Input.Validate.REQUIRED);
+
+    public Input<RealParameter> originInput = new Input<>(
+            "origin",
+            "Origin of process.",
+            Input.Validate.REQUIRED);
+
+    public Input<Integer> nParticlesInput = new Input<>(
+            "nParticles",
+            "Number of particles to use.",
+            1000);
+
     TreeInterface tree;
-    SEISModel model;
+    int nParticles;
+
+    class Particle {
+        int S;
+        int[] E, I;
+
+        public Particle() {
+            S = 0;
+            E = new int[tree.getNodeCount()];
+            I = new int[tree.getNodeCount()];
+        }
+    }
 
     @Override
     public void initAndValidate() throws Exception {
         super.initAndValidate();
 
         tree = treeInput.get();
-        model = modelInput.get();
+        nParticles = nParticlesInput.get();
     }
 
     @Override
     public double calculateLogP() throws Exception {
         logP = 0.0;
 
+        double origin = originInput.get().getValue();
+        double rateInfect = infectionRateInput.get().getValue();
+        double rateActivate = activationRateInput.get().getValue();
+        double rateRecover = recoveryRateInput.get().getValue();
+        double rateSamp = psiSamplingRateInput.get().getValue();
+
+        List<Node> treeNodes = new ArrayList<>(Arrays.asList(tree.getNodesAsArray()));
+        treeNodes.sort((Node n1, Node n2) -> {
+            if (n1.getHeight() > n2.getHeight())
+                return -1;
+            if (n1.getHeight() < n2.getHeight())
+                return 1;
+            return 0;
+        });
+
+        int S0 = S0Input.get().getValue();
+
+        Particle[] particles = new Particle[nParticles];
+        double[] weights = new double[nParticles];
+
+        for (int i=0; i<nParticles; i++) {
+            Particle particle = new Particle();
+
+            particle.S = S0;
+            particle.E[0] = 1;
+            particle.I[0] = 0;
+
+            particles[i] = particle;
+            weights[i] = 1.0;
+        }
+
+        double[] aInfect = new double[treeNodes.size()];
+        double[] aActivate = new double[treeNodes.size()];
+        double[] aRecover = new double[treeNodes.size()];
+        double aInfectTot, aActivateTot, aRecoverTot, aTotNS, aTotSamp;
+
+        for (int i=0; i<treeNodes.size(); i++) {
+
+            Node node = treeNodes.get(i);
+
+            for (int pIdx = 0; pIdx<nParticles; pIdx++) {
+                Particle particle = particles[pIdx];
+
+                double t;
+                if (i > 0)
+                    t = origin - treeNodes.get(i-1).getHeight();
+                else
+                    t = 0.0;
+
+                double tEnd = origin - node.getHeight();
+
+                while(true) {
+
+                    // Calculate propensities
+
+                    aTotSamp = 0;
+                    aTotNS = 0;
+
+                    for (int j = 0; j <= i; j++) {
+                        aInfect[j] = rateInfect * particle.S * particle.I[j];
+                        aTotNS += aInfect[j];
+
+                        aActivate[j] = rateActivate * particle.E[j];
+                        aTotNS += aActivate[j];
+
+                        aRecover[j] = rateRecover * particle.I[j];
+                        aTotNS += aRecover[j];
+
+                        aTotSamp += rateSamp * particle.I[j];
+                    }
+
+//                    aTotNS = aInfectTot + aActivateTot + aRecoverTot;
+
+                    // Increment time
+
+                    double dt;
+                    if (aTotNS>0.0)
+                        dt = Randomizer.nextExponential(aTotNS);
+                    else
+                        dt = Double.POSITIVE_INFINITY;
+
+                    if (t + dt>tEnd) {
+                        weights[pIdx] *= Math.exp(-(tEnd-t)*aTotSamp);
+                        break;
+                    }
+
+                    t += dt;
+                    weights[pIdx] *= Math.exp(-(tEnd-t)*aTotSamp);
+
+                    // Choose and implement reaction:
+                    double u = Randomizer.nextDouble()*aTotNS;
+
+                    for (int j=0; j<=i; j++) {
+
+                        if (u < aInfect[j]) {
+                            particle.S -= 1;
+                            particle.E[j] += 1;
+                            break;
+                        }
+                        u -= aInfect[j];
+
+                        if (u < aActivate[j]) {
+                            particle.E[j] -= 1;
+                            particle.I[j] += 1;
+                            break;
+                        }
+                        u -= aActivate[j];
+
+
+                        if (u < aRecover[j]) {
+                            particle.I[j] -= 1;
+                            particle.S += 1;
+                            break;
+                        }
+                        u -= aRecover[j];
+                    }
+
+                }
+            }
+
+        }
+
         return logP;
     }
+
+
 }
 
