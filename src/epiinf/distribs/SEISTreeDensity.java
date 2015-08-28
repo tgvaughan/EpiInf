@@ -9,6 +9,7 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeDistribution;
 import beast.evolution.tree.TreeInterface;
+import beast.math.statistic.DiscreteStatistics;
 import beast.util.Randomizer;
 import epiinf.EpidemicState;
 import epiinf.models.SEISModel;
@@ -55,6 +56,7 @@ public class SEISTreeDensity extends TreeDistribution {
 
     TreeInterface tree;
     int nParticles;
+    int nContemp;
 
     class Particle {
         int S;
@@ -65,6 +67,16 @@ public class SEISTreeDensity extends TreeDistribution {
             E = new int[tree.getNodeCount()];
             I = new int[tree.getNodeCount()];
         }
+
+        public Particle getCopy() {
+            Particle copy = new Particle();
+
+            copy.S = S;
+            System.arraycopy(E, 0, copy.E, 0, E.length);
+            System.arraycopy(I, 0, copy.I, 0, I.length);
+
+            return copy;
+        }
     }
 
     @Override
@@ -73,6 +85,16 @@ public class SEISTreeDensity extends TreeDistribution {
 
         tree = treeInput.get();
         nParticles = nParticlesInput.get();
+
+        // Count number of contemporaneously sampled leaves
+
+        nContemp = 0;
+        for (Node leaf : tree.getExternalNodes()) {
+            if (leaf.getHeight()>0.0)
+                continue;
+
+            nContemp += 1;
+        }
     }
 
     @Override
@@ -97,6 +119,7 @@ public class SEISTreeDensity extends TreeDistribution {
         int S0 = S0Input.get().getValue();
 
         Particle[] particles = new Particle[nParticles];
+        Particle[] particlesPrime = new Particle[nParticles];
         double[] weights = new double[nParticles];
 
         for (int i=0; i<nParticles; i++) {
@@ -107,13 +130,12 @@ public class SEISTreeDensity extends TreeDistribution {
             particle.I[0] = 0;
 
             particles[i] = particle;
-            weights[i] = 1.0;
         }
 
         double[] aInfect = new double[treeNodes.size()];
         double[] aActivate = new double[treeNodes.size()];
         double[] aRecover = new double[treeNodes.size()];
-        double aInfectTot, aActivateTot, aRecoverTot, aTotNS, aTotSamp;
+        double aTotNS, aTotSamp;
 
         for (int i=0; i<treeNodes.size(); i++) {
 
@@ -121,6 +143,7 @@ public class SEISTreeDensity extends TreeDistribution {
 
             for (int pIdx = 0; pIdx<nParticles; pIdx++) {
                 Particle particle = particles[pIdx];
+                weights[i] = 1.0;
 
                 double t;
                 if (i > 0)
@@ -195,10 +218,42 @@ public class SEISTreeDensity extends TreeDistribution {
                         }
                         u -= aRecover[j];
                     }
+                }
 
+                // Compute probability of observed state (always I):
+                weights[i] *= particle.I[i]/(double)(particle.E[i] + particle.I[i]);
+
+                // Compute probability of observed event:
+
+                if (node.isLeaf()) {
+                    // Sampling event
+
+                    weights[i] *= rateSamp;
+                    particle.I[i] -= 1;
+                    particle.S += 1;
+
+
+                } else {
+                    // Branching event
+
+                    weights[i] *= rateInfect;
+                    particle.S -= 1;
+                    particle.E[i] += 1;
                 }
             }
 
+            // Compute average weight and include in tree density:
+            logP += Math.log(DiscreteStatistics.mean(weights));
+
+            // Particle resampling:
+            for (int pIdx = 0; pIdx<particles.length; pIdx++) {
+                particlesPrime[pIdx] =
+                        particles[Randomizer.randomChoicePDF(weights)].getCopy();
+            }
+
+            Particle[] tmpParticles = particles;
+            particles = particlesPrime;
+            particlesPrime = tmpParticles;
         }
 
         return logP;
