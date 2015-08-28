@@ -47,7 +47,7 @@ import java.util.Random;
  */
 @Description("Use SMC to estimate density of tree conditional on model "
         + "parameters.")
-public class SMCTreeDensity extends Distribution {
+public class TreeDensityUnstructured extends Distribution {
 
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
@@ -66,7 +66,7 @@ public class SMCTreeDensity extends Distribution {
     // DEBUG
     PrintStream debugOut;
 
-    public SMCTreeDensity() {
+    public TreeDensityUnstructured() {
     }
 
     @Override
@@ -403,7 +403,7 @@ public class SMCTreeDensity extends Distribution {
                 "tree", tree,
                 "treeOrigin", treeOrigin);
 
-        SMCTreeDensity treeDensity = new SMCTreeDensity();
+        TreeDensityUnstructured treeDensity = new TreeDensityUnstructured();
 
         try (PrintStream ps = new PrintStream("logLik.txt")) {
             ps.println("beta logP");

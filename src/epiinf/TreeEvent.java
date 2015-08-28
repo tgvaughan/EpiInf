@@ -6,6 +6,10 @@
 
 package epiinf;
 
+import beast.evolution.tree.Node;
+
+import java.util.List;
+
 /**
  * Class representing events on a transmission tree.
  *
