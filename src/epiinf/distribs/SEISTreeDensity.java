@@ -1,25 +1,24 @@
 package epiinf.distribs;
 
-import beast.core.Distribution;
+import beast.core.Description;
 import beast.core.Input;
-import beast.core.State;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeDistribution;
 import beast.evolution.tree.TreeInterface;
-import beast.math.Binomial;
+import beast.math.GammaFunction;
 import beast.math.statistic.DiscreteStatistics;
 import beast.util.Randomizer;
-import epiinf.EpidemicState;
-import epiinf.models.SEISModel;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
+@Description("Computes density of tree given stochastic SEIS model.")
 public class SEISTreeDensity extends TreeDistribution {
 
     public Input<IntegerParameter> S0Input = new Input<>(
@@ -59,6 +58,12 @@ public class SEISTreeDensity extends TreeDistribution {
     int nParticles;
     int nContemp;
 
+    double[] aInfect, aActivate, aRecover;
+    double aTotNS, aTotSamp;
+
+    Particle[] particles, particlesPrime;
+    double[] weights;
+
     class Particle {
         int S;
         int[] E, I;
@@ -96,18 +101,18 @@ public class SEISTreeDensity extends TreeDistribution {
 
             nContemp += 1;
         }
+
+        aInfect = new double[tree.getNodeCount()];
+        aActivate = new double[tree.getNodeCount()];
+        aRecover = new double[tree.getNodeCount()];
+
+        weights = new double[nParticles];
+        particles = new Particle[nParticles];
     }
 
     @Override
     public double calculateLogP() throws Exception {
         logP = 0.0;
-
-        double origin = originInput.get().getValue();
-        double rateInfect = infectionRateInput.get().getValue();
-        double rateActivate = activationRateInput.get().getValue();
-        double rateRecover = recoveryRateInput.get().getValue();
-        double rateSamp = psiSamplingRateInput.get().getValue();
-        double pSamp = rhoSamplingProbInput.get().getValue();
 
         List<Node> treeNodes = new ArrayList<>(Arrays.asList(tree.getNodesAsArray()));
         treeNodes.sort((Node n1, Node n2) -> {
@@ -120,130 +125,25 @@ public class SEISTreeDensity extends TreeDistribution {
 
         int S0 = S0Input.get().getValue();
 
-        Particle[] particles = new Particle[nParticles];
-        Particle[] particlesPrime = new Particle[nParticles];
-        double[] weights = new double[nParticles];
-
-        for (int i=0; i<nParticles; i++) {
-            Particle particle = new Particle();
-
+        for (Particle particle : particles) {
             particle.S = S0;
             particle.E[0] = 1;
             particle.I[0] = 0;
-
-            particles[i] = particle;
         }
-
-        double[] aInfect = new double[treeNodes.size()];
-        double[] aActivate = new double[treeNodes.size()];
-        double[] aRecover = new double[treeNodes.size()];
-        double aTotNS, aTotSamp;
 
         for (int i=0; i<treeNodes.size(); i++) {
 
-            Node node = treeNodes.get(i);
+            double tStart = i>0
+                    ? originInput.get().getValue() - treeNodes.get(i-1).getHeight()
+                    : 0.0;
 
-            for (int pIdx = 0; pIdx<nParticles; pIdx++) {
-                Particle particle = particles[pIdx];
-                weights[i] = 1.0;
+            // Skip zero-length intervals
+//            if (originInput.get().getValue() - node.getHeight() == tStart)
+//                continue;
 
-                double t;
-                if (i > 0)
-                    t = origin - treeNodes.get(i-1).getHeight();
-                else
-                    t = 0.0;
-
-                double tEnd = origin - node.getHeight();
-
-                while(true) {
-
-                    // Calculate propensities
-
-                    aTotSamp = 0;
-                    aTotNS = 0;
-
-                    for (int j = 0; j <= i; j++) {
-                        aInfect[j] = rateInfect * particle.S * particle.I[j];
-                        aTotNS += aInfect[j];
-
-                        aActivate[j] = rateActivate * particle.E[j];
-                        aTotNS += aActivate[j];
-
-                        aRecover[j] = rateRecover * particle.I[j];
-                        aTotNS += aRecover[j];
-
-                        aTotSamp += rateSamp * particle.I[j];
-                    }
-
-//                    aTotNS = aInfectTot + aActivateTot + aRecoverTot;
-
-                    // Increment time
-
-                    double dt;
-                    if (aTotNS>0.0)
-                        dt = Randomizer.nextExponential(aTotNS);
-                    else
-                        dt = Double.POSITIVE_INFINITY;
-
-                    if (t + dt>tEnd) {
-                        weights[pIdx] *= Math.exp(-(tEnd-t)*aTotSamp);
-                        break;
-                    }
-
-                    t += dt;
-                    weights[pIdx] *= Math.exp(-(tEnd-t)*aTotSamp);
-
-                    // Choose and implement reaction:
-                    double u = Randomizer.nextDouble()*aTotNS;
-
-                    for (int j=0; j<=i; j++) {
-
-                        if (u < aInfect[j]) {
-                            particle.S -= 1;
-                            particle.E[j] += 1;
-                            break;
-                        }
-                        u -= aInfect[j];
-
-                        if (u < aActivate[j]) {
-                            particle.E[j] -= 1;
-                            particle.I[j] += 1;
-                            break;
-                        }
-                        u -= aActivate[j];
-
-
-                        if (u < aRecover[j]) {
-                            particle.I[j] -= 1;
-                            particle.S += 1;
-                            break;
-                        }
-                        u -= aRecover[j];
-                    }
-                }
-
-                // Compute probability of observed state (always I):
-                weights[i] *= particle.I[i]/(double)(particle.E[i] + particle.I[i]);
-
-                // Compute probability of observed event:
-
-                if (node.isLeaf()) {
-                    // Sampling event
-
-                    if (rateSamp > 0.0) {
-                        weights[i] *= rateSamp;
-                        particle.I[i] -= 1;
-                        particle.S += 1;
-                    }
-
-                } else {
-                    // Branching event
-
-                    weights[i] *= rateInfect;
-                    particle.S -= 1;
-                    particle.E[i] += 1;
-                }
-            }
+            // Update particles
+            for (int pIdx = 0; pIdx<nParticles; pIdx++)
+                weights[pIdx] = updateParticle(particles[pIdx], treeNodes, i, tStart);
 
             // Compute average weight and include in tree density:
             logP += Math.log(DiscreteStatistics.mean(weights));
@@ -259,9 +159,137 @@ public class SEISTreeDensity extends TreeDistribution {
             particlesPrime = tmpParticles;
         }
 
+        // Account for arbitrary ordering of leaf nodes in treeNodes.
+        logP += GammaFunction.lnGamma(nContemp+1);
+
         return logP;
     }
 
+    double updateParticle(Particle particle,  List<Node> treeNodes, int intervalIdx, double tStart) {
+
+        Node node = treeNodes.get(intervalIdx);
+
+        double origin = originInput.get().getValue();
+        double rateInfect = infectionRateInput.get().getValue();
+        double rateActivate = activationRateInput.get().getValue();
+        double rateRecover = recoveryRateInput.get().getValue();
+        double rateSamp = psiSamplingRateInput.get().getValue();
+        double pSamp = rhoSamplingProbInput.get().getValue();
+
+        double t = tStart;
+        double tEnd = origin - node.getHeight();
+
+        double weight = 1.0;
+
+        while(true) {
+
+            // Calculate propensities
+
+            aTotSamp = 0;
+            aTotNS = 0;
+
+            for (int j = 0; j <= intervalIdx; j++) {
+                aInfect[j] = rateInfect * particle.S * particle.I[j];
+                aTotNS += aInfect[j];
+
+                aActivate[j] = rateActivate * particle.E[j];
+                aTotNS += aActivate[j];
+
+                aRecover[j] = rateRecover * particle.I[j];
+                aTotNS += aRecover[j];
+
+                aTotSamp += rateSamp * particle.I[j];
+            }
+
+//                    aTotNS = aInfectTot + aActivateTot + aRecoverTot;
+
+            // Increment time
+
+            double dt;
+            if (aTotNS>0.0)
+                dt = Randomizer.nextExponential(aTotNS);
+            else
+                dt = Double.POSITIVE_INFINITY;
+
+            if (t + dt>tEnd) {
+                weight *= Math.exp(-(tEnd-t)*aTotSamp);
+                break;
+            }
+
+            t += dt;
+            weight *= Math.exp(-(tEnd-t)*aTotSamp);
+
+            // Choose and implement reaction:
+            double u = Randomizer.nextDouble()*aTotNS;
+
+            for (int j=0; j<=intervalIdx; j++) {
+
+                if (u < aInfect[j]) {
+                    particle.S -= 1;
+                    particle.E[j] += 1;
+                    break;
+                }
+                u -= aInfect[j];
+
+                if (u < aActivate[j]) {
+                    particle.E[j] -= 1;
+                    particle.I[j] += 1;
+                    break;
+                }
+                u -= aActivate[j];
+
+
+                if (u < aRecover[j]) {
+                    particle.I[j] -= 1;
+                    particle.S += 1;
+                    break;
+                }
+                u -= aRecover[j];
+            }
+        }
+
+        // Compute probability of observed state (always I):
+        weight *= particle.I[intervalIdx]/(double)(particle.E[intervalIdx] + particle.I[intervalIdx]);
+
+        // Compute probability of observed event:
+
+        if (node.isLeaf()) {
+            // Sampling event
+
+            /* Following condition not exactly right as it is sometimes impossible
+               to determine whether final sampling event was produced by rho
+               sampling or by psi sampling. */
+            if (rateSamp > 0.0 && (pSamp == 0.0 || node.getHeight()>0.0)) {
+                weight *= aTotSamp;
+            }
+
+            if (pSamp > 0.0 && node.getHeight() == 0.0) {
+                weight *= pSamp*Math.pow(1.0-pSamp, particle.I[intervalIdx]-1)
+                        *particle.I[intervalIdx];
+            }
+
+            particle.I[intervalIdx] -= 1;
+            particle.S += 1;
+
+        } else {
+            // Branching event
+
+            int leftIdx = treeNodes.indexOf(node.getLeft());
+            int rightIdx = treeNodes.indexOf(node.getRight());
+
+            weight *= rateInfect;
+            particle.S -= 1;
+            if (Randomizer.nextBoolean()) {
+                particle.E[leftIdx] = 1;
+                particle.I[rightIdx] = 0;
+            } else {
+                particle.E[rightIdx] = 1;
+                particle.I[leftIdx] = 0;
+            }
+        }
+
+        return weight;
+    }
 
 }
 
