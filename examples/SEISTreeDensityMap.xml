@@ -1,0 +1,83 @@
+<!-- Simulate a transmission tree from the BDMM epidemic model -->
+
+<beast version='2.0' namespace='
+    beast.core
+    :beast.util
+    :beast.core.util
+    :beast.core.parameter
+    :beast.evolution.tree
+    :beast.evolution.operators
+    :beast.evolution.likelihood
+    :master
+    :master.model
+    :master.conditions
+    :master.outputs
+    :master.postprocessors
+    :epiinf.distribs
+    :feast.mapping'>
+
+    <!--input spec='BeastTreeFromMaster' id="tree"
+        samplePopulationSizes="true"
+        simulationTime="7"
+        reverseTime="false"
+        collapseSingletons="true"
+        verbosity="1">
+
+        <model spec='Model' id='model'>
+            <population spec='Population' id='S' populationName='S'/>
+            <population spec='Population' id='E' populationName='E'/>
+            <population spec='Population' id='I' populationName='I'/>
+
+            <reaction spec='Reaction' reactionName="Infection" rate=".0005">
+                S:0 + I:1 -> E:1 + I:1
+            </reaction>
+            <reaction spec='Reaction' reactionName="Activation" rate="1.0">
+                E:1 -> I:1
+            </reaction>
+            <reaction spec='Reaction' reactionName="Removal" rate="1.0">
+                I -> S
+            </reaction>
+        </model>
+
+        <initialState spec='InitState'>
+            <lineageSeed spec='Individual' population="@E"/>
+            <populationSize spec="PopulationSize" population="@S" size="9999"/>
+            <populationSize spec="PopulationSize" population="@I" size="0"/>
+        </initialState>
+
+        <inheritancePostProcessor spec="LineageSampler" samplingTime="7" noClean="false">
+            <populationSize spec="PopulationSize" population="@I" size="20"/>
+        </inheritancePostProcessor>
+
+        <lineageEndCondition spec='LineageEndCondition' nLineages="0"/>
+
+        <output spec='NexusOutput' fileName='$(filebase)_output.nexus'/>
+        <output spec='JsonOutput' fileName='$(filebase)_output.json'/>
+    </input-->
+
+    <input spec='TreeParser' id="tree" newick="((3:1.0,2:1.0),1:2.0):0.0;" singlechild="false" adjustTipHeights="false"/>
+
+    <run spec="DensityMapper">
+
+        <realParam id="samplingProb" spec="RealParameter" value="0" lower="0.05" upper="0.15"/>
+        <steps spec="IntegerParameter" value="10"/>
+
+        <distribution spec="SEISTreeDensity" id="treeDensity" nParticles="10000">
+            <tree idref="tree"/>
+            <origin spec="RealParameter" value="4"/>
+            <activationRate spec="RealParameter" value="1"/>
+            <recoveryRate spec="RealParameter" value="1"/>
+            <infectionRate spec="RealParameter" value="0.0005"/>
+            <psiSamplingRate spec="RealParameter" value="0.0"/>
+            <rhoSamplingProb idref="samplingProb"/>
+            <S0 spec="IntegerParameter" value="9999"/>
+        </distribution>
+
+        <logger logEvery="1">
+            <log idref="samplingProb"/>
+            <log idref="treeDensity"/>
+        </logger>
+
+    </run>
+</beast>
+

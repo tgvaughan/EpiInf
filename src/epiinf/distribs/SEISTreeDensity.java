@@ -108,6 +108,9 @@ public class SEISTreeDensity extends TreeDistribution {
 
         weights = new double[nParticles];
         particles = new Particle[nParticles];
+        particlesPrime = new Particle[nParticles];
+        for (int pIdx=0; pIdx<nParticles; pIdx++)
+            particles[pIdx] = new Particle();
     }
 
     @Override
@@ -150,8 +153,9 @@ public class SEISTreeDensity extends TreeDistribution {
 
             // Particle resampling:
             for (int pIdx = 0; pIdx<particles.length; pIdx++) {
+                int choice = Randomizer.randomChoicePDF(weights);
                 particlesPrime[pIdx] =
-                        particles[Randomizer.randomChoicePDF(weights)].getCopy();
+                        particles[choice].getCopy();
             }
 
             Particle[] tmpParticles = particles;
@@ -165,7 +169,7 @@ public class SEISTreeDensity extends TreeDistribution {
         return logP;
     }
 
-    double updateParticle(Particle particle,  List<Node> treeNodes, int intervalIdx, double tStart) {
+    protected double updateParticle(Particle particle,  List<Node> treeNodes, int intervalIdx, double tStart) {
 
         Node node = treeNodes.get(intervalIdx);
 
@@ -249,7 +253,10 @@ public class SEISTreeDensity extends TreeDistribution {
         }
 
         // Compute probability of observed state (always I):
-        weight *= particle.I[intervalIdx]/(double)(particle.E[intervalIdx] + particle.I[intervalIdx]);
+        if (particle.I[intervalIdx] >= 1)
+            weight *= particle.I[intervalIdx]/(double)(particle.E[intervalIdx] + particle.I[intervalIdx]);
+        else
+            return 0.0;
 
         // Compute probability of observed event:
 
