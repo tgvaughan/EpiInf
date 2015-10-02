@@ -6,3 +6,6 @@
 /*.iml
 /.idea
 /out
+/examples/*.tree
+/examples/*.log
+/examples/*.txt
