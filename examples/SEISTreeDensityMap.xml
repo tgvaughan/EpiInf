@@ -55,7 +55,7 @@
         <output spec='JsonOutput' fileName='$(filebase)_output.json'/>
     </input-->
 
-    <input spec='TreeParser' id="tree" newick="((3:1.0,2:1.0),1:2.0):0.0;" singlechild="false" adjustTipHeights="false"/>
+    <input spec='TreeParser' id="tree" newick="((3:1.0,2:1.0):1.0,1:2.0):0.0;" singlechild="false" adjustTipHeights="false"/>
 
     <run spec="DensityMapper">
 
