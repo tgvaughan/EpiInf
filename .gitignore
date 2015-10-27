@@ -1,0 +1,14 @@
+# IntelliJ cruft
+/EpiInf.iml
+/.idea/
+/out
+/META-INF
+
+# Logs and tree files
+*.txt
+*.log
+*.expotree
+*.newick
+
+# Misc
+/.localrc*
