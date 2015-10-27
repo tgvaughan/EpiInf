@@ -59,7 +59,7 @@ public class EpiInfUtilityMethods {
             }
         }
 
-        ps.println(origin + " 1");
+        ps.println(origin + " 99");
     }
     
 }

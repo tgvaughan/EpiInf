@@ -1,0 +1,49 @@
+<beast version="2.0" namespace="beast.core
+    :beast.core.parameter
+    :epiinf
+    :epiinf.models
+    :epiinf.distribs
+    :epiinf.util
+    :feast.mapping">
+
+
+    <tree spec="SimulatedTransmissionTree" id="tree" fileName="$(filebase).tree.newick">
+        <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="5.0">
+            <model spec="SISModel">
+                <S0 spec="IntegerParameter" value="99"/>
+                <infectionRate spec="RealParameter" value="0.01"/>
+                <recoveryRate spec="RealParameter" value="0.2"/>
+                <psiSamplingProb spec="RealParameter" value="0.0"/>
+                <rhoSamplingProb spec="RealParameter" value="0.3"/>
+                <rhoSamplingTime spec="RealParameter" value="4.0"/>
+            </model>
+        </epidemicTrajectory>
+    </tree>
+
+    <run spec="DensityMapper">
+        <distribution spec="SMCTreeDensity" id="density" nParticles="10000">
+            <treeEventList spec="TreeEventList" treeOrigin="4.0" tree="@tree"/>
+            <model spec="SISModel">
+                <S0 spec="IntegerParameter" value="99"/>
+                <infectionRate idref="beta"/>
+                <recoveryRate spec="RealParameter" value="0.2"/>
+                <psiSamplingProb spec="RealParameter" value="0.0"/>
+                <rhoSamplingProb spec="RealParameter" value="0.3"/>
+                <rhoSamplingTime spec="RealParameter" value="4.0"/>
+            </model>
+        </distribution>
+
+        <realParam spec="RealParameter" id="beta" value="0.01" lower="0.005" upper="0.015"/>
+        <steps spec="IntegerParameter" value="21"/>
+
+        <logger spec="Logger" logEvery="1">
+            <log idref="beta"/>
+            <log idref="density"/>
+        </logger>
+
+        <logger spec="Logger" logEvery="1" fileName="$(filebase).log">
+            <log idref="beta"/>
+            <log idref="density"/>
+        </logger>
+    </run>
+</beast>
