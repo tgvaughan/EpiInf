@@ -22,24 +22,16 @@ import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
-import beast.core.parameter.IntegerParameter;
-import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Tree;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
 import beast.util.Randomizer;
 import com.google.common.collect.Lists;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
-import epiinf.EpidemicTrajectory;
-import epiinf.SimulatedTrajectory;
-import epiinf.SimulatedTransmissionTree;
 import epiinf.TreeEvent;
 import epiinf.TreeEventList;
 import epiinf.models.EpidemicModel;
-import epiinf.models.SISModel;
-import epiinf.util.EpiInfUtilityMethods;
-import java.io.PrintStream;
+
 import java.util.List;
 import java.util.Random;
 
@@ -201,8 +193,8 @@ public class SMCTreeDensity extends Distribution {
 
                 case RECOVERY:
                     // Prob that sampling did not occur
-                    if (model.psiSamplingProbInput.get() != null)
-                        conditionalP *= 1.0 - model.psiSamplingProbInput.get().getValue();
+                    if (model.psiSamplingRateInput.get() != null)
+                        conditionalP *= 1.0 - model.psiSamplingRateInput.get().getValue();
                     break;
             }
 
@@ -227,17 +219,17 @@ public class SMCTreeDensity extends Distribution {
 
             // If the model contains an explicit sampling process, evaluate the
             // probability of the sampling event on the tree
-            if (!model.rhoSamplingProbInput.get().isEmpty()
-                    || model.psiSamplingProbInput.get() != null) {
+            if (model.rhoSamplingProbInput.get() != null
+                    || model.psiSamplingRateInput.get() != null) {
 
                 double sampleProb = 0.0;
 
                 // If model contains a rho sampling event at this time, calculate the probability
                 // of sampling the number of samples in finalTreeEvent given the current
                 // state.
-                for (int i = 0; i < model.rhoSamplingProbInput.get().size(); i++) {
-                    double rhoProb = model.rhoSamplingProbInput.get().get(i).getValue();
-                    double rhoTime = model.rhoSamplingTimeInput.get().get(i).getValue();
+                for (int i = 0; i < model.rhoSamplingProbInput.get().getDimension(); i++) {
+                    double rhoProb = model.rhoSamplingProbInput.get().getValue(i);
+                    double rhoTime = model.rhoSamplingTimeInput.get().getValue(i);
 
                     if (Math.abs(rhoTime - finalTreeEvent.time) < model.getTolerance()) {
                         int I = (int) Math.round(particleState.I);
@@ -251,10 +243,10 @@ public class SMCTreeDensity extends Distribution {
                 // probability of a sampled recovery occuring at the time of finalTreeEvent
 
                 if (finalTreeEvent.multiplicity == 1
-                        && model.psiSamplingProbInput.get() != null) {
+                        && model.psiSamplingRateInput.get() != null) {
                     model.calculatePropensities(particleState);
                     sampleProb += model.getPropensities().get(EpidemicEvent.Type.RECOVERY)
-                            * model.psiSamplingProbInput.get().getValue();
+                            * model.psiSamplingRateInput.get().getValue();
                 }
 
                 conditionalP *= sampleProb * Math.exp(GammaFunction.lnGamma(1 + finalTreeEvent.multiplicity));

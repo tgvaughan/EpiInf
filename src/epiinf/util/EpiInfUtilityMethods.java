@@ -19,10 +19,7 @@ package epiinf.util;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import com.google.common.collect.Lists;
-import epiinf.TreeEvent;
-import epiinf.TreeEventList;
 import java.io.PrintStream;
-import java.util.Comparator;
 import java.util.List;
 
 /**

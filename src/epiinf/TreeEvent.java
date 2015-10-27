@@ -11,10 +11,9 @@ package epiinf;
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class TreeEvent {
+public class TreeEvent extends Event {
     public enum Type { COALESCENCE, LEAF };
     
     public Type type;
     public int multiplicity = 1;
-    public double time;
 }

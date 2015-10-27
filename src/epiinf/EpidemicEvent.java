@@ -18,14 +18,13 @@
 package epiinf;
 
 /**
- * Class representing events during an SIR epidemic.
+ * Class representing events during an epidemic.
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class EpidemicEvent {
-    public enum Type { INFECTION, RECOVERY, SAMPLE };
-    
-    public double time;
+public class EpidemicEvent extends Event {
+    public enum Type { INFECTION, RECOVERY, RHO_SAMPLE, PSI_SAMPLE };
+
     public Type type;
     public int multiplicity;
 
@@ -56,9 +55,10 @@ public class EpidemicEvent {
     
     public static EpidemicEvent Infection = new EpidemicEvent(-1, Type.INFECTION, 1);
     public static EpidemicEvent Recovery = new EpidemicEvent(-1, Type.RECOVERY, 1);
-    public static EpidemicEvent Sample = new EpidemicEvent(-1, Type.SAMPLE, 1);
-    
-    public static EpidemicEvent MultipleSamples(int multiplicity) {
-        return new EpidemicEvent(-1, Type.SAMPLE, multiplicity);
+    public static EpidemicEvent RhoSample = new EpidemicEvent(-1, Type.RHO_SAMPLE, 1);
+    public static EpidemicEvent PsiSample = new EpidemicEvent(-1, Type.PSI_SAMPLE, 1);
+
+    public static EpidemicEvent MultipleRhoSamples(int multiplicity) {
+        return new EpidemicEvent(-1, Type.RHO_SAMPLE, multiplicity);
     }
 }
