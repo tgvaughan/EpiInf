@@ -174,10 +174,16 @@ public class SMCTreeDensity extends Distribution {
         while (true) {
             model.calculatePropensities(particleState);
 
-            if (model.getTotalPropensity() > 0.0)
-                t += Randomizer.nextExponential(model.getTotalPropensity());
+            double dt;
+            if (model.getTotalNonSamplingPropensity() > 0.0)
+                dt = Randomizer.nextExponential(model.getTotalNonSamplingPropensity());
             else
-                t = Double.POSITIVE_INFINITY;
+                dt = Double.POSITIVE_INFINITY;
+
+            // Condition against psi-sampling within interval
+            double trueDt = Math.min(dt, Math.min(nextModelEventTime, finalTreeEvent.time) - t);
+            conditionalP *= Math.exp(-trueDt*model.getPsiSamplingPropensity());
+            t += dt;
 
             if (nextModelEventTime < finalTreeEvent.time && t > nextModelEventTime) {
                 if (modelEventList.get(0).type == ModelEvent.Type.RHO_SAMPLING)
@@ -197,11 +203,11 @@ public class SMCTreeDensity extends Distribution {
             if (t > finalTreeEvent.time)
                 break;
 
-            double u = model.getTotalPropensity() * Randomizer.nextDouble();
+            double u = model.getTotalNonSamplingPropensity() * Randomizer.nextDouble();
 
             EpidemicEvent event = new EpidemicEvent();
-            for (EpidemicEvent.Type type : model.getPropensities().keySet()) {
-                u -= model.getPropensities().get(type);
+            for (EpidemicEvent.Type type : model.getNonSamplingPropoensities().keySet()) {
+                u -= model.getNonSamplingPropoensities().get(type);
 
                 if (u < 0) {
                     event.type = type;
@@ -209,17 +215,10 @@ public class SMCTreeDensity extends Distribution {
                 }
             }
 
-            switch (event.type) {
-                case INFECTION:
-                    conditionalP *= 1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1);
-                    break;
-
-                case RECOVERY:
-                    // Prob that sampling did not occur
-                    if (model.psiSamplingProbInput.get() != null)
-                        conditionalP *= 1.0 - model.psiSamplingProbInput.get().getValue();
-                    break;
-            }
+            // Condition against infection events that produce coalescences not
+            // obvserved in tree.
+            if (event.type == EpidemicEvent.Type.INFECTION)
+                conditionalP *= 1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1);
 
             model.incrementState(particleState, event);
 
@@ -237,7 +236,7 @@ public class SMCTreeDensity extends Distribution {
             model.calculatePropensities(particleState);
             model.incrementState(particleState, EpidemicEvent.Infection);
             conditionalP *= 2.0 / particleState.I / (particleState.I - 1)
-                    * model.getPropensities().get(EpidemicEvent.Type.INFECTION);
+                    * model.getNonSamplingPropoensities().get(EpidemicEvent.Type.INFECTION);
         } else {
 
             double sampleProb;
@@ -264,12 +263,10 @@ public class SMCTreeDensity extends Distribution {
                         EpidemicEvent.MultipleRhoSamples(finalTreeEvent.multiplicity));
 
             } else {
-                if (model.psiSamplingProbInput.get() != null && finalTreeEvent.multiplicity == 1) {
+                if (model.psiSamplingRateInput.get() != null && finalTreeEvent.multiplicity == 1) {
                     model.calculatePropensities(particleState);
-                    sampleProb = model.getPropensities().get(EpidemicEvent.Type.RECOVERY)
-                            * model.psiSamplingProbInput.get().getValue();
-                    model.incrementState(particleState,
-                            EpidemicEvent.PsiSample);
+                    sampleProb = model.getPsiSamplingPropensity();
+                    model.incrementState(particleState, EpidemicEvent.PsiSample);
                 } else {
                     // No explicit sampling process
                     sampleProb = 1.0;

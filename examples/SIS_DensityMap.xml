@@ -13,7 +13,7 @@
                 <S0 spec="IntegerParameter" value="99"/>
                 <infectionRate spec="RealParameter" value="0.01"/>
                 <recoveryRate spec="RealParameter" value="0.2"/>
-                <psiSamplingProb spec="RealParameter" value="0.0"/>
+                <psiSamplingRate spec="RealParameter" value="0.0"/>
                 <rhoSamplingProb spec="RealParameter" value="0.3"/>
                 <rhoSamplingTime spec="RealParameter" value="4.0"/>
             </model>
@@ -22,14 +22,14 @@
 
     <run spec="DensityMapper">
         <distribution spec="SMCTreeDensity" id="density" nParticles="10000">
-            <treeEventList spec="TreeEventList" treeOrigin="4.0" tree="@tree"/>
+            <treeEventList spec="TreeEventList" treeOrigin="@origin" tree="@tree"/>
             <model spec="SISModel">
                 <S0 spec="IntegerParameter" value="99"/>
                 <infectionRate idref="beta"/>
                 <recoveryRate spec="RealParameter" value="0.2"/>
-                <psiSamplingProb spec="RealParameter" value="0.0"/>
+                <psiSamplingRate spec="RealParameter" value="0.0"/>
                 <rhoSamplingProb spec="RealParameter" value="0.3"/>
-                <rhoSamplingTime spec="RealParameter" value="4.0"/>
+                <rhoSamplingTime id="origin" spec="RealParameter" value="4.0"/>
             </model>
         </distribution>
 
