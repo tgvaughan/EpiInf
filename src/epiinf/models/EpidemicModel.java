@@ -26,6 +26,7 @@ import com.google.common.collect.Maps;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.ModelEvent;
+import master.model.Model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -201,21 +202,27 @@ public abstract class EpidemicModel extends CalculationNode {
 
             if (!theseModelEvents.isEmpty() && thisState.time > theseModelEvents.get(0).time) {
                 ModelEvent event = theseModelEvents.get(0);
+                theseModelEvents.remove(0);
                 if (event.type == ModelEvent.Type.RHO_SAMPLING) {
+                    nextEvent.type = EpidemicEvent.Type.RHO_SAMPLE;
 
                     // Got to be a better way of sampling from a binomial distribution
-                    nextEvent.type = EpidemicEvent.Type.RHO_SAMPLE;
                     nextEvent.multiplicity = 0;
                     for (int i = 0; i < thisState.I; i++) {
                         if (Randomizer.nextDouble() < event.rho)
                             nextEvent.multiplicity += 1;
                     }
 
-                    thisState.time = event.time;
-                    theseModelEvents.remove(0);
 
-                    continue;
+                    nextEvent.time = event.time;
+                    thisState.time = event.time;
+
+                    incrementState(thisState, nextEvent);
+                    eventList.add(nextEvent);
+                    stateList.add(thisState.copy());
                 }
+
+                continue;
             }
 
             if (thisState.time>=endTime)
