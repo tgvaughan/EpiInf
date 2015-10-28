@@ -23,7 +23,7 @@ package epiinf;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class EpidemicEvent extends Event {
-    public enum Type { INFECTION, RECOVERY, RHO_SAMPLE, PSI_SAMPLE };
+    public enum Type { INFECTION, RECOVERY, RHO_SAMPLE, PSI_SAMPLE, OTHER_SAMPLE};
 
     public Type type;
     public int multiplicity;
@@ -36,6 +36,15 @@ public class EpidemicEvent extends Event {
         this.time = time;
         this.type = type;
         this.multiplicity = multiplicity;
+    }
+
+    /**
+     * @return true iff this is a sampling event
+     */
+    public boolean isSample() {
+        return this.type == Type.RHO_SAMPLE
+                || this.type == Type.PSI_SAMPLE
+                || this.type == Type.OTHER_SAMPLE;
     }
     
     /**
@@ -57,8 +66,13 @@ public class EpidemicEvent extends Event {
     public static EpidemicEvent Recovery = new EpidemicEvent(-1, Type.RECOVERY, 1);
     public static EpidemicEvent RhoSample = new EpidemicEvent(-1, Type.RHO_SAMPLE, 1);
     public static EpidemicEvent PsiSample = new EpidemicEvent(-1, Type.PSI_SAMPLE, 1);
+    public static EpidemicEvent OtherSample = new EpidemicEvent(-1, Type.PSI_SAMPLE, 1);
 
     public static EpidemicEvent MultipleRhoSamples(int multiplicity) {
         return new EpidemicEvent(-1, Type.RHO_SAMPLE, multiplicity);
+    }
+
+    public static EpidemicEvent MultipleOtherSamples(int multiplicity) {
+        return new EpidemicEvent(-1, Type.OTHER_SAMPLE, multiplicity);
     }
 }

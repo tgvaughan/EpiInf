@@ -40,8 +40,8 @@ import java.util.Map;
  */
 public abstract class EpidemicModel extends CalculationNode {
     
-    public Input<RealParameter> psiSamplingRateInput = new Input<>(
-            "psiSamplingRate",
+    public Input<RealParameter> psiSamplingProbInput = new Input<>(
+            "psiSamplingProb",
             "Rate at which (destructive) psi-sampling is performed.");
 
     public Input<RealParameter> rhoSamplingProbInput = new Input<>(
@@ -60,6 +60,10 @@ public abstract class EpidemicModel extends CalculationNode {
     
     protected List<EpidemicEvent> eventList;
     protected List<EpidemicState> stateList;
+    protected List<ModelEvent> modelEventList = new ArrayList<>();
+    protected List<Double> modelEventTimes = new ArrayList<>();
+
+    protected boolean dirty;
     
     protected Map<EpidemicEvent.Type, Double> propensities;
     protected double totalPropensity;
@@ -74,6 +78,8 @@ public abstract class EpidemicModel extends CalculationNode {
     @Override
     public void initAndValidate() {
         tolerance = toleranceInput.get();
+
+        dirty = true;
     };
     
     /**
@@ -126,40 +132,37 @@ public abstract class EpidemicModel extends CalculationNode {
             EpidemicEvent event);
 
 
-    public List<ModelEvent> getModelEventList() {
-        List<ModelEvent> modelEvents = new ArrayList<>();
-
-        if (rhoSamplingProbInput.get() != null) {
-            for (int i = 0; i<rhoSamplingProbInput.get().getDimension(); i++) {
-                ModelEvent event = new ModelEvent();
-                event.type = ModelEvent.Type.RHO_SAMPLING;
-                event.time = rhoSamplingTimeInput.get().getValue(i);
-                modelEvents.add(event);
-            }
-        }
-
-        return modelEvents;
-    }
-
     /**
-     * Retrieve the rho sampling time immediately following t.
-     * 
-     * @param t
-     * @return next rho sampling time (+infinity if there is none)
+     * Assemble list of model events.
+     *
+     * @return the event list
      */
-    public double getNextRhoSamplingTime(double t) {
-        for (int i=0; i<rhoSamplingTimeInput.get().getDimension(); i++) {
-            if (rhoSamplingTimeInput.get().getValue(i)>t)
-                return rhoSamplingTimeInput.get().getValue(i);
+    public List<ModelEvent> getModelEventList() {
+
+        if (dirty) {
+            modelEventList.clear();
+
+            if (rhoSamplingProbInput.get() != null) {
+                for (int i = 0; i < rhoSamplingProbInput.get().getDimension(); i++) {
+                    ModelEvent event = new ModelEvent();
+                    event.type = ModelEvent.Type.RHO_SAMPLING;
+                    event.rho = rhoSamplingProbInput.get().getValue(i);
+                    event.time = rhoSamplingTimeInput.get().getValue(i);
+                    modelEventList.add(event);
+                    modelEventTimes.add(event.time);
+                }
+            }
+
+            dirty = false;
         }
-        
-        return Double.POSITIVE_INFINITY;
+
+        return modelEventList;
     }
-    
+
     /**
      * Generate a sequence of events between startTime and endTime conditional
      * on the startState.  The results are retrieved using subsequent calls
-     * to getEventList() and getStateList().  Note that the latter only provides
+     * to getEpidemicEventList() and getEpidemicStateList().  Note that the latter only provides
      * the list of states _following_ startState: i.e. there are as many states
      * as events in this list.
      * 
@@ -178,13 +181,10 @@ public abstract class EpidemicModel extends CalculationNode {
         EpidemicState thisState = startState.copy();
         thisState.time = startTime;
 
-        double nextRhoSamplingTime = Double.POSITIVE_INFINITY;
-        int nextRhoSamplingIndex = -1;
-        if (rhoSamplingTimeInput.get() != null) {
-            nextRhoSamplingTime = rhoSamplingTimeInput.get().getValue(0);
-            nextRhoSamplingIndex = 0;
-        }
-
+        List<ModelEvent> theseModelEvents = new ArrayList<>();
+        getModelEventList().stream()
+                .filter(e -> e.time > startTime && e.time < endTime)
+                .forEach(theseModelEvents::add);
 
         while (true) {
             calculatePropensities(thisState);
@@ -196,55 +196,51 @@ public abstract class EpidemicModel extends CalculationNode {
                 dt = Double.POSITIVE_INFINITY;
             
             thisState.time += dt;
-                    
+
+            EpidemicEvent nextEvent = new EpidemicEvent();
+
+            if (!theseModelEvents.isEmpty() && thisState.time > theseModelEvents.get(0).time) {
+                ModelEvent event = theseModelEvents.get(0);
+                if (event.type == ModelEvent.Type.RHO_SAMPLING) {
+
+                    // Got to be a better way of sampling from a binomial distribution
+                    nextEvent.type = EpidemicEvent.Type.RHO_SAMPLE;
+                    nextEvent.multiplicity = 0;
+                    for (int i = 0; i < thisState.I; i++) {
+                        if (Randomizer.nextDouble() < event.rho)
+                            nextEvent.multiplicity += 1;
+                    }
+
+                    thisState.time = event.time;
+                    theseModelEvents.remove(0);
+
+                    continue;
+                }
+            }
+
             if (thisState.time>=endTime)
                 break;
-            
-            EpidemicEvent nextEvent = new EpidemicEvent();
-            
-            if (thisState.time > nextRhoSamplingTime) {
-                // Simultaneous sampling from the extant population
 
-                thisState.time = nextRhoSamplingTime;
-                nextEvent.time = nextRhoSamplingTime;
-                nextEvent.type = EpidemicEvent.Type.SAMPLE;
 
-                // Got to be a better way of sampling from a binomial distribution
-                nextEvent.multiplicity = 0;
-                for (int i=0; i<thisState.I; i++) {
-                    if (Randomizer.nextDouble()<rhoSamplingProbInput.get().getValue(nextRhoSamplingIndex))
-                        nextEvent.multiplicity += 1;
+            nextEvent.time = thisState.time;
+
+            double u = totalPropensity*Randomizer.nextDouble();
+
+            for (EpidemicEvent.Type type : propensities.keySet()) {
+                u -= propensities.get(type);
+
+                if (u<0) {
+                    nextEvent.type = type;
+                    break;
                 }
-
-                nextRhoSamplingIndex += 1;
-                
-                if (nextRhoSamplingIndex<rhoSamplingTimeInput.get().getDimension())
-                    nextRhoSamplingTime = rhoSamplingTimeInput.get().getValue(nextRhoSamplingIndex);
-                else
-                    nextRhoSamplingTime = Double.POSITIVE_INFINITY;
-
-            } else {
-
-                nextEvent.time = thisState.time;
-            
-                double u = totalPropensity*Randomizer.nextDouble();
-                
-                for (EpidemicEvent.Type type : propensities.keySet()) {
-                    u -= propensities.get(type);
-                    
-                    if (u<0) {
-                        nextEvent.type = type;
-                        break;
-                    }
-                }
-
-                // Replace recovery events with sampling events with fixed probability
-                if (psiSamplingRateInput.get() != null
-                        && nextEvent.type == EpidemicEvent.Type.RECOVERY
-                        && Randomizer.nextDouble()< psiSamplingRateInput.get().getValue())
-                    nextEvent.type = EpidemicEvent.Type.SAMPLE;
             }
-            
+
+            // Replace recovery events with sampling events with fixed probability
+            if (psiSamplingProbInput.get() != null
+                    && nextEvent.type == EpidemicEvent.Type.RECOVERY
+                    && Randomizer.nextDouble()< psiSamplingProbInput.get().getValue())
+                nextEvent.type = EpidemicEvent.Type.PSI_SAMPLE;
+
             incrementState(thisState, nextEvent);
             eventList.add(nextEvent);
             stateList.add(thisState.copy());
@@ -254,14 +250,37 @@ public abstract class EpidemicModel extends CalculationNode {
     /**
      * @return last simulated event list
      */
-    public List<EpidemicEvent> getEventList() {
+    public List<EpidemicEvent> getEpidemicEventList() {
         return eventList;
     }
     
     /**
      * @return last simulated state list
      */
-    public List<EpidemicState> getStateList() {
+    public List<EpidemicState> getEpidemicStateList() {
         return stateList;
     }
+
+    @Override
+    protected boolean requiresRecalculation() {
+        dirty = true;
+        return true;
+    }
+
+    @Override
+    protected void restore() {
+        dirty = true;
+    }
+
+    /**
+     * Test whether two times are equal to within the model's tolerance.
+     *
+     * @param timeA first time
+     * @param timeB second time
+     * @return true if times are to be considered equal
+     */
+    public boolean timesEqual(double timeA, double timeB) {
+        return Math.abs(timeA - timeB) < tolerance;
+    }
+
 }

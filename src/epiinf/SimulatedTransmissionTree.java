@@ -58,7 +58,7 @@ public class SimulatedTransmissionTree extends Tree {
         int nSamples = 0;
         double youngestSamp = 0.0;
         for (EpidemicEvent event : traj.getEventList()) {
-            if (event.type == EpidemicEvent.Type.SAMPLE) {
+            if (event.isSample()) {
                 nSamples += event.multiplicity;
                 youngestSamp = Math.max(event.time, youngestSamp);
             }
@@ -80,7 +80,7 @@ public class SimulatedTransmissionTree extends Tree {
             EpidemicEvent epidemicEvent = revEventList.get(eidx);
             EpidemicState epidemicState = revStateList.get(eidx);
             
-            if (epidemicEvent.type == EpidemicEvent.Type.SAMPLE) {
+            if (epidemicEvent.isSample()) {
                 for (int i=0; i<epidemicEvent.multiplicity; i++) {
                     Node leaf = new Node();
                     leaf.setHeight(youngestSamp-epidemicEvent.time);

@@ -66,7 +66,9 @@ public class SISModel extends EpidemicModel {
                 state.I += event.multiplicity;
                 break;
             case RECOVERY:
-            case SAMPLE:
+            case RHO_SAMPLE:
+            case PSI_SAMPLE:
+            case OTHER_SAMPLE:
                 state.I -= event.multiplicity;
                 state.S += event.multiplicity;
                 break;

@@ -22,11 +22,9 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
-import beast.util.Randomizer;
 import epiinf.models.EpidemicModel;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -81,8 +79,8 @@ public class SimulatedTrajectory extends EpidemicTrajectory implements StateNode
         EpidemicState currentState = model.getInitialState();
         
         model.generateTrajectory(currentState, t, duration);
-        eventList.addAll(model.getEventList());
-        stateList.addAll(model.getStateList().subList(0, model.getStateList().size()));
+        eventList.addAll(model.getEpidemicEventList());
+        stateList.addAll(model.getEpidemicStateList().subList(0, model.getEpidemicStateList().size()));
     }
     
     @Override
