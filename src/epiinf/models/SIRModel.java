@@ -59,14 +59,14 @@ public class SIRModel extends EpidemicModel {
     @Override
     public void incrementState(EpidemicState state, EpidemicEvent event) {
         switch(event.type) {
-            case INFECTION:
+            case EpidemicEvent.INFECTION:
                 state.S -= event.multiplicity;
                 state.I += event.multiplicity;
                 break;
-            case RECOVERY:
-            case RHO_SAMPLE:
-            case PSI_SAMPLE:
-            case OTHER_SAMPLE:
+            case EpidemicEvent.RECOVERY:
+            case EpidemicEvent.RHO_SAMPLE:
+            case EpidemicEvent.PSI_SAMPLE:
+            case EpidemicEvent.OTHER_SAMPLE:
                 state.I -= event.multiplicity;
                 state.R += event.multiplicity;
                 break;

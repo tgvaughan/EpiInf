@@ -23,18 +23,24 @@ package epiinf;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class EpidemicEvent extends Event {
-    public enum Type { INFECTION, RECOVERY, RHO_SAMPLE, PSI_SAMPLE, OTHER_SAMPLE};
-    public static Type[] sampleTypes = {Type.RHO_SAMPLE, Type.PSI_SAMPLE, Type.OTHER_SAMPLE};
-    public static Type[] nonSampleTypes = {Type.INFECTION, Type.RECOVERY};
+//    public enum Type { INFECTION, RECOVERY, RHO_SAMPLE, PSI_SAMPLE, OTHER_SAMPLE};
+    public static final int INFECTION = 0;
+    public static final int RECOVERY = 1;
+    public static final int RHO_SAMPLE = 2;
+    public static final int PSI_SAMPLE = 3;
+    public static final int OTHER_SAMPLE= 4;
+    public static final int nTypes = 5;
+    public static final int[] sampleTypes = {RHO_SAMPLE, PSI_SAMPLE, OTHER_SAMPLE};
+    public static final int[] nonSampleTypes = {INFECTION, RECOVERY};
 
-    public Type type;
+    public int type;
     public int multiplicity;
 
     public EpidemicEvent() {
         multiplicity = 1;
     }
     
-    public EpidemicEvent(double time, Type type, int multiplicity) {
+    public EpidemicEvent(double time, int type, int multiplicity) {
         this.time = time;
         this.type = type;
         this.multiplicity = multiplicity;
@@ -44,12 +50,7 @@ public class EpidemicEvent extends Event {
      * @return true iff this is a sampling event
      */
     public boolean isSample() {
-        for (Type type : nonSampleTypes) {
-            if (type == this.type)
-                return false;
-        }
-
-        return true;
+        return type >= 2;
     }
 
     /**
@@ -67,17 +68,17 @@ public class EpidemicEvent extends Event {
         return "t: " + time + " type: " + type + " mult: " + multiplicity;
     }
     
-    public static EpidemicEvent Infection = new EpidemicEvent(-1, Type.INFECTION, 1);
-    public static EpidemicEvent Recovery = new EpidemicEvent(-1, Type.RECOVERY, 1);
-    public static EpidemicEvent RhoSample = new EpidemicEvent(-1, Type.RHO_SAMPLE, 1);
-    public static EpidemicEvent PsiSample = new EpidemicEvent(-1, Type.PSI_SAMPLE, 1);
-    public static EpidemicEvent OtherSample = new EpidemicEvent(-1, Type.PSI_SAMPLE, 1);
+    public static final EpidemicEvent Infection = new EpidemicEvent(-1, INFECTION, 1);
+    public static final EpidemicEvent Recovery = new EpidemicEvent(-1, RECOVERY, 1);
+    public static final EpidemicEvent RhoSample = new EpidemicEvent(-1, RHO_SAMPLE, 1);
+    public static final EpidemicEvent PsiSample = new EpidemicEvent(-1, PSI_SAMPLE, 1);
+    public static final EpidemicEvent OtherSample = new EpidemicEvent(-1, PSI_SAMPLE, 1);
 
     public static EpidemicEvent MultipleRhoSamples(int multiplicity) {
-        return new EpidemicEvent(-1, Type.RHO_SAMPLE, multiplicity);
+        return new EpidemicEvent(-1, RHO_SAMPLE, multiplicity);
     }
 
     public static EpidemicEvent MultipleOtherSamples(int multiplicity) {
-        return new EpidemicEvent(-1, Type.OTHER_SAMPLE, multiplicity);
+        return new EpidemicEvent(-1, OTHER_SAMPLE, multiplicity);
     }
 }

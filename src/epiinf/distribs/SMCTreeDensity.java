@@ -165,14 +165,14 @@ public class SMCTreeDensity extends Distribution {
         while (true) {
             model.calculatePropensities(particleState);
 
-            double infectionProp = model.propensities.get(EpidemicEvent.Type.INFECTION);
+            double infectionProp = model.propensities[EpidemicEvent.INFECTION];
             double allowedRecovProp, forbiddenRecovProp;
             if (particleState.I > lineages) {
-                allowedRecovProp = model.propensities.get(EpidemicEvent.Type.RECOVERY);
+                allowedRecovProp = model.propensities[EpidemicEvent.RECOVERY];
                 forbiddenRecovProp = 0.0;
             } else {
                 allowedRecovProp = 0.0;
-                forbiddenRecovProp = model.propensities.get(EpidemicEvent.Type.RECOVERY);
+                forbiddenRecovProp = model.propensities[EpidemicEvent.RECOVERY];
             }
             double allowedEventProp = infectionProp + allowedRecovProp;
 
@@ -186,7 +186,7 @@ public class SMCTreeDensity extends Distribution {
 
             // Condition against psi-sampling and illegal recovery within interval
             double trueDt = Math.min(dt, Math.min(nextModelEventTime, finalTreeEvent.time) - t);
-            conditionalP *= Math.exp(-trueDt*(model.propensities.get(EpidemicEvent.Type.PSI_SAMPLE) + forbiddenRecovProp));
+            conditionalP *= Math.exp(-trueDt*(model.propensities[EpidemicEvent.PSI_SAMPLE] + forbiddenRecovProp));
 
             // Increment time
             t += dt;
@@ -213,14 +213,14 @@ public class SMCTreeDensity extends Distribution {
 
             EpidemicEvent event = new EpidemicEvent();
             if (allowedEventProp*Randomizer.nextDouble() < infectionProp) {
-                event.type = EpidemicEvent.Type.INFECTION;
+                event.type = EpidemicEvent.INFECTION;
             } else
-                event.type = EpidemicEvent.Type.RECOVERY;
+                event.type = EpidemicEvent.RECOVERY;
 
 
             // Condition against infection events that produce coalescences not
             // observed in tree.
-            if (event.type == EpidemicEvent.Type.INFECTION)
+            if (event.type == EpidemicEvent.INFECTION)
                 conditionalP *= 1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1);
 
             model.incrementState(particleState, event);
@@ -236,7 +236,7 @@ public class SMCTreeDensity extends Distribution {
             model.calculatePropensities(particleState);
             model.incrementState(particleState, EpidemicEvent.Infection);
             conditionalP *= 2.0 / particleState.I / (particleState.I - 1)
-                    * model.propensities.get(EpidemicEvent.Type.INFECTION);
+                    * model.propensities[EpidemicEvent.INFECTION];
         } else {
 
             double sampleProb;
@@ -265,7 +265,7 @@ public class SMCTreeDensity extends Distribution {
             } else {
                 if (model.psiSamplingRateInput.get() != null && finalTreeEvent.multiplicity == 1) {
                     model.calculatePropensities(particleState);
-                    sampleProb = model.propensities.get(EpidemicEvent.Type.PSI_SAMPLE);
+                    sampleProb = model.propensities[EpidemicEvent.PSI_SAMPLE];
                     model.incrementState(particleState, EpidemicEvent.PsiSample);
                 } else {
                     // No explicit sampling process

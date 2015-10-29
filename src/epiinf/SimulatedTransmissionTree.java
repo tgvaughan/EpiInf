@@ -91,7 +91,7 @@ public class SimulatedTransmissionTree extends Tree {
                 samplesSeen += epidemicEvent.multiplicity;
             } else {
                 
-                if (epidemicEvent.type == EpidemicEvent.Type.INFECTION) {
+                if (epidemicEvent.type == EpidemicEvent.INFECTION) {
                     int k = activeNodes.size();
                     double N = epidemicState.I;
                     
@@ -152,5 +152,5 @@ public class SimulatedTransmissionTree extends Tree {
             return "Tried to simulate tree from trajectory "
                     + "containing no samples.";
         }
-    };
+    }
 }

@@ -21,16 +21,12 @@ import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.ModelEvent;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Class representing an epidemic model.  Contains all the bits and bobs
@@ -67,7 +63,8 @@ public abstract class EpidemicModel extends CalculationNode {
     protected boolean modelEventListDirty;
     protected double tolerance;
 
-    public Map<EpidemicEvent.Type,Double> propensities = new HashMap<>();
+//    public Map<EpidemicEvent.Type,Double> propensities = new HashMap<>();
+    public double[] propensities = new double[EpidemicEvent.nTypes];
 
 
     EpidemicModel() { }
@@ -77,7 +74,7 @@ public abstract class EpidemicModel extends CalculationNode {
         tolerance = toleranceInput.get();
 
         modelEventListDirty = true;
-    };
+    }
     
     /**
      * Retrieve tolerance with respect to difference between epidemic
@@ -96,13 +93,13 @@ public abstract class EpidemicModel extends CalculationNode {
     
 
     public final void calculatePropensities(EpidemicState state) {
-        propensities.put(EpidemicEvent.Type.RECOVERY, calculateRecoveryPropensity(state));
-        propensities.put(EpidemicEvent.Type.INFECTION, calculateInfectionPropensity(state));
+        propensities[EpidemicEvent.RECOVERY] = calculateRecoveryPropensity(state);
+        propensities[EpidemicEvent.INFECTION] = calculateInfectionPropensity(state);
 
         if (psiSamplingRateInput.get() != null)
-            propensities.put(EpidemicEvent.Type.PSI_SAMPLE, state.I * psiSamplingRateInput.get().getValue());
+            propensities[EpidemicEvent.PSI_SAMPLE] = state.I * psiSamplingRateInput.get().getValue();
         else
-            propensities.put(EpidemicEvent.Type.PSI_SAMPLE, 0.0);
+            propensities[EpidemicEvent.PSI_SAMPLE] = 0.0;
     }
 
     public abstract double calculateRecoveryPropensity(EpidemicState state);
@@ -113,7 +110,7 @@ public abstract class EpidemicModel extends CalculationNode {
      * Increment state according to reaction of chosen type.
      * 
      * @param state state to update
-     * @param event
+     * @param event epidemic event
      */
     public abstract void incrementState(EpidemicState state,
             EpidemicEvent event);
@@ -176,9 +173,9 @@ public abstract class EpidemicModel extends CalculationNode {
         while (true) {
             calculatePropensities(thisState);
 
-            double totalPropensity = propensities.get(EpidemicEvent.Type.INFECTION)
-                    + propensities.get(EpidemicEvent.Type.RECOVERY)
-                    + propensities.get(EpidemicEvent.Type.PSI_SAMPLE);
+            double totalPropensity = propensities[EpidemicEvent.INFECTION]
+                    + propensities[EpidemicEvent.RECOVERY]
+                    + propensities[EpidemicEvent.PSI_SAMPLE];
 
             double dt;
             if (totalPropensity>0.0)
@@ -194,7 +191,7 @@ public abstract class EpidemicModel extends CalculationNode {
                 ModelEvent event = theseModelEvents.get(0);
                 theseModelEvents.remove(0);
                 if (event.type == ModelEvent.Type.RHO_SAMPLING) {
-                    nextEvent.type = EpidemicEvent.Type.RHO_SAMPLE;
+                    nextEvent.type = EpidemicEvent.RHO_SAMPLE;
 
                     // Got to be a better way of sampling from a binomial distribution
                     nextEvent.multiplicity = 0;
@@ -223,8 +220,8 @@ public abstract class EpidemicModel extends CalculationNode {
 
             double u = totalPropensity*Randomizer.nextDouble();
 
-            for (EpidemicEvent.Type type : propensities.keySet()) {
-                u -= propensities.get(type);
+            for (int type = 0; type<EpidemicEvent.nTypes; type++) {
+                u -= propensities[type];
 
                 if (u<0) {
                     nextEvent.type = type;
