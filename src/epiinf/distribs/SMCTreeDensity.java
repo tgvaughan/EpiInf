@@ -27,6 +27,7 @@ import beast.math.GammaFunction;
 import beast.util.Randomizer;
 import com.google.common.collect.Lists;
 import epiinf.*;
+import epiinf.util.ReplacementSampler;
 import epiinf.models.EpidemicModel;
 
 import java.util.List;
@@ -78,26 +79,25 @@ public class SMCTreeDensity extends Distribution {
 
         List<ModelEvent> modelEventList = model.getModelEventList();
 
-        List<Double> particleWeights = Lists.newArrayList();
-        List<EpidemicState> particleStates = Lists.newArrayList();
-        List<EpidemicState> particleStatesNew = Lists.newArrayList();
+        double[] particleWeights = new double[nParticles];
+        EpidemicState[] particleStates = new EpidemicState[nParticles];
+        EpidemicState[] particleStatesNew = new EpidemicState[nParticles];
 
         // Initialize particles
         for (int p = 0; p < nParticles; p++)
-            particleStates.add(model.getInitialState());
+            particleStates[p] = model.getInitialState();
 
         double t = 0.0;
         int k = 1;
         for (TreeEvent treeEvent : treeEventList.getEventList()) {
 
             // Update particles
-            particleWeights.clear();
             double sumOfWeights = 0.0;
             for (int p = 0; p < nParticles; p++) {
 
-                double newWeight = updateParticle(particleStates.get(p), t, k, treeEvent, modelEventList);
+                double newWeight = updateParticle(particleStates[p], t, k, treeEvent, modelEventList);
 
-                particleWeights.add(newWeight);
+                particleWeights[p] = newWeight;
                 sumOfWeights += newWeight;
             }
 
@@ -108,25 +108,15 @@ public class SMCTreeDensity extends Distribution {
                 return Double.NEGATIVE_INFINITY;
 
             // Sample particle with replacement
-            particleStatesNew.clear();
-            for (int p = 0; p < nParticles; p++) {
-                double u = Randomizer.nextDouble() * sumOfWeights;
+            for (int i=0; i<nParticles; i++)
+                particleWeights[i] = particleWeights[i]/sumOfWeights;
 
-                int pChoice;
-                for (pChoice = 0; pChoice < nParticles; pChoice++) {
-                    u -= particleWeights.get(pChoice);
-                    if (u < 0.0)
-                        break;
-                }
-
-                if (pChoice == nParticles)
-                    System.err.println("sumOfWeights: " + sumOfWeights);
-
-                particleStatesNew.add(particleStates.get(pChoice).copy());
-            }
+            ReplacementSampler replacementSampler = new ReplacementSampler(particleWeights);
+            for (int p=0; p<nParticles; p++)
+                particleStatesNew[p] = particleStates[replacementSampler.next()].copy();
 
             // Switch particleStates and particleStatesNew
-            List<EpidemicState> temp = particleStates;
+            EpidemicState[] temp = particleStates;
             particleStates = particleStatesNew;
             particleStatesNew = temp;
 
@@ -146,10 +136,12 @@ public class SMCTreeDensity extends Distribution {
     /**
      * Updates weight and state of particle.
      *
-     * @param particleState
-     * @param startTime
-     * @param lineages
-     * @param finalTreeEvent
+     * @param particleState State of particle
+     * @param startTime start time of interval
+     * @param lineages number of tree lineages in interval
+     * @param finalTreeEvent tree event which terminates interval
+     * @param modelEventList list of model events potentially affecting calculation
+     *
      * @return conditional prob of tree interval under trajectory
      */
     private double updateParticle(EpidemicState particleState,
