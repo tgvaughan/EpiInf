@@ -73,6 +73,9 @@ public class TreeEventList extends CalculationNode {
      * Ensure list of tree events is up to date.
      */
     public void updateEventList() {
+        if (!dirty)
+            return;
+
         eventList.clear();
 
         // Assemble event list
@@ -136,9 +139,7 @@ public class TreeEventList extends CalculationNode {
      * @return event list
      */
     public List<TreeEvent> getEventList() {
-        if (dirty)
-            updateEventList();
-        
+        updateEventList();
         return eventList;
     }
     

@@ -24,6 +24,8 @@ package epiinf;
  */
 public class EpidemicEvent extends Event {
     public enum Type { INFECTION, RECOVERY, RHO_SAMPLE, PSI_SAMPLE, OTHER_SAMPLE};
+    public static Type[] sampleTypes = {Type.RHO_SAMPLE, Type.PSI_SAMPLE, Type.OTHER_SAMPLE};
+    public static Type[] nonSampleTypes = {Type.INFECTION, Type.RECOVERY};
 
     public Type type;
     public int multiplicity;
@@ -42,11 +44,14 @@ public class EpidemicEvent extends Event {
      * @return true iff this is a sampling event
      */
     public boolean isSample() {
-        return this.type == Type.RHO_SAMPLE
-                || this.type == Type.PSI_SAMPLE
-                || this.type == Type.OTHER_SAMPLE;
+        for (Type type : nonSampleTypes) {
+            if (type == this.type)
+                return false;
+        }
+
+        return true;
     }
-    
+
     /**
      * Get record describing this event for use in constructing
      * R-compatible text files.

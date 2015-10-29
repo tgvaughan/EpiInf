@@ -28,6 +28,7 @@ import epiinf.EpidemicState;
 import epiinf.ModelEvent;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -58,30 +59,24 @@ public abstract class EpidemicModel extends CalculationNode {
                     + "events in epidemic trajectory for events to be"
                     + "considered compatible.  Default 1e-10.", 1e-10);
     
-    protected List<EpidemicEvent> eventList;
-    protected List<EpidemicState> stateList;
+    protected List<EpidemicEvent> eventList = new ArrayList<>();
+    protected List<EpidemicState> stateList = new ArrayList<>();
     protected List<ModelEvent> modelEventList = new ArrayList<>();
     protected List<Double> modelEventTimes = new ArrayList<>();
 
-    protected boolean dirty;
-    
-    protected Map<EpidemicEvent.Type, Double> nonSamplingPropoensities;
-    protected double totalNonSamplingPropensity;
-    protected double psiSamplingPropensity;
-
+    protected boolean modelEventListDirty;
     protected double tolerance;
-    
-    EpidemicModel() {
-        eventList = Lists.newArrayList();
-        stateList = Lists.newArrayList();
-        nonSamplingPropoensities = Maps.newHashMap();
-    }
+
+    public Map<EpidemicEvent.Type,Double> propensities = new HashMap<>();
+
+
+    EpidemicModel() { }
     
     @Override
     public void initAndValidate() {
         tolerance = toleranceInput.get();
 
-        dirty = true;
+        modelEventListDirty = true;
     };
     
     /**
@@ -101,52 +96,18 @@ public abstract class EpidemicModel extends CalculationNode {
     
 
     public final void calculatePropensities(EpidemicState state) {
+        propensities.put(EpidemicEvent.Type.RECOVERY, calculateRecoveryPropensity(state));
+        propensities.put(EpidemicEvent.Type.INFECTION, calculateInfectionPropensity(state));
+
         if (psiSamplingRateInput.get() != null)
-            psiSamplingPropensity = state.I * psiSamplingRateInput.get().getValue();
+            propensities.put(EpidemicEvent.Type.PSI_SAMPLE, state.I * psiSamplingRateInput.get().getValue());
         else
-            psiSamplingPropensity = 0.0;
-
-        calculateModelSpecificPropensities(state);
-
-        totalNonSamplingPropensity = 0.0;
-        for (Double propensity : nonSamplingPropoensities.values()) {
-            totalNonSamplingPropensity += propensity;
-        }
+            propensities.put(EpidemicEvent.Type.PSI_SAMPLE, 0.0);
     }
 
-    /**
-     * Calculate propensities of all possible reactions contained in
-     * this model.
-     * @param state state used to calculate propensities
-     */
-    public abstract void calculateModelSpecificPropensities(EpidemicState state);
-    
-    /**
-     * Obtain the most recently calculated reaction propensities.
-     * 
-     * @return propensity map
-     */
-    public Map<EpidemicEvent.Type, Double> getNonSamplingPropoensities() {
-        return nonSamplingPropoensities;
-    }
-    
-    /**
-     * Obtain most recently calculated total reaction propensity.
-     * 
-     * @return propensity
-     */
-    public double getTotalNonSamplingPropensity() {
-        return totalNonSamplingPropensity;
-    }
+    public abstract double calculateRecoveryPropensity(EpidemicState state);
+    public abstract double calculateInfectionPropensity(EpidemicState state);
 
-    /**
-     * Obtain most recently calculated psi sampling propensity.
-     *
-     * @return propensity
-     */
-    public double getPsiSamplingPropensity() {
-        return psiSamplingPropensity;
-    }
     
     /**
      * Increment state according to reaction of chosen type.
@@ -165,7 +126,7 @@ public abstract class EpidemicModel extends CalculationNode {
      */
     public List<ModelEvent> getModelEventList() {
 
-        if (dirty) {
+        if (modelEventListDirty) {
             modelEventList.clear();
 
             if (rhoSamplingProbInput.get() != null) {
@@ -179,7 +140,7 @@ public abstract class EpidemicModel extends CalculationNode {
                 }
             }
 
-            dirty = false;
+            modelEventListDirty = false;
         }
 
         return modelEventList;
@@ -215,9 +176,10 @@ public abstract class EpidemicModel extends CalculationNode {
         while (true) {
             calculatePropensities(thisState);
 
-            double totalPropensity = getTotalNonSamplingPropensity()
-                    + getPsiSamplingPropensity();
-            
+            double totalPropensity = propensities.get(EpidemicEvent.Type.INFECTION)
+                    + propensities.get(EpidemicEvent.Type.RECOVERY)
+                    + propensities.get(EpidemicEvent.Type.PSI_SAMPLE);
+
             double dt;
             if (totalPropensity>0.0)
                 dt = Randomizer.nextExponential(totalPropensity);
@@ -261,18 +223,13 @@ public abstract class EpidemicModel extends CalculationNode {
 
             double u = totalPropensity*Randomizer.nextDouble();
 
-            for (EpidemicEvent.Type type : nonSamplingPropoensities.keySet()) {
-                u -= nonSamplingPropoensities.get(type);
+            for (EpidemicEvent.Type type : propensities.keySet()) {
+                u -= propensities.get(type);
 
                 if (u<0) {
                     nextEvent.type = type;
                     break;
                 }
-            }
-
-            if (u>0) {
-                // Psi sampling
-                nextEvent.type = EpidemicEvent.Type.PSI_SAMPLE;
             }
 
             incrementState(thisState, nextEvent);
@@ -297,13 +254,13 @@ public abstract class EpidemicModel extends CalculationNode {
 
     @Override
     protected boolean requiresRecalculation() {
-        dirty = true;
+        modelEventListDirty = true;
         return true;
     }
 
     @Override
     protected void restore() {
-        dirty = true;
+        modelEventListDirty = true;
     }
 
     /**

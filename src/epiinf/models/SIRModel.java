@@ -45,14 +45,15 @@ public class SIRModel extends EpidemicModel {
     public EpidemicState getInitialState() {
         return new EpidemicState(S0Input.get().getValue(), 1, 0);
     }
-    
-    @Override
-    public void calculateModelSpecificPropensities(EpidemicState state) {
-        nonSamplingPropoensities.put(EpidemicEvent.Type.INFECTION,
-                infectionRateInput.get().getValue()*state.S*state.I);
 
-        nonSamplingPropoensities.put(EpidemicEvent.Type.RECOVERY,
-                recoveryRateInput.get().getValue()*state.I);
+    @Override
+    public double calculateInfectionPropensity(EpidemicState state) {
+        return infectionRateInput.get().getValue()*state.S*state.I;
+    }
+
+    @Override
+    public double calculateRecoveryPropensity(EpidemicState state) {
+        return recoveryRateInput.get().getValue()*state.I;
     }
 
     @Override

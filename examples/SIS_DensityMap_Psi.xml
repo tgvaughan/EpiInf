@@ -19,7 +19,7 @@
     </tree>
 
     <run spec="DensityMapper">
-        <distribution spec="SMCTreeDensity" id="density" nParticles="1000">
+        <distribution spec="SMCTreeDensity" id="density" nParticles="2000">
             <treeEventList spec="TreeEventList" tree="@tree">
                 <treeOrigin spec="OriginFromTrajectory" trajectory="@trajectory"/>
             </treeEventList>
