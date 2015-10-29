@@ -25,10 +25,9 @@ import beast.core.State;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
 import beast.util.Randomizer;
-import com.google.common.collect.Lists;
 import epiinf.*;
-import epiinf.util.ReplacementSampler;
 import epiinf.models.EpidemicModel;
+import epiinf.util.ReplacementSampler;
 
 import java.util.List;
 import java.util.Random;
