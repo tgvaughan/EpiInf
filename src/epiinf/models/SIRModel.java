@@ -46,28 +46,29 @@ public class SIRModel extends EpidemicModel {
     public Input<RealParameter> recoveryRateShiftTimesInput = new Input<>(
             "recoveryRateShiftTimes", "Recovery rate shift times.", Validate.REQUIRED);
 
-    
+    @Override
+    public RealParameter getInfectionRateParam() {
+        return infectionRateInput.get();
+    }
+
+    @Override
+    public RealParameter getInfectionRateShiftTimesParam() {
+        return infectionRateShiftTimesInput.get();
+    }
+
+    @Override
+    public RealParameter getRecoveryRateParam() {
+        return recoveryRateInput.get();
+    }
+
+    @Override
+    public RealParameter getRecoveryRateShiftTimesParam() {
+        return recoveryRateShiftTimesInput.get();
+    }
+
     @Override
     public EpidemicState getInitialState() {
         return new EpidemicState(S0Input.get().getValue(), 1, 0);
-    }
-
-    @Override
-    public void addRateShiftEvents() {
-        addRateShiftEvents(infectionRateShiftTimesInput.get());
-        addRateShiftEvents(recoveryRateShiftTimesInput.get());
-    }
-
-    @Override
-    protected double getCurrentInfectionRate(double time) {
-        return getCurrentRate(infectionRateInput.get(),
-                infectionRateShiftTimesInput.get(), time);
-    }
-
-    @Override
-    protected double getCurrentRecoveryRate(double time) {
-        return getCurrentRate(recoveryRateInput.get(),
-                recoveryRateShiftTimesInput.get(), time);
     }
 
     @Override

@@ -44,24 +44,28 @@ public class BirthDeathModel extends EpidemicModel {
             "deathRateShiftTimes", "Death rate shift times.", Validate.REQUIRED);
 
     @Override
+    public RealParameter getInfectionRateParam() {
+        return birthRateInput.get();
+    }
+
+    @Override
+    public RealParameter getInfectionRateShiftTimesParam() {
+        return birthRateShiftTimesInput.get();
+    }
+
+    @Override
+    public RealParameter getRecoveryRateParam() {
+        return deathRateInput.get();
+    }
+
+    @Override
+    public RealParameter getRecoveryRateShiftTimesParam() {
+        return deathRateShiftTimesInput.get();
+    }
+
+    @Override
     public EpidemicState getInitialState() {
         return new EpidemicState(0, 1, 0);
-    }
-
-    @Override
-    public void addRateShiftEvents() {
-        addRateShiftEvents(birthRateShiftTimesInput.get());
-        addRateShiftEvents(deathRateShiftTimesInput.get());
-    }
-
-    @Override
-    protected double getCurrentInfectionRate(double time) {
-        return getCurrentRate(birthRateInput.get(), birthRateShiftTimesInput.get(), time);
-    }
-
-    @Override
-    protected double getCurrentRecoveryRate(double time) {
-        return getCurrentRate(deathRateInput.get(), deathRateShiftTimesInput.get(), time);
     }
 
     @Override
