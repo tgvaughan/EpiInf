@@ -76,8 +76,6 @@ public class SMCTreeDensity extends Distribution {
             return logP;
         }
 
-        List<ModelEvent> modelEventList = model.getModelEventList();
-
         double[] particleWeights = new double[nParticles];
         EpidemicState[] particleStates = new EpidemicState[nParticles];
         EpidemicState[] particleStatesNew = new EpidemicState[nParticles];
@@ -86,7 +84,6 @@ public class SMCTreeDensity extends Distribution {
         for (int p = 0; p < nParticles; p++)
             particleStates[p] = model.getInitialState();
 
-        double t = 0.0;
         int k = 1;
         for (TreeEvent treeEvent : treeEventList.getEventList()) {
 
@@ -94,7 +91,7 @@ public class SMCTreeDensity extends Distribution {
             double sumOfWeights = 0.0;
             for (int p = 0; p < nParticles; p++) {
 
-                double newWeight = updateParticle(particleStates[p], t, k, treeEvent, modelEventList);
+                double newWeight = updateParticle(particleStates[p], k, treeEvent);
 
                 particleWeights[p] = newWeight;
                 sumOfWeights += newWeight;
@@ -124,9 +121,6 @@ public class SMCTreeDensity extends Distribution {
                 k += 1;
             else
                 k -= treeEvent.multiplicity;
-
-            // Update start interval time
-            t = treeEvent.time;
         }
 
         return logP;
@@ -136,31 +130,14 @@ public class SMCTreeDensity extends Distribution {
      * Updates weight and state of particle.
      *
      * @param particleState State of particle
-     * @param startTime start time of interval
      * @param lineages number of tree lineages in interval
      * @param finalTreeEvent tree event which terminates interval
-     * @param modelEventList list of model events potentially affecting calculation
      *
      * @return conditional prob of tree interval under trajectory
      */
     private double updateParticle(EpidemicState particleState,
-                                  double startTime, int lineages, TreeEvent finalTreeEvent,
-                                  List<ModelEvent> modelEventList) {
+                                  int lineages, TreeEvent finalTreeEvent) {
         double conditionalP = 1.0;
-
-        double t = startTime;
-
-        // Trim off any model events which occurred before the start of the tree
-        while (!modelEventList.isEmpty() && modelEventList.get(0).time<startTime) {
-            if (modelEventList.get(0).type == ModelEvent.Type.RHO_SAMPLING)
-                return 0.0;
-
-            modelEventList.remove(0);
-        }
-
-        double nextModelEventTime = Double.POSITIVE_INFINITY;
-        if (!modelEventList.isEmpty())
-            nextModelEventTime = modelEventList.get(0).time;
 
         while (true) {
             model.calculatePropensities(particleState);
@@ -184,31 +161,30 @@ public class SMCTreeDensity extends Distribution {
             else
                 dt = Double.POSITIVE_INFINITY;
 
+            double nextModelEventTime = model.getNextModelEventTime(particleState);
+
             // Condition against psi-sampling and illegal recovery within interval
-            double trueDt = Math.min(dt, Math.min(nextModelEventTime, finalTreeEvent.time) - t);
+            double trueDt = Math.min(dt, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);
             conditionalP *= Math.exp(-trueDt*(model.propensities[EpidemicEvent.PSI_SAMPLE] + forbiddenRecovProp));
 
             // Increment time
-            t += dt;
+            particleState.time += dt;
 
             // Deal with model events (rho sampling and rate shifts)
-            if (nextModelEventTime < finalTreeEvent.time && t > nextModelEventTime) {
-                if (modelEventList.get(0).type == ModelEvent.Type.RHO_SAMPLING)
+            if (nextModelEventTime < finalTreeEvent.time && particleState.time > nextModelEventTime) {
+
+                ModelEvent nextModelEvent = model.getNextModelEvent(particleState);
+                if (nextModelEvent.type == ModelEvent.Type.RHO_SAMPLING)
                     return 0.0;
                 else {
-                    t = nextModelEventTime;
-                    modelEventList.remove(0);
-                    if (modelEventList.isEmpty())
-                        nextModelEventTime = Double.POSITIVE_INFINITY;
-                    else
-                        nextModelEventTime = modelEventList.get(0).time;
-
+                    particleState.time = nextModelEventTime;
+                    particleState.intervalIdx += 1;
                     continue;
                 }
             }
 
             // Stop here if we're past the end of the tree interval
-            if (t > finalTreeEvent.time)
+            if (particleState.time > finalTreeEvent.time)
                 break;
 
             EpidemicEvent event = new EpidemicEvent();
@@ -231,6 +207,8 @@ public class SMCTreeDensity extends Distribution {
 
         }
 
+        particleState.time = finalTreeEvent.time;
+
         // Include probability of tree event
         if (finalTreeEvent.type == TreeEvent.Type.COALESCENCE) {
             model.calculatePropensities(particleState);
@@ -240,7 +218,8 @@ public class SMCTreeDensity extends Distribution {
         } else {
 
             double sampleProb;
-            if (model.timesEqual(finalTreeEvent.time, nextModelEventTime) && modelEventList.get(0).type == ModelEvent.Type.RHO_SAMPLING) {
+            if (model.timesEqual(finalTreeEvent.time, model.getNextModelEventTime(particleState))
+                    && model.getNextModelEvent(particleState).type == ModelEvent.Type.RHO_SAMPLING) {
 
                 sampleProb = 0.0;
 

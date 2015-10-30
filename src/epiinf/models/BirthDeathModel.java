@@ -31,15 +31,17 @@ import epiinf.EpidemicState;
  */
 public class BirthDeathModel extends EpidemicModel {
     
-    public Input<RealParameter> birthRateInput = new Input<RealParameter>(
+    public Input<RealParameter> birthRateInput = new Input<>(
             "birthRate", "Lineage birth rate.", Validate.REQUIRED);
-    
-    public Input<RealParameter> deathRateInput = new Input<RealParameter>(
+
+    public Input<RealParameter> birthRateShiftTimesInput = new Input<>(
+            "birthRateShiftTimes", "Birth rate shift times.", Validate.REQUIRED);
+
+    public Input<RealParameter> deathRateInput = new Input<>(
             "deathRate", "Lineage death rate.", Validate.REQUIRED);
-    
-    public Input<RealParameter> durationInput = new Input<RealParameter>(
-            "duration", "Parameter specifying duration of process.  Usually"
-            + "set to the origin of the tree.", Validate.REQUIRED);
+
+    public Input<RealParameter> deathRateShiftTimesInput = new Input<>(
+            "deathRateShiftTimes", "Death rate shift times.", Validate.REQUIRED);
 
     @Override
     public EpidemicState getInitialState() {
@@ -47,13 +49,29 @@ public class BirthDeathModel extends EpidemicModel {
     }
 
     @Override
-    public double calculateInfectionPropensity(EpidemicState state) {
-        return birthRateInput.get().getValue()*state.I;
+    public void addRateShiftEvents() {
+        addRateShiftEvents(birthRateShiftTimesInput.get());
+        addRateShiftEvents(deathRateShiftTimesInput.get());
     }
 
     @Override
-    public double calculateRecoveryPropensity(EpidemicState state) {
-        return deathRateInput.get().getValue()* state.I;
+    protected double getCurrentInfectionRate(double time) {
+        return getCurrentRate(birthRateInput.get(), birthRateShiftTimesInput.get(), time);
+    }
+
+    @Override
+    protected double getCurrentRecoveryRate(double time) {
+        return getCurrentRate(deathRateInput.get(), deathRateShiftTimesInput.get(), time);
+    }
+
+    @Override
+    protected double calculateInfectionPropensity(EpidemicState state) {
+        return rateCache.get(state.intervalIdx)[EpidemicEvent.INFECTION]*state.I;
+    }
+
+    @Override
+    protected double calculateRecoveryPropensity(EpidemicState state) {
+        return rateCache.get(state.intervalIdx)[EpidemicEvent.RECOVERY]*state.I;
     }
 
     @Override

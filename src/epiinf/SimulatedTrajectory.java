@@ -75,10 +75,9 @@ public class SimulatedTrajectory extends EpidemicTrajectory implements StateNode
         eventList.clear();
         stateList.clear();
         
-        double t = 0.0;
         EpidemicState currentState = model.getInitialState();
         
-        model.generateTrajectory(currentState, t, duration);
+        model.generateTrajectory(currentState, duration);
         eventList.addAll(model.getEpidemicEventList());
         stateList.addAll(model.getEpidemicStateList().subList(0, model.getEpidemicStateList().size()));
     }

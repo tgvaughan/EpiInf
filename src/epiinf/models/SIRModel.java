@@ -36,9 +36,15 @@ public class SIRModel extends EpidemicModel {
     
     public Input<RealParameter> infectionRateInput = new Input<>(
             "infectionRate", "Infection rate.", Validate.REQUIRED);
-    
+
+    public Input<RealParameter> infectionRateShiftTimesInput = new Input<>(
+            "infectionRateShiftTimes", "Infection rate shift times.", Validate.REQUIRED);
+
     public Input<RealParameter> recoveryRateInput = new Input<>(
             "recoveryRate", "Recovery rate.", Validate.REQUIRED);
+
+    public Input<RealParameter> recoveryRateShiftTimesInput = new Input<>(
+            "recoveryRateShiftTimes", "Recovery rate shift times.", Validate.REQUIRED);
 
     
     @Override
@@ -47,13 +53,31 @@ public class SIRModel extends EpidemicModel {
     }
 
     @Override
-    public double calculateInfectionPropensity(EpidemicState state) {
-        return infectionRateInput.get().getValue()*state.S*state.I;
+    public void addRateShiftEvents() {
+        addRateShiftEvents(infectionRateShiftTimesInput.get());
+        addRateShiftEvents(recoveryRateShiftTimesInput.get());
     }
 
     @Override
-    public double calculateRecoveryPropensity(EpidemicState state) {
-        return recoveryRateInput.get().getValue()*state.I;
+    protected double getCurrentInfectionRate(double time) {
+        return getCurrentRate(infectionRateInput.get(),
+                infectionRateShiftTimesInput.get(), time);
+    }
+
+    @Override
+    protected double getCurrentRecoveryRate(double time) {
+        return getCurrentRate(recoveryRateInput.get(),
+                recoveryRateShiftTimesInput.get(), time);
+    }
+
+    @Override
+    protected double calculateInfectionPropensity(EpidemicState state) {
+        return rateCache.get(state.intervalIdx)[EpidemicEvent.INFECTION]*state.S*state.I;
+    }
+
+    @Override
+    protected double calculateRecoveryPropensity(EpidemicState state) {
+        return rateCache.get(state.intervalIdx)[EpidemicEvent.RECOVERY]*state.I;
     }
 
     @Override

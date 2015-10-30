@@ -26,6 +26,8 @@ import epiinf.EpidemicState;
 import epiinf.ModelEvent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,6 +42,10 @@ public abstract class EpidemicModel extends CalculationNode {
     public Input<RealParameter> psiSamplingRateInput = new Input<>(
             "psiSamplingRate",
             "Rate at which (destructive) psi-sampling is performed.");
+
+    public Input<RealParameter> psiSamplingRateShiftTimesInput = new Input<>(
+            "psiSamplingRateShiftTimes",
+            "Times at which psi-sampling rate changes.");
 
     public Input<RealParameter> rhoSamplingProbInput = new Input<>(
             "rhoSamplingProb",
@@ -58,12 +64,11 @@ public abstract class EpidemicModel extends CalculationNode {
     protected List<EpidemicEvent> eventList = new ArrayList<>();
     protected List<EpidemicState> stateList = new ArrayList<>();
     protected List<ModelEvent> modelEventList = new ArrayList<>();
-    protected List<Double> modelEventTimes = new ArrayList<>();
+    protected List<Double[]> rateCache = new ArrayList<>();
 
-    protected boolean modelEventListDirty;
+    protected boolean ratesDirty;
     protected double tolerance;
 
-//    public Map<EpidemicEvent.Type,Double> propensities = new HashMap<>();
     public double[] propensities = new double[EpidemicEvent.nTypes];
 
 
@@ -73,7 +78,16 @@ public abstract class EpidemicModel extends CalculationNode {
     public void initAndValidate() {
         tolerance = toleranceInput.get();
 
-        modelEventListDirty = true;
+        if (psiSamplingRateShiftTimesInput.get() != null) {
+            if (psiSamplingRateInput.get() == null
+                    || psiSamplingRateInput.get().getDimension()
+                    != psiSamplingRateShiftTimesInput.get().getDimension() + 1)
+                throw new IllegalArgumentException(
+                        "Psi sampling rate and rate shift time dimensions " +
+                                "don't match.");
+        }
+
+        ratesDirty = true;
     }
     
     /**
@@ -93,22 +107,44 @@ public abstract class EpidemicModel extends CalculationNode {
     
 
     public final void calculatePropensities(EpidemicState state) {
+        update();
         propensities[EpidemicEvent.RECOVERY] = calculateRecoveryPropensity(state);
         propensities[EpidemicEvent.INFECTION] = calculateInfectionPropensity(state);
-
-        if (psiSamplingRateInput.get() != null)
-            propensities[EpidemicEvent.PSI_SAMPLE] = state.I * psiSamplingRateInput.get().getValue();
-        else
-            propensities[EpidemicEvent.PSI_SAMPLE] = 0.0;
+        propensities[EpidemicEvent.PSI_SAMPLE] = calculatePsiSamplingPropensity(state);
     }
 
-    public abstract double calculateRecoveryPropensity(EpidemicState state);
-    public abstract double calculateInfectionPropensity(EpidemicState state);
+    protected double getCurrentRate(RealParameter rateParam, RealParameter rateShiftTimeParam,
+                          double time) {
+        if (rateParam != null) {
+            if (rateShiftTimeParam != null) {
+                int idx = Arrays.binarySearch(
+                        rateShiftTimeParam.getValues(), time);
+                if (idx<0)
+                    idx = -(idx+1);
 
-    
+                return rateParam.getValue(idx);
+            } else
+                return rateParam.getValue();
+        } else
+            return 0.0;
+    }
+
+    protected double getCurrentPsiSamplingRate(double time) {
+        return getCurrentRate(psiSamplingRateInput.get(),
+                psiSamplingRateShiftTimesInput.get(), time);
+    }
+    protected abstract double getCurrentRecoveryRate(double time);
+    protected abstract double getCurrentInfectionRate(double time);
+
+    protected double calculatePsiSamplingPropensity(EpidemicState state) {
+        return state.I * rateCache.get(state.intervalIdx)[EpidemicEvent.PSI_SAMPLE];
+    }
+    protected abstract double calculateRecoveryPropensity(EpidemicState state);
+    protected abstract double calculateInfectionPropensity(EpidemicState state);
+
     /**
      * Increment state according to reaction of chosen type.
-     * 
+     *
      * @param state state to update
      * @param event epidemic event
      */
@@ -117,30 +153,95 @@ public abstract class EpidemicModel extends CalculationNode {
 
 
     /**
+     * Update model event list and reaction rate caches.
+     */
+    public void update() {
+        if (!ratesDirty)
+            return;
+
+        updateModelEventList();
+
+        if (rateCache.size() == 0) {
+            for (int i=0; i< modelEventList.size()+1; i++)
+                rateCache.add(new Double[EpidemicEvent.nTypes]);
+        }
+
+        for (int i=0; i< modelEventList.size()+1; i++) {
+            double t = i>0 ? modelEventList.get(i-1).time : 0.0;
+
+            rateCache.get(i)[EpidemicEvent.INFECTION] = getCurrentInfectionRate(t);
+            rateCache.get(i)[EpidemicEvent.RECOVERY] = getCurrentRecoveryRate(t);
+            rateCache.get(i)[EpidemicEvent.PSI_SAMPLE] = getCurrentPsiSamplingRate(t);
+        }
+
+        ratesDirty = false;
+    }
+
+
+    /**
      * Assemble list of model events.
      *
      * @return the event list
      */
-    public List<ModelEvent> getModelEventList() {
+    public void updateModelEventList() {
 
-        if (modelEventListDirty) {
-            modelEventList.clear();
+        modelEventList.clear();
 
-            if (rhoSamplingProbInput.get() != null) {
-                for (int i = 0; i < rhoSamplingProbInput.get().getDimension(); i++) {
-                    ModelEvent event = new ModelEvent();
-                    event.type = ModelEvent.Type.RHO_SAMPLING;
-                    event.rho = rhoSamplingProbInput.get().getValue(i);
-                    event.time = rhoSamplingTimeInput.get().getValue(i);
-                    modelEventList.add(event);
-                    modelEventTimes.add(event.time);
-                }
+        if (rhoSamplingProbInput.get() != null) {
+            for (int i = 0; i < rhoSamplingProbInput.get().getDimension(); i++) {
+                ModelEvent event = new ModelEvent();
+                event.type = ModelEvent.Type.RHO_SAMPLING;
+                event.rho = rhoSamplingProbInput.get().getValue(i);
+                event.time = rhoSamplingTimeInput.get().getValue(i);
+                modelEventList.add(event);
             }
-
-            modelEventListDirty = false;
         }
 
-        return modelEventList;
+        addRateShiftEvents(psiSamplingRateShiftTimesInput.get());
+        addRateShiftEvents();
+
+        Collections.sort(modelEventList, (e1, e2) -> {
+            if (e1.time < e2.time)
+                return -1;
+
+            if (e1.time > e2.time)
+                return 1;
+
+            return 0;
+        });
+
+    }
+
+    public void addRateShiftEvents(RealParameter rateShiftTimesParam) {
+
+        if (rateShiftTimesParam != null) {
+            for (int i=0; i<rateShiftTimesParam.getDimension(); i++) {
+                ModelEvent event = new ModelEvent();
+                event.type = ModelEvent.Type.RATE_CHANGE;
+                event.time = rateShiftTimesParam.getValue(i);
+                modelEventList.add(event);
+            }
+        }
+    }
+
+    public abstract void addRateShiftEvents();
+
+    public double getNextModelEventTime(EpidemicState state) {
+        update();
+
+        if (state.intervalIdx<modelEventList.size())
+            return modelEventList.get(state.intervalIdx).time;
+        else
+            return Double.POSITIVE_INFINITY;
+    }
+
+    public ModelEvent getNextModelEvent(EpidemicState state) {
+        update();
+
+        if (state.intervalIdx < modelEventList.size())
+            return modelEventList.get(state.intervalIdx);
+        else
+            return null;
     }
 
     /**
@@ -151,11 +252,9 @@ public abstract class EpidemicModel extends CalculationNode {
      * as events in this list.
      * 
      * @param startState Starting state of trajectory
-     * @param startTime Starting time of trajectory
-     * @param endTime End time of trajectory
+     * @param duration End time of trajectory
      */
-    public void generateTrajectory(EpidemicState startState,
-            double startTime, double endTime) {
+    public void generateTrajectory(EpidemicState startState, double duration) {
         
         eventList.clear();
         stateList.clear();
@@ -163,12 +262,7 @@ public abstract class EpidemicModel extends CalculationNode {
         stateList.add(startState);
         
         EpidemicState thisState = startState.copy();
-        thisState.time = startTime;
-
-        List<ModelEvent> theseModelEvents = new ArrayList<>();
-        getModelEventList().stream()
-                .filter(e -> e.time > startTime && e.time < endTime)
-                .forEach(theseModelEvents::add);
+        thisState.time = 0;
 
         while (true) {
             calculatePropensities(thisState);
@@ -187,9 +281,10 @@ public abstract class EpidemicModel extends CalculationNode {
 
             EpidemicEvent nextEvent = new EpidemicEvent();
 
-            if (!theseModelEvents.isEmpty() && thisState.time > theseModelEvents.get(0).time) {
-                ModelEvent event = theseModelEvents.get(0);
-                theseModelEvents.remove(0);
+            double nextModelEventTime = getNextModelEventTime(thisState);
+            if (nextModelEventTime < duration && thisState.time > nextModelEventTime) {
+                ModelEvent event = getNextModelEvent(thisState);
+
                 if (event.type == ModelEvent.Type.RHO_SAMPLING) {
                     nextEvent.type = EpidemicEvent.RHO_SAMPLE;
 
@@ -209,10 +304,12 @@ public abstract class EpidemicModel extends CalculationNode {
                     stateList.add(thisState.copy());
                 }
 
+                thisState.intervalIdx += 1;
+
                 continue;
             }
 
-            if (thisState.time>=endTime)
+            if (thisState.time>=duration)
                 break;
 
 
@@ -251,13 +348,13 @@ public abstract class EpidemicModel extends CalculationNode {
 
     @Override
     protected boolean requiresRecalculation() {
-        modelEventListDirty = true;
+        ratesDirty = true;
         return true;
     }
 
     @Override
     protected void restore() {
-        modelEventListDirty = true;
+        ratesDirty = true;
     }
 
     /**
