@@ -47,6 +47,14 @@ public abstract class EpidemicModel extends CalculationNode {
             "psiSamplingRateShiftTimes",
             "Times at which psi-sampling rate changes.");
 
+    public Input<RealParameter> removalProbInput = new Input<>(
+            "removalProb",
+            "Probability that sample individual is removed from population.");
+
+    public Input<RealParameter> removalProbShiftTimesInput = new Input<>(
+            "removalProbShiftTimes",
+            "Times at which removal probability changes.");
+
     public Input<RealParameter> rhoSamplingProbInput = new Input<>(
             "rhoSamplingProb",
             "Probability with which a lineage at the corresponding time"
@@ -84,6 +92,15 @@ public abstract class EpidemicModel extends CalculationNode {
                     != psiSamplingRateShiftTimesInput.get().getDimension() + 1)
                 throw new IllegalArgumentException(
                         "Psi sampling rate and rate shift time dimensions " +
+                                "don't match.");
+        }
+
+        if (removalProbShiftTimesInput.get() != null) {
+            if (removalProbInput.get() == null
+                    || removalProbInput.get().getDimension()
+                    != removalProbShiftTimesInput.get().getDimension() + 1)
+                throw new IllegalArgumentException(
+                        "Removal prob and and removal prob shift time dimensions " +
                                 "don't match.");
         }
 

@@ -28,8 +28,9 @@ public class EpidemicEvent extends Event {
     public static final int RECOVERY = 1;
     public static final int RHO_SAMPLE = 2;
     public static final int PSI_SAMPLE = 3;
-    public static final int OTHER_SAMPLE= 4;
-    public static final int nTypes = 5;
+    public static final int PSI_SAMPLE_NOREMOVE = 4;
+    public static final int OTHER_SAMPLE= 5;
+    public static final int nTypes = 6;
     public static final int[] sampleTypes = {RHO_SAMPLE, PSI_SAMPLE, OTHER_SAMPLE};
     public static final int[] nonSampleTypes = {INFECTION, RECOVERY};
 
@@ -72,6 +73,7 @@ public class EpidemicEvent extends Event {
     public static final EpidemicEvent Recovery = new EpidemicEvent(-1, RECOVERY, 1);
     public static final EpidemicEvent RhoSample = new EpidemicEvent(-1, RHO_SAMPLE, 1);
     public static final EpidemicEvent PsiSample = new EpidemicEvent(-1, PSI_SAMPLE, 1);
+    public static final EpidemicEvent PsiSampleNoRemove = new EpidemicEvent(-1, PSI_SAMPLE_NOREMOVE, 1);
     public static final EpidemicEvent OtherSample = new EpidemicEvent(-1, PSI_SAMPLE, 1);
 
     public static EpidemicEvent MultipleRhoSamples(int multiplicity) {

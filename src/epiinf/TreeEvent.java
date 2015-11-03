@@ -12,7 +12,7 @@ package epiinf;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class TreeEvent extends Event {
-    public enum Type { COALESCENCE, LEAF };
+    public enum Type { COALESCENCE, LEAF, SAMPLED_ANCESTOR};
     
     public Type type;
     public int multiplicity = 1;

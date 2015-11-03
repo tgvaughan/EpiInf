@@ -89,10 +89,15 @@ public class TreeEventList extends CalculationNode {
 
 
             TreeEvent event = new TreeEvent();
-            if (node.isLeaf())
-                event.type = TreeEvent.Type.LEAF;
-            else
-                event.type = TreeEvent.Type.COALESCENCE;
+            if (node.isLeaf()) {
+                if (node.isDirectAncestor())
+                    event.type = TreeEvent.Type.SAMPLED_ANCESTOR;
+                else
+                    event.type = TreeEvent.Type.LEAF;
+            } else {
+                if (!node.isFake())
+                    event.type = TreeEvent.Type.COALESCENCE;
+            }
        
             event.time = getTimeFromHeight(node.getHeight());
             
