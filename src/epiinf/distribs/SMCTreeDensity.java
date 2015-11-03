@@ -165,7 +165,9 @@ public class SMCTreeDensity extends Distribution {
 
             // Condition against psi-sampling and illegal recovery within interval
             double trueDt = Math.min(dt, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);
-            conditionalP *= Math.exp(-trueDt*(model.propensities[EpidemicEvent.PSI_SAMPLE] + forbiddenRecovProp));
+            conditionalP *= Math.exp(-trueDt*(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                    + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
+                    + forbiddenRecovProp));
 
             // Increment time
             particleState.time += dt;
@@ -244,8 +246,14 @@ public class SMCTreeDensity extends Distribution {
             } else {
                 if (model.psiSamplingRateInput.get() != null && finalTreeEvent.multiplicity == 1) {
                     model.calculatePropensities(particleState);
-                    sampleProb = model.propensities[EpidemicEvent.PSI_SAMPLE];
-                    model.incrementState(particleState, EpidemicEvent.PsiSample);
+                    if (finalTreeEvent.type == TreeEvent.Type.LEAF) {
+                        sampleProb = model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
+                        model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
+                    } else {
+                        // Sampled ancestor
+                        sampleProb = model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE];
+//                        model.incrementState(particleState, EpidemicEvent.PsiSampleNoRemove);
+                    }
                 } else {
                     // No explicit sampling process
                     sampleProb = 1.0;

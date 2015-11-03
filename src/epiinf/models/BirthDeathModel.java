@@ -86,7 +86,7 @@ public class BirthDeathModel extends EpidemicModel {
                 break;
             case EpidemicEvent.RECOVERY:
             case EpidemicEvent.RHO_SAMPLE:
-            case EpidemicEvent.PSI_SAMPLE:
+            case EpidemicEvent.PSI_SAMPLE_REMOVE:
             case EpidemicEvent.OTHER_SAMPLE:
                 state.I -= event.multiplicity;
                 break;

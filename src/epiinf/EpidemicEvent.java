@@ -23,16 +23,14 @@ package epiinf;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class EpidemicEvent extends Event {
-//    public enum Type { INFECTION, RECOVERY, RHO_SAMPLE, PSI_SAMPLE, OTHER_SAMPLE};
+//    public enum Type { INFECTION, RECOVERY, RHO_SAMPLE, PSI_SAMPLE_REMOVE, OTHER_SAMPLE};
     public static final int INFECTION = 0;
     public static final int RECOVERY = 1;
     public static final int RHO_SAMPLE = 2;
-    public static final int PSI_SAMPLE = 3;
+    public static final int PSI_SAMPLE_REMOVE = 3;
     public static final int PSI_SAMPLE_NOREMOVE = 4;
     public static final int OTHER_SAMPLE= 5;
     public static final int nTypes = 6;
-    public static final int[] sampleTypes = {RHO_SAMPLE, PSI_SAMPLE, OTHER_SAMPLE};
-    public static final int[] nonSampleTypes = {INFECTION, RECOVERY};
 
     public int type;
     public int multiplicity;
@@ -72,9 +70,9 @@ public class EpidemicEvent extends Event {
     public static final EpidemicEvent Infection = new EpidemicEvent(-1, INFECTION, 1);
     public static final EpidemicEvent Recovery = new EpidemicEvent(-1, RECOVERY, 1);
     public static final EpidemicEvent RhoSample = new EpidemicEvent(-1, RHO_SAMPLE, 1);
-    public static final EpidemicEvent PsiSample = new EpidemicEvent(-1, PSI_SAMPLE, 1);
+    public static final EpidemicEvent PsiSampleRemove = new EpidemicEvent(-1, PSI_SAMPLE_REMOVE, 1);
     public static final EpidemicEvent PsiSampleNoRemove = new EpidemicEvent(-1, PSI_SAMPLE_NOREMOVE, 1);
-    public static final EpidemicEvent OtherSample = new EpidemicEvent(-1, PSI_SAMPLE, 1);
+    public static final EpidemicEvent OtherSample = new EpidemicEvent(-1, PSI_SAMPLE_REMOVE, 1);
 
     public static EpidemicEvent MultipleRhoSamples(int multiplicity) {
         return new EpidemicEvent(-1, RHO_SAMPLE, multiplicity);

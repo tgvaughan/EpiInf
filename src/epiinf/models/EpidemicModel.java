@@ -131,7 +131,8 @@ public abstract class EpidemicModel extends CalculationNode {
         update();
         propensities[EpidemicEvent.RECOVERY] = calculateRecoveryPropensity(state);
         propensities[EpidemicEvent.INFECTION] = calculateInfectionPropensity(state);
-        propensities[EpidemicEvent.PSI_SAMPLE] = calculatePsiSamplingPropensity(state);
+        propensities[EpidemicEvent.PSI_SAMPLE_REMOVE] = calculatePsiSamplingRemovePropensity(state);
+        propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE] = calculatePsiSamplingNoRemovePropensity(state);
     }
 
     protected double getCurrentRate(RealParameter rateParam, RealParameter rateShiftTimeParam,
@@ -150,8 +151,11 @@ public abstract class EpidemicModel extends CalculationNode {
             return 0.0;
     }
 
-    protected double calculatePsiSamplingPropensity(EpidemicState state) {
-        return state.I * rateCache.get(state.intervalIdx)[EpidemicEvent.PSI_SAMPLE];
+    protected double calculatePsiSamplingRemovePropensity(EpidemicState state) {
+        return state.I * rateCache.get(state.intervalIdx)[EpidemicEvent.PSI_SAMPLE_REMOVE];
+    }
+    protected double calculatePsiSamplingNoRemovePropensity(EpidemicState state) {
+        return state.I * rateCache.get(state.intervalIdx)[EpidemicEvent.PSI_SAMPLE_NOREMOVE];
     }
     protected abstract double calculateRecoveryPropensity(EpidemicState state);
     protected abstract double calculateInfectionPropensity(EpidemicState state);
@@ -187,8 +191,15 @@ public abstract class EpidemicModel extends CalculationNode {
                     getInfectionRateParam(), getInfectionRateShiftTimesParam(), t);
             rateCache.get(i)[EpidemicEvent.RECOVERY] = getCurrentRate(
                     getRecoveryRateParam(), getRecoveryRateShiftTimesParam(), t);
-            rateCache.get(i)[EpidemicEvent.PSI_SAMPLE] = getCurrentRate(
+
+            double psiSamplingRate = getCurrentRate(
                     psiSamplingRateInput.get(), psiSamplingRateShiftTimesInput.get(), t);
+
+            double removalProb = getCurrentRate(
+                    removalProbInput.get(), removalProbShiftTimesInput.get(), t);
+
+            rateCache.get(i)[EpidemicEvent.PSI_SAMPLE_REMOVE] = psiSamplingRate*removalProb;
+            rateCache.get(i)[EpidemicEvent.PSI_SAMPLE_NOREMOVE] = psiSamplingRate*(1.0 - removalProb);
         }
 
         ratesDirty = false;
@@ -285,7 +296,8 @@ public abstract class EpidemicModel extends CalculationNode {
 
             double totalPropensity = propensities[EpidemicEvent.INFECTION]
                     + propensities[EpidemicEvent.RECOVERY]
-                    + propensities[EpidemicEvent.PSI_SAMPLE];
+                    + propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                    + propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE];
 
             double dt;
             if (totalPropensity>0.0)
