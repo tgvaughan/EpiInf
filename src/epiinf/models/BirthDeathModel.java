@@ -35,13 +35,13 @@ public class BirthDeathModel extends EpidemicModel {
             "birthRate", "Lineage birth rate.", Validate.REQUIRED);
 
     public Input<RealParameter> birthRateShiftTimesInput = new Input<>(
-            "birthRateShiftTimes", "Birth rate shift times.", Validate.REQUIRED);
+            "birthRateShiftTimes", "Birth rate shift times.");
 
     public Input<RealParameter> deathRateInput = new Input<>(
             "deathRate", "Lineage death rate.", Validate.REQUIRED);
 
     public Input<RealParameter> deathRateShiftTimesInput = new Input<>(
-            "deathRateShiftTimes", "Death rate shift times.", Validate.REQUIRED);
+            "deathRateShiftTimes", "Death rate shift times.");
 
     @Override
     public RealParameter getInfectionRateParam() {

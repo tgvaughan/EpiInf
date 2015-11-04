@@ -38,13 +38,13 @@ public class SIRModel extends EpidemicModel {
             "infectionRate", "Infection rate.", Validate.REQUIRED);
 
     public Input<RealParameter> infectionRateShiftTimesInput = new Input<>(
-            "infectionRateShiftTimes", "Infection rate shift times.", Validate.REQUIRED);
+            "infectionRateShiftTimes", "Infection rate shift times.");
 
     public Input<RealParameter> recoveryRateInput = new Input<>(
             "recoveryRate", "Recovery rate.", Validate.REQUIRED);
 
     public Input<RealParameter> recoveryRateShiftTimesInput = new Input<>(
-            "recoveryRateShiftTimes", "Recovery rate shift times.", Validate.REQUIRED);
+            "recoveryRateShiftTimes", "Recovery rate shift times.");
 
     @Override
     public RealParameter getInfectionRateParam() {
