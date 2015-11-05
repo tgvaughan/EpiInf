@@ -1,0 +1,105 @@
+<beast version="2.0" namespace="beast.core
+    :beast.core.parameter
+    :beast.core.util
+    :beast.evolution.likelihood
+    :beast.evolution.operators
+    :epiinf
+    :epiinf.models
+    :epiinf.distribs
+    :epiinf.util
+    :feast.mapping">
+
+
+    <tree spec="SimulatedTransmissionTree" id="simulated_tree" fileName="$(filebase).tree.newick">
+        <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="5.0">
+            <model spec="SISModel">
+                <S0 spec="IntegerParameter" value="199"/>
+                <infectionRate spec="RealParameter" value="0.02"/>
+                <recoveryRate spec="RealParameter" value="0.2"/>
+                <psiSamplingRate spec="RealParameter" value="0.0"/>
+                <rhoSamplingProb spec="RealParameter" value="0.5"/>
+                <rhoSamplingTime spec="RealParameter" value="4.0"/>
+            </model>
+        </epidemicTrajectory>
+    </tree>
+
+    <alignment id="alignment" spec="epiinf.SimulatedAlignment" tree="@simulated_tree" sequenceLength="2000">
+        <siteModel id="siteModel" spec="beast.evolution.sitemodel.SiteModel">
+            <substModel spec="beast.evolution.substitutionmodel.JukesCantor"/>
+            <mutationRate spec="RealParameter" value="0.01"/>
+        </siteModel>
+    </alignment>
+
+    <run spec="MCMC" id="mcmc" chainLength="100000">
+        <state>
+            <stateNode id="tree" spec="beast.evolution.tree.RandomTree" taxa="@alignment">
+                <populationModel spec="beast.evolution.tree.coalescent.ConstantPopulation" popSize="1.0"/>
+            </stateNode>
+            <stateNode idref="beta"/>
+        </state>
+
+        <distribution id="posterior" spec="CompoundDistribution">
+
+            <distribution spec="TreeLikelihood" id="treeLikelihood" siteModel="@siteModel">
+                <data idref="alignment"/>
+                <tree idref="tree"/>
+            </distribution>
+
+            <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100">
+                <treeEventList spec="TreeEventList" treeOrigin="@origin" tree="@tree"/>
+                <model spec="SISModel">
+                    <S0 spec="IntegerParameter" value="199"/>
+                    <infectionRate id="beta" spec="RealParameter" value="0.01"/>
+                    <recoveryRate spec="RealParameter" value="0.2"/>
+                    <psiSamplingRate spec="RealParameter" value="0.0"/>
+                    <rhoSamplingProb spec="RealParameter" value="0.5"/>
+                    <rhoSamplingTime id="origin" spec="RealParameter" value="4.0"/>
+                </model>
+            </distribution>
+
+            <distribution spec="CompoundDistribution" id="paramPriors">
+                <distribution spec="beast.math.distributions.Prior" x="@beta">
+                    <distr spec="beast.math.distributions.OneOnX"/>
+                </distribution>
+            </distribution>
+        </distribution>
+
+        <operator id='betaScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="beta"/>
+        </operator>
+
+        <operator id='treeScaler' spec='ScaleOperator' scaleFactor="0.5" weight="1">
+            <tree idref="tree"/>
+        </operator>
+        <operator spec='Uniform' weight="10">
+            <tree idref="tree"/>
+        </operator>
+        <operator spec='SubtreeSlide' weight="5" gaussian="true" size="1.0">
+            <tree idref="tree"/>
+        </operator>
+        <operator id='narrow' spec='Exchange' isNarrow='true' weight="1">
+            <tree idref="tree"/>
+        </operator>
+        <operator id='wide' spec='Exchange' isNarrow='false' weight="1">
+            <tree idref="tree"/>
+        </operator>
+        <operator spec='WilsonBalding' weight="1">
+            <tree idref="tree"/>
+        </operator>
+
+
+        <logger id="screenlog" spec="Logger" logEvery="1000">
+            <log idref="posterior"/>
+            <log idref="beta"/>
+        </logger>
+
+        <logger logEvery="1000" fileName="$(filebase).trees">
+            <log idref="tree"/>
+        </logger>
+
+        <logger id="filelog" spec="Logger" logEvery="1000" fileName="$(filebase).log">
+            <log idref="posterior"/>
+            <log idref="beta"/>
+        </logger>
+    </run>
+</beast>
