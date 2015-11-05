@@ -192,11 +192,19 @@ public abstract class EpidemicModel extends CalculationNode {
             rateCache.get(i)[EpidemicEvent.RECOVERY] = getCurrentRate(
                     getRecoveryRateParam(), getRecoveryRateShiftTimesParam(), t);
 
-            double psiSamplingRate = getCurrentRate(
-                    psiSamplingRateInput.get(), psiSamplingRateShiftTimesInput.get(), t);
+            double psiSamplingRate, removalProb;
 
-            double removalProb = getCurrentRate(
-                    removalProbInput.get(), removalProbShiftTimesInput.get(), t);
+            if (psiSamplingRateInput.get() != null)
+                psiSamplingRate = getCurrentRate(
+                        psiSamplingRateInput.get(), psiSamplingRateShiftTimesInput.get(), t);
+            else
+                psiSamplingRate = 0.0;
+
+            if (removalProbInput.get() != null)
+                removalProb = getCurrentRate(
+                        removalProbInput.get(), removalProbShiftTimesInput.get(), t);
+            else
+                removalProb = 1.0;
 
             rateCache.get(i)[EpidemicEvent.PSI_SAMPLE_REMOVE] = psiSamplingRate*removalProb;
             rateCache.get(i)[EpidemicEvent.PSI_SAMPLE_NOREMOVE] = psiSamplingRate*(1.0 - removalProb);
@@ -226,6 +234,7 @@ public abstract class EpidemicModel extends CalculationNode {
         }
 
         addRateShiftEvents(psiSamplingRateShiftTimesInput.get());
+        addRateShiftEvents(removalProbShiftTimesInput.get());
         addRateShiftEvents(getInfectionRateShiftTimesParam());
         addRateShiftEvents(getRecoveryRateShiftTimesParam());
 
