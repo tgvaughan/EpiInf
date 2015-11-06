@@ -131,11 +131,18 @@ public class TreeEventList extends CalculationNode {
     /**
      * Obtain absolute epidemic time corresponding to height on tree.
      * 
-     * @param height
+     * @param height height to comvert
      * @return time
      */
     public double getTimeFromHeight (double height) {
         return treeOrigin.getValue() - height;
+    }
+
+    /**
+     * @return The time before the most recent sample that the epidemic began.
+     */
+    public double getOrigin() {
+        return treeOrigin.getValue();
     }
     
     /**

@@ -29,6 +29,7 @@ import epiinf.*;
 import epiinf.models.EpidemicModel;
 import epiinf.util.ReplacementSampler;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -49,21 +50,53 @@ public class SMCTreeDensity extends Distribution {
             "nParticles", "Number of particles to use in SMC calculation.",
             Validate.REQUIRED);
 
+    public Input<Integer> trajRecordPeriodInput = new Input<>(
+            "trajRecordPeriod",
+            "Number of iterations between calculations that record " +
+                    "sampled trajectories. A number < 0 avoids ever " +
+                    "recording trajectories.",
+            -1);
+
     EpidemicModel model;
     TreeEventList treeEventList;
     int nParticles;
 
-    // DEBUG
-//    PrintStream debugOut;
+    // Keep these around so we don't have to create these arrays/lists
+    // for every density evaluation.
 
-    public SMCTreeDensity() {
-    }
+    double[] particleWeights;
+    EpidemicState[] particleStates, particleStatesNew;
+
+    double recordedOrigin;
+    List<EpidemicState> recordedTrajectory = null;
+    int trajRecordPeriod;
+    int evaluationCounter;
+    List<List<EpidemicState>> particleTrajectories, particleTrajectoriesNew;
+
+
+    public SMCTreeDensity() { }
 
     @Override
     public void initAndValidate() throws Exception {
         model = modelInput.get();
         treeEventList = treeEventListInput.get();
         nParticles = nParticlesInput.get();
+
+        particleWeights = new double[nParticles];
+        particleStates = new EpidemicState[nParticles];
+        particleStatesNew = new EpidemicState[nParticles];
+
+        trajRecordPeriod = trajRecordPeriodInput.get();
+
+        particleTrajectories = new ArrayList<>();
+        particleTrajectoriesNew = new ArrayList<>();
+
+        for (int p=0; p<nParticles; p++) {
+            particleTrajectories.add(new ArrayList<>());
+            particleTrajectoriesNew.add(new ArrayList<>());
+        }
+
+        evaluationCounter = 0;
     }
 
     @Override
@@ -71,18 +104,32 @@ public class SMCTreeDensity extends Distribution {
 
         logP = 0.0;
 
+        boolean recordTrajectory = false;
+        if (trajRecordPeriod>0) {
+            if (evaluationCounter == 0) {
+                recordTrajectory = true;
+                recordedOrigin = treeEventList.getOrigin();
+                recordedTrajectory = null;
+            } else
+                recordTrajectory = false;
+            evaluationCounter = (evaluationCounter + 1) % trajRecordPeriod;
+        }
+
+        // Early exit if first tree event occurs before origin.
         if (treeEventList.getEventList().get(0).time < 0) {
             logP = Double.NEGATIVE_INFINITY;
             return logP;
         }
 
-        double[] particleWeights = new double[nParticles];
-        EpidemicState[] particleStates = new EpidemicState[nParticles];
-        EpidemicState[] particleStatesNew = new EpidemicState[nParticles];
-
-        // Initialize particles
-        for (int p = 0; p < nParticles; p++)
+        // Initialize particles and trajectory storage
+        for (int p = 0; p < nParticles; p++) {
             particleStates[p] = model.getInitialState();
+
+            if (recordTrajectory) {
+                particleTrajectories.get(p).clear();
+                particleTrajectoriesNew.get(p).add(model.getInitialState());
+            }
+        }
 
         int k = 1;
         for (TreeEvent treeEvent : treeEventList.getEventList()) {
@@ -91,7 +138,9 @@ public class SMCTreeDensity extends Distribution {
             double sumOfWeights = 0.0;
             for (int p = 0; p < nParticles; p++) {
 
-                double newWeight = updateParticle(particleStates[p], k, treeEvent);
+                double newWeight = recordTrajectory ?
+                        updateParticle(particleStates[p], k, treeEvent, particleTrajectories.get(p))
+                        : updateParticle(particleStates[p], k, treeEvent, null);
 
                 particleWeights[p] = newWeight;
                 sumOfWeights += newWeight;
@@ -100,21 +149,38 @@ public class SMCTreeDensity extends Distribution {
             // Update marginal likelihood estimate
             logP += Math.log(sumOfWeights / nParticles);
 
-            if (!(sumOfWeights > 0.0))
-                return Double.NEGATIVE_INFINITY;
+            if (!(sumOfWeights > 0.0)) {
+                logP = 0.0;
+                return logP;
+            }
 
-            // Sample particle with replacement
+            // Normalize weights
             for (int i=0; i<nParticles; i++)
                 particleWeights[i] = particleWeights[i]/sumOfWeights;
 
+            // Sample particle with replacement
             ReplacementSampler replacementSampler = new ReplacementSampler(particleWeights);
-            for (int p=0; p<nParticles; p++)
-                particleStatesNew[p] = particleStates[replacementSampler.next()].copy();
+            for (int p=0; p<nParticles; p++) {
+                int srcIdx = replacementSampler.next();
+                particleStatesNew[p] = particleStates[srcIdx].copy();
+
+                if (recordTrajectory) {
+                    particleTrajectoriesNew.get(p).clear();
+                    particleTrajectoriesNew.get(p).addAll(particleTrajectories.get(srcIdx));
+                }
+            }
 
             // Switch particleStates and particleStatesNew
-            EpidemicState[] temp = particleStates;
+            EpidemicState[] tempStates = particleStates;
             particleStates = particleStatesNew;
-            particleStatesNew = temp;
+            particleStatesNew = tempStates;
+
+            // Switch particleTrajectories and particleTrajectoriesNew
+            if (recordTrajectory) {
+                List<List<EpidemicState>> tmpTrajs = particleTrajectories;
+                particleTrajectories = particleTrajectoriesNew;
+                particleTrajectoriesNew = tmpTrajs;
+            }
 
             // Update lineage counter
             if (treeEvent.type == TreeEvent.Type.COALESCENCE)
@@ -122,6 +188,10 @@ public class SMCTreeDensity extends Distribution {
             else
                 k -= treeEvent.multiplicity;
         }
+
+        // Choose arbitrary trajectory to log.
+        if (recordTrajectory)
+            recordedTrajectory = particleTrajectories.get(0);
 
         return logP;
     }
@@ -136,8 +206,13 @@ public class SMCTreeDensity extends Distribution {
      * @return conditional prob of tree interval under trajectory
      */
     private double updateParticle(EpidemicState particleState,
-                                  int lineages, TreeEvent finalTreeEvent) {
+                                  int lineages, TreeEvent finalTreeEvent,
+                                  List<EpidemicState> particleTrajectory) {
         double conditionalP = 1.0;
+        boolean recordTrajectory = particleTrajectory != null;
+
+//        if (recordTrajectory)
+//            particleTrajectory.clear();
 
         while (true) {
             model.calculatePropensities(particleState);
@@ -190,6 +265,7 @@ public class SMCTreeDensity extends Distribution {
                 break;
 
             EpidemicEvent event = new EpidemicEvent();
+            event.time = particleState.time;
             if (allowedEventProp*Randomizer.nextDouble() < infectionProp) {
                 event.type = EpidemicEvent.INFECTION;
             } else
@@ -203,9 +279,14 @@ public class SMCTreeDensity extends Distribution {
 
             model.incrementState(particleState, event);
 
-            // Early exit if invalid state:
-            if (conditionalP == 0)
-                return 0.0;
+            if (recordTrajectory)
+                particleTrajectory.add(particleState.copy());
+
+            if (conditionalP == 0) {
+                // Should never get here, as we explicitly condition against
+                // events that cause this.
+                throw new IllegalStateException("Programmer error in SMCTreeDensity.");
+            }
 
         }
 
@@ -217,6 +298,7 @@ public class SMCTreeDensity extends Distribution {
             model.incrementState(particleState, EpidemicEvent.Infection);
             conditionalP *= 2.0 / particleState.I / (particleState.I - 1)
                     * model.propensities[EpidemicEvent.INFECTION];
+
         } else {
 
             double sampleProb;
@@ -266,10 +348,21 @@ public class SMCTreeDensity extends Distribution {
             conditionalP *= sampleProb * Math.exp(GammaFunction.lnGamma(1 + finalTreeEvent.multiplicity));
         }
 
+        if (recordTrajectory)
+            particleTrajectory.add(particleState.copy());
+
         if (!particleState.isValid())
-            return 0.0;
+            return 0.0; // Can occur due to susceptible pool depletion
         else
             return conditionalP;
+    }
+
+    public List<EpidemicState> getRecordedTrajectory() {
+        return recordedTrajectory;
+    }
+
+    public double getRecordedOrigin() {
+        return recordedOrigin;
     }
 
     @Override
