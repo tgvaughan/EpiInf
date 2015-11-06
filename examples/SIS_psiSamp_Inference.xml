@@ -10,15 +10,15 @@
     :feast.mapping">
 
 
-    <tree spec="SimulatedTransmissionTree" id="simulated_tree" fileName="$(filebase)_truth.tree">
-        <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="5.0" fileName="$(filebase)_truth.traj">
+    <tree spec="SimulatedTransmissionTree" id="simulated_tree" fileName="$(filebase).tree.newick">
+        <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="5.0">
             <model spec="SISModel">
                 <S0 spec="IntegerParameter" value="199"/>
                 <infectionRate spec="RealParameter" value="0.02"/>
-                <recoveryRate spec="RealParameter" value="0.2"/>
-                <psiSamplingRate spec="RealParameter" value="0.0"/>
-                <rhoSamplingProb spec="RealParameter" value="0.5"/>
-                <rhoSamplingTime spec="RealParameter" value="4.0"/>
+                <recoveryRate spec="RealParameter" value="0.1"/>
+                <psiSamplingRate spec="RealParameter" value="0.1"/>
+                <!--rhoSamplingProb spec="RealParameter" value="0.5"/>
+                <rhoSamplingTime spec="RealParameter" value="4.0"/-->
             </model>
         </epidemicTrajectory>
     </tree>
@@ -34,9 +34,12 @@
         <state>
             <stateNode id="tree" spec="beast.evolution.tree.RandomTree" taxa="@alignment">
                 <populationModel spec="beast.evolution.tree.coalescent.ConstantPopulation" popSize="0.1"/>
+                <trait spec='TipDatesFromTree' tree="@simulated_tree">
+                    <taxa spec='beast.evolution.alignment.TaxonSet' alignment="@alignment"/>
+                </trait>
             </stateNode>
             <stateNode idref="beta"/>
-            <stateNode id="origin" spec="RealParameter" value="1.0"/>
+            <stateNode id="origin" spec="RealParameter" value="6.0"/>
         </state>
 
         <distribution id="posterior" spec="CompoundDistribution">
@@ -46,16 +49,15 @@
                 <tree idref="tree"/>
             </distribution>
 
-            <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100" trajRecordPeriod="1000">
+            <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100" trajRecordPeriod="100">
                 <treeEventList spec="TreeEventList" treeOrigin="@origin" tree="@tree"/>
                 <model spec="SISModel">
                     <S0 spec="IntegerParameter" value="199"/>
                     <infectionRate id="beta" spec="RealParameter" value="0.01"/>
-                    <recoveryRate spec="RealParameter" value="0.2"/>
-                    <psiSamplingRate spec="RealParameter" value="0.0"/>
-                    <rhoSamplingProb spec="RealParameter" value="0.5"/>
-                    <!--rhoSamplingTime id="origin" spec="RealParameter" value="4.0"/-->
-                    <rhoSamplingTime idref="origin"/>
+                    <recoveryRate spec="RealParameter" value="0.1"/>
+                    <psiSamplingRate spec="RealParameter" value="0.1"/>
+                    <!--rhoSamplingProb spec="RealParameter" value="0.5"/>
+                    <rhoSamplingTime idref="origin"/-->
                 </model>
             </distribution>
 
@@ -80,13 +82,6 @@
         <operator id='treeScaler' spec='ScaleOperator' scaleFactor="0.5" weight="1">
             <tree idref="tree"/>
         </operator>
-
-        <operator id='treeUpDown' spec='UpDownOperator' scaleFactor="0.8" weight="1">
-            <up idref="tree"/>
-            <up idref="origin"/>
-            <down idref="beta"/>
-        </operator>
-
         <operator spec='Uniform' weight="10">
             <tree idref="tree"/>
         </operator>
@@ -114,7 +109,7 @@
             <log idref="tree"/>
         </logger>
 
-        <logger logEvery="1000" fileName="$(filebase).traj">
+        <logger logEvery="100" fileName="$(filebase).traj">
             <log spec='TrajectoryLogger' treeDensity="@treePrior" />
         </logger>
 

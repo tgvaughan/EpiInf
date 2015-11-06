@@ -21,6 +21,7 @@ import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.evolution.tree.Node;
+import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 import com.google.common.collect.Lists;
@@ -47,6 +48,8 @@ public class SimulatedTransmissionTree extends Tree {
     public Input<Boolean> truncateTrajectoryInput = new Input<>(
             "truncateTrajectory",
             "Truncate trajectory at most recent sample. (Default true.)", true);
+
+    public Input<TraitSet> heightsTrait = new Input<>("tipHeights", "Trait set to initialize with tip heights.");
     
     public SimulatedTransmissionTree() { }
     
@@ -84,7 +87,9 @@ public class SimulatedTransmissionTree extends Tree {
                 for (int i=0; i<epidemicEvent.multiplicity; i++) {
                     Node leaf = new Node();
                     leaf.setHeight(youngestSamp-epidemicEvent.time);
-                    leaf.setNr(nextLeafNr++);
+                    leaf.setNr(nextLeafNr);
+                    leaf.setID("t" + nextLeafNr);
+                    nextLeafNr += 1;
                     activeNodes.add(leaf);
                 }
                 

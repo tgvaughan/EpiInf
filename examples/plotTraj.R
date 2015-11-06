@@ -19,7 +19,7 @@ parseTrajectoryString <- function(trajString) {
     return(res)
 }
 
-plotTraj <- function(fileName, burninFrac=0.1, col=rgb(0,0,0,0.3), xlab='Time', ylab='Prevalence', main='Trajectory distribution', ...) {
+plotTraj <- function(fileName, burninFrac=0.1, includeFinalState=FALSE, col=rgb(0,0,0,0.3), xlab='Time', ylab='Prevalence', main='Trajectory distribution', ...) {
     df <- read.table(fileName, header=T, as.is=T)
 
     # Remove burnin
@@ -43,10 +43,14 @@ plotTraj <- function(fileName, burninFrac=0.1, col=rgb(0,0,0,0.3), xlab='Time', 
         maxOccupancy <- max(maxOccupancy, traj[[i]]$R)
         maxHeight <- max(maxHeight, traj[[i]]$t)
     }
-
     plot(traj[[1]]$t, traj[[1]]$I, col=NA, xlim=c(0, maxHeight), ylim=c(0, maxOccupancy), xlab=xlab, ylab=ylab, main=main, ...)
 
     for (i in 1:nRecords) {
-        lines(traj[[i]]$t, traj[[i]]$I, 's', col=col, ...)
+        if (includeFinalState) {
+            lines(traj[[i]]$t, traj[[i]]$I, 's', col=col, ...)
+        } else {
+            n <- length(traj[[i]]$t)
+            lines(traj[[i]]$t[-n], traj[[i]]$I[-n], 's', col=col, ...)
+        }
     }
 }
