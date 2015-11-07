@@ -140,7 +140,8 @@ public class SimulatedTransmissionTree extends Tree {
         // Write tree to disk if requested:
         if (fileNameInput.get() != null) {
             try (PrintStream ps = new PrintStream(fileNameInput.get())) {
-                String newick = toString().concat(";");
+//                String newick = toString().concat(";");
+                String newick = root.toNewick().concat(";");
                 ps.println(newick.replace(":0.0;", ":" + (youngestSamp-root.getHeight()) + ";"));
             }
         }

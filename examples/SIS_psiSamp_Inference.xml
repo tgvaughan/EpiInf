@@ -32,8 +32,13 @@
 
     <run spec="MCMC" id="mcmc" chainLength="100000">
         <state>
-            <stateNode id="tree" spec="beast.evolution.tree.RandomTree" taxa="@alignment">
+            <!--stateNode id="tree" spec="beast.evolution.tree.RandomTree" taxa="@alignment">
                 <populationModel spec="beast.evolution.tree.coalescent.ConstantPopulation" popSize="0.1"/>
+                <trait spec='TipDatesFromTree' tree="@simulated_tree">
+                    <taxa spec='beast.evolution.alignment.TaxonSet' alignment="@alignment"/>
+                </trait>
+            </stateNode-->
+            <stateNode id="tree" spec="beast.util.ClusterTree" taxa="@alignment" clusterType="upgma">
                 <trait spec='TipDatesFromTree' tree="@simulated_tree">
                     <taxa spec='beast.evolution.alignment.TaxonSet' alignment="@alignment"/>
                 </trait>
