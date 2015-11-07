@@ -150,7 +150,7 @@ public class SMCTreeDensity extends Distribution {
             logP += Math.log(sumOfWeights / nParticles);
 
             if (!(sumOfWeights > 0.0)) {
-                logP = 0.0;
+                logP = Double.NEGATIVE_INFINITY;
                 return logP;
             }
 
@@ -285,7 +285,8 @@ public class SMCTreeDensity extends Distribution {
             if (conditionalP == 0) {
                 // Should never get here, as we explicitly condition against
                 // events that cause this.
-                throw new IllegalStateException("Programmer error in SMCTreeDensity.");
+                throw new IllegalStateException("Programmer error in " +
+                        "SMCTreeDensity. Particle state: " + particleState);
             }
 
         }
