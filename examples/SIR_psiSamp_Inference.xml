@@ -56,7 +56,7 @@
 
             <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100" trajRecordPeriod="100">
                 <treeEventList spec="TreeEventList" treeOrigin="@origin" tree="@tree"/>
-                <model spec="SISModel">
+                <model spec="SIRModel">
                     <S0 spec="IntegerParameter" value="199"/>
                     <infectionRate id="beta" spec="RealParameter" value="0.01"/>
                     <recoveryRate spec="RealParameter" value="0.1"/>

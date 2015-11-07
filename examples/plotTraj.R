@@ -19,7 +19,7 @@ parseTrajectoryString <- function(trajString) {
     return(res)
 }
 
-plotTraj <- function(fileName, burninFrac=0.1, includeFinalState=FALSE, col=rgb(0,0,0,0.3), xlab='Time', ylab='Prevalence', main='Trajectory distribution', ...) {
+plotTraj <- function(fileName, burninFrac=0.1, includeFinalState=TRUE, col=rgb(0,0,0,0.3), xlab='Time', ylab='Prevalence', main='Trajectory distribution', ...) {
     df <- read.table(fileName, header=T, as.is=T)
 
     # Remove burnin
