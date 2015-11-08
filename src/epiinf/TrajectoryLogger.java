@@ -51,7 +51,8 @@ public class TrajectoryLogger extends BEASTObject implements Loggable {
     @Override
     public void log(int nSample, PrintStream out) {
 
-        if (treeDensity.getRecordedTrajectory() == null) {
+        treeDensity.calculateLogP(true);
+        if (treeDensity.getRecordedTrajectory().isEmpty()) {
             out.print("NA\t");
             return;
         }

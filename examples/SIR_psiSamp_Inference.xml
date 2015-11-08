@@ -11,12 +11,12 @@
 
 
     <tree spec="SimulatedTransmissionTree" id="simulated_tree" fileName="$(filebase)_truth.tree">
-        <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="5.0" fileName="$(filebase)_truth.traj">
-            <model spec="SISModel">
+        <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="7.0" fileName="$(filebase)_truth.traj">
+            <model spec="SIRModel">
                 <S0 spec="IntegerParameter" value="199"/>
                 <infectionRate spec="RealParameter" value="0.02"/>
-                <recoveryRate spec="RealParameter" value="0.1"/>
-                <psiSamplingRate spec="RealParameter" value="0.1"/>
+                <recoveryRate spec="RealParameter" value="0.2"/>
+                <psiSamplingRate spec="RealParameter" value="0.2"/>
                 <!--rhoSamplingProb spec="RealParameter" value="0.5"/>
                 <rhoSamplingTime spec="RealParameter" value="4.0"/-->
             </model>
@@ -43,8 +43,8 @@
                     <taxa spec='beast.evolution.alignment.TaxonSet' alignment="@alignment"/>
                 </trait>
             </stateNode>
-            <stateNode idref="beta"/>
-            <stateNode id="origin" spec="RealParameter" value="6.0"/>
+            <stateNode id="beta" spec="RealParameter" value="0.01"/>
+            <stateNode id="origin" spec="RealParameter" value="10.0"/>
         </state>
 
         <distribution id="posterior" spec="CompoundDistribution">
@@ -58,9 +58,9 @@
                 <treeEventList spec="TreeEventList" treeOrigin="@origin" tree="@tree"/>
                 <model spec="SIRModel">
                     <S0 spec="IntegerParameter" value="199"/>
-                    <infectionRate id="beta" spec="RealParameter" value="0.01"/>
-                    <recoveryRate spec="RealParameter" value="0.1"/>
-                    <psiSamplingRate spec="RealParameter" value="0.1"/>
+                    <infectionRate idref="beta" />
+                    <recoveryRate spec="RealParameter" value="0.2"/>
+                    <psiSamplingRate spec="RealParameter" value="0.2"/>
                     <!--rhoSamplingProb spec="RealParameter" value="0.5"/>
                     <rhoSamplingTime idref="origin"/-->
                 </model>
@@ -87,6 +87,13 @@
         <operator id='treeScaler' spec='ScaleOperator' scaleFactor="0.5" weight="1">
             <tree idref="tree"/>
         </operator>
+
+        <operator id='treeUpDown' spec='UpDownOperator' scaleFactor="0.8" weight="1">
+            <up idref="tree"/>
+            <up idref="origin"/>
+            <down idref="beta"/>
+        </operator>
+
         <operator spec='Uniform' weight="10">
             <tree idref="tree"/>
         </operator>

@@ -11,12 +11,11 @@
 
 
     <tree spec="SimulatedTransmissionTree" id="simulated_tree" fileName="$(filebase)_truth.tree">
-        <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="5.0" fileName="$(filebase)_truth.traj">
-            <model spec="SISModel">
-                <S0 spec="IntegerParameter" value="199"/>
-                <infectionRate spec="RealParameter" value="0.02"/>
-                <recoveryRate spec="RealParameter" value="0.1"/>
-                <psiSamplingRate spec="RealParameter" value="0.1"/>
+        <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="7.0" fileName="$(filebase)_truth.traj">
+            <model spec="BirthDeathModel">
+                <birthRate spec="RealParameter" value="1.0"/>
+                <deathRate spec="RealParameter" value="0.2"/>
+                <psiSamplingRate spec="RealParameter" value="0.2"/>
                 <!--rhoSamplingProb spec="RealParameter" value="0.5"/>
                 <rhoSamplingTime spec="RealParameter" value="4.0"/-->
             </model>
@@ -43,8 +42,10 @@
                     <taxa spec='beast.evolution.alignment.TaxonSet' alignment="@alignment"/>
                 </trait>
             </stateNode>
-            <stateNode idref="beta"/>
-            <stateNode id="origin" spec="RealParameter" value="6.0"/>
+            <stateNode id="birthRate" spec="RealParameter" value="1.0"/>
+            <stateNode id="deathRate" spec="RealParameter" value="0.2"/>
+            <stateNode id="psiSamplingRate" spec="RealParameter" value="0.2"/>
+            <stateNode id="origin" spec="RealParameter" value="10.0"/>
         </state>
 
         <distribution id="posterior" spec="CompoundDistribution">
@@ -56,13 +57,10 @@
 
             <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100" trajRecordPeriod="100">
                 <treeEventList spec="TreeEventList" treeOrigin="@origin" tree="@tree"/>
-                <model spec="SISModel">
-                    <S0 spec="IntegerParameter" value="199"/>
-                    <infectionRate id="beta" spec="RealParameter" value="0.01"/>
-                    <recoveryRate spec="RealParameter" value="0.1"/>
-                    <psiSamplingRate spec="RealParameter" value="0.1"/>
-                    <!--rhoSamplingProb spec="RealParameter" value="0.5"/>
-                    <rhoSamplingTime idref="origin"/-->
+                <model spec="BirthDeathModel">
+                    <birthRate idref="birthRate" />
+                    <deathRate idref="deathRate" />
+                    <psiSamplingRate idref="psiSamplingRate" />
                 </model>
             </distribution>
 
@@ -70,14 +68,26 @@
                 <distribution spec="beast.math.distributions.Prior" x="@origin">
                     <distr spec="beast.math.distributions.OneOnX"/>
                 </distribution>
-                <distribution spec="beast.math.distributions.Prior" x="@beta">
+                <distribution spec="beast.math.distributions.Prior" x="@birthRate">
+                    <distr spec="beast.math.distributions.OneOnX"/>
+                </distribution>
+                <distribution spec="beast.math.distributions.Prior" x="@deathRate">
+                    <distr spec="beast.math.distributions.OneOnX"/>
+                </distribution>
+                <distribution spec="beast.math.distributions.Prior" x="@psiSamplingRate">
                     <distr spec="beast.math.distributions.OneOnX"/>
                 </distribution>
             </distribution>
         </distribution>
 
-        <operator id='betaScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
-            <parameter idref="beta"/>
+        <operator id='birthRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="birthRate"/>
+        </operator>
+        <operator id='deathRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="deathRate"/>
+        </operator>
+        <operator id='samplingRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="psiSamplingRate"/>
         </operator>
 
         <operator id='originScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
@@ -91,7 +101,9 @@
         <operator id='treeUpDown' spec='UpDownOperator' scaleFactor="0.8" weight="1">
             <up idref="tree"/>
             <up idref="origin"/>
-            <down idref="beta"/>
+            <down idref="birthRate"/>
+            <down idref="deathRate"/>
+            <down idref="psiSamplingRate"/>
         </operator>
 
         <operator spec='Uniform' weight="10">
@@ -113,7 +125,9 @@
 
         <logger id="screenlog" spec="Logger" logEvery="1000">
             <log idref="posterior"/>
-            <log idref="beta"/>
+            <log idref="birthRate"/>
+            <log idref="deathRate"/>
+            <log idref="psiSamplingRate"/>
             <log idref="origin"/>
         </logger>
 
@@ -127,7 +141,9 @@
 
         <logger id="filelog" spec="Logger" logEvery="1000" fileName="$(filebase).log">
             <log idref="posterior"/>
-            <log idref="beta"/>
+            <log idref="birthRate"/>
+            <log idref="deathRate"/>
+            <log idref="psiSamplingRate"/>
             <log idref="origin"/>
         </logger>
     </run>

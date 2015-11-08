@@ -68,9 +68,7 @@ public class SMCTreeDensity extends Distribution {
     EpidemicState[] particleStates, particleStatesNew;
 
     double recordedOrigin;
-    List<EpidemicState> recordedTrajectory = null;
-    int trajRecordPeriod;
-    int evaluationCounter;
+    List<EpidemicState> recordedTrajectory;
     List<List<EpidemicState>> particleTrajectories, particleTrajectoriesNew;
 
 
@@ -86,8 +84,7 @@ public class SMCTreeDensity extends Distribution {
         particleStates = new EpidemicState[nParticles];
         particleStatesNew = new EpidemicState[nParticles];
 
-        trajRecordPeriod = trajRecordPeriodInput.get();
-
+        recordedTrajectory = new ArrayList<>();
         particleTrajectories = new ArrayList<>();
         particleTrajectoriesNew = new ArrayList<>();
 
@@ -95,30 +92,26 @@ public class SMCTreeDensity extends Distribution {
             particleTrajectories.add(new ArrayList<>());
             particleTrajectoriesNew.add(new ArrayList<>());
         }
-
-        evaluationCounter = 0;
     }
 
     @Override
     public double calculateLogP() throws Exception {
+        logP = calculateLogP(false);
+        return logP;
+    }
 
-        logP = 0.0;
+    public double calculateLogP(boolean recordTrajectory) {
 
-        boolean recordTrajectory = false;
-        if (trajRecordPeriod>0) {
-            if (evaluationCounter == 0) {
-                recordTrajectory = true;
-                recordedOrigin = treeEventList.getOrigin();
-                recordedTrajectory = null;
-            } else
-                recordTrajectory = false;
-            evaluationCounter = (evaluationCounter + 1) % trajRecordPeriod;
+        double thisLogP = 0.0;
+
+        if (recordTrajectory) {
+            recordedOrigin = treeEventList.getOrigin();
+            recordedTrajectory.clear();
         }
 
         // Early exit if first tree event occurs before origin.
         if (treeEventList.getEventList().get(0).time < 0) {
-            logP = Double.NEGATIVE_INFINITY;
-            return logP;
+            return Double.NEGATIVE_INFINITY;
         }
 
         // Initialize particles and trajectory storage
@@ -147,11 +140,10 @@ public class SMCTreeDensity extends Distribution {
             }
 
             // Update marginal likelihood estimate
-            logP += Math.log(sumOfWeights / nParticles);
+            thisLogP += Math.log(sumOfWeights / nParticles);
 
             if (!(sumOfWeights > 0.0)) {
-                logP = Double.NEGATIVE_INFINITY;
-                return logP;
+                return Double.NEGATIVE_INFINITY;
             }
 
             // Normalize weights
@@ -191,9 +183,9 @@ public class SMCTreeDensity extends Distribution {
 
         // Choose arbitrary trajectory to log.
         if (recordTrajectory)
-            recordedTrajectory = particleTrajectories.get(0);
+            recordedTrajectory.addAll(particleTrajectories.get(0));
 
-        return logP;
+        return thisLogP;
     }
 
     /**
@@ -202,6 +194,7 @@ public class SMCTreeDensity extends Distribution {
      * @param particleState State of particle
      * @param lineages number of tree lineages in interval
      * @param finalTreeEvent tree event which terminates interval
+     * @param particleTrajectory if non-null, add particle states to this trajectory
      *
      * @return conditional prob of tree interval under trajectory
      */
@@ -209,10 +202,6 @@ public class SMCTreeDensity extends Distribution {
                                   int lineages, TreeEvent finalTreeEvent,
                                   List<EpidemicState> particleTrajectory) {
         double conditionalP = 1.0;
-        boolean recordTrajectory = particleTrajectory != null;
-
-//        if (recordTrajectory)
-//            particleTrajectory.clear();
 
         while (true) {
             model.calculatePropensities(particleState);
@@ -279,7 +268,7 @@ public class SMCTreeDensity extends Distribution {
 
             model.incrementState(particleState, event);
 
-            if (recordTrajectory)
+            if (particleTrajectory != null)
                 particleTrajectory.add(particleState.copy());
 
             if (conditionalP == 0) {
@@ -349,7 +338,7 @@ public class SMCTreeDensity extends Distribution {
             conditionalP *= sampleProb * Math.exp(GammaFunction.lnGamma(1 + finalTreeEvent.multiplicity));
         }
 
-        if (recordTrajectory)
+        if (particleTrajectory != null)
             particleTrajectory.add(particleState.copy());
 
         if (!particleState.isValid())
@@ -384,4 +373,5 @@ public class SMCTreeDensity extends Distribution {
     public boolean isStochastic() {
         return true;
     }
+
 }
