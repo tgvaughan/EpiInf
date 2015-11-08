@@ -17,8 +17,6 @@
                 <infectionRate spec="RealParameter" value="0.02"/>
                 <recoveryRate spec="RealParameter" value="0.1"/>
                 <psiSamplingRate spec="RealParameter" value="0.1"/>
-                <!--rhoSamplingProb spec="RealParameter" value="0.5"/>
-                <rhoSamplingTime spec="RealParameter" value="4.0"/-->
             </model>
         </epidemicTrajectory>
     </tree>
@@ -43,7 +41,9 @@
                     <taxa spec='beast.evolution.alignment.TaxonSet' alignment="@alignment"/>
                 </trait>
             </stateNode>
-            <stateNode idref="beta"/>
+            <stateNode id="beta" spec="RealParameter" value="0.01"/>
+            <stateNode id="recoveryRate" spec="RealParameter" value="0.05"/>
+            <stateNode id="psiSamplingRate" spec="RealParameter" value="0.05"/>
             <stateNode id="origin" spec="RealParameter" value="6.0"/>
         </state>
 
@@ -54,13 +54,13 @@
                 <tree idref="tree"/>
             </distribution>
 
-            <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100" trajRecordPeriod="100">
+            <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100">
                 <treeEventList spec="TreeEventList" treeOrigin="@origin" tree="@tree"/>
                 <model spec="SISModel">
                     <S0 spec="IntegerParameter" value="199"/>
-                    <infectionRate id="beta" spec="RealParameter" value="0.01"/>
-                    <recoveryRate spec="RealParameter" value="0.1"/>
-                    <psiSamplingRate spec="RealParameter" value="0.1"/>
+                    <infectionRate idref="beta"/>
+                    <recoveryRate idref="recoveryRate"/>
+                    <psiSamplingRate idref="psiSamplingRate"/>
                     <!--rhoSamplingProb spec="RealParameter" value="0.5"/>
                     <rhoSamplingTime idref="origin"/-->
                 </model>
@@ -73,11 +73,25 @@
                 <distribution spec="beast.math.distributions.Prior" x="@beta">
                     <distr spec="beast.math.distributions.OneOnX"/>
                 </distribution>
+                <distribution spec="beast.math.distributions.Prior" x="@recoveryRate">
+                    <distr spec="beast.math.distributions.OneOnX"/>
+                </distribution>
+                <distribution spec="beast.math.distributions.Prior" x="@psiSamplingRate">
+                    <distr spec="beast.math.distributions.OneOnX"/>
+                </distribution>
             </distribution>
         </distribution>
 
         <operator id='betaScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
             <parameter idref="beta"/>
+        </operator>
+
+        <operator id='recoveryRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="recoveryRate"/>
+        </operator>
+
+        <operator id='psiSamplingRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="psiSamplingRate"/>
         </operator>
 
         <operator id='originScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
@@ -92,6 +106,8 @@
             <up idref="tree"/>
             <up idref="origin"/>
             <down idref="beta"/>
+            <down idref="recoveryRate"/>
+            <down idref="psiSamplingRate"/>
         </operator>
 
         <operator spec='Uniform' weight="10">
@@ -114,6 +130,8 @@
         <logger id="screenlog" spec="Logger" logEvery="1000">
             <log idref="posterior"/>
             <log idref="beta"/>
+            <log idref="recoveryRate"/>
+            <log idref="psiSamplingRate"/>
             <log idref="origin"/>
         </logger>
 
@@ -128,6 +146,8 @@
         <logger id="filelog" spec="Logger" logEvery="1000" fileName="$(filebase).log">
             <log idref="posterior"/>
             <log idref="beta"/>
+            <log idref="recoveryRate"/>
+            <log idref="psiSamplingRate"/>
             <log idref="origin"/>
         </logger>
     </run>

@@ -50,13 +50,6 @@ public class SMCTreeDensity extends Distribution {
             "nParticles", "Number of particles to use in SMC calculation.",
             Validate.REQUIRED);
 
-    public Input<Integer> trajRecordPeriodInput = new Input<>(
-            "trajRecordPeriod",
-            "Number of iterations between calculations that record " +
-                    "sampled trajectories. A number < 0 avoids ever " +
-                    "recording trajectories.",
-            -1);
-
     EpidemicModel model;
     TreeEventList treeEventList;
     int nParticles;

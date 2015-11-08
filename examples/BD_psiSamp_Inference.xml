@@ -55,7 +55,7 @@
                 <tree idref="tree"/>
             </distribution>
 
-            <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100" trajRecordPeriod="100">
+            <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100">
                 <treeEventList spec="TreeEventList" treeOrigin="@origin" tree="@tree"/>
                 <model spec="BirthDeathModel">
                     <birthRate idref="birthRate" />
