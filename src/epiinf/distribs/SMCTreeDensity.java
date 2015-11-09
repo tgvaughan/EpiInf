@@ -294,7 +294,7 @@ public class SMCTreeDensity extends Distribution {
                 // of sampling the number of samples in finalTreeEvent given the current
                 // state.
                 for (int i = 0; i < model.rhoSamplingProbInput.get().getDimension(); i++) {
-                    double rhoProb = model.rhoSamplingProbInput.get().getValue(i);
+                    double rhoProb = model.rhoSamplingProbInput.get().getArrayValue(i);
                     double rhoTime = model.rhoSamplingTimeInput.get().getValue(i);
 
                     if (Math.abs(rhoTime - finalTreeEvent.time) < model.getTolerance()) {

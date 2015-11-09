@@ -29,7 +29,7 @@
         </siteModel>
     </alignment>
 
-    <run spec="MCMC" id="mcmc" chainLength="100000">
+    <run spec="MCMC" id="mcmc" chainLength="1000000">
         <state>
             <!--stateNode id="tree" spec="beast.evolution.tree.RandomTree" taxa="@alignment">
                 <populationModel spec="beast.evolution.tree.coalescent.ConstantPopulation" popSize="0.1"/>
@@ -135,7 +135,7 @@
             <log idref="tree"/>
         </logger>
 
-        <logger logEvery="100" fileName="$(filebase).traj">
+        <logger logEvery="250" fileName="$(filebase).traj">
             <log spec='TrajectoryLogger' treeDensity="@treePrior" />
         </logger>
 

@@ -17,6 +17,7 @@
 
 package epiinf.models;
 
+import beast.core.Function;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
@@ -31,20 +32,20 @@ import epiinf.EpidemicState;
  */
 public class BirthDeathModel extends EpidemicModel {
     
-    public Input<RealParameter> birthRateInput = new Input<>(
+    public Input<Function> birthRateInput = new Input<>(
             "birthRate", "Lineage birth rate.", Validate.REQUIRED);
 
     public Input<RealParameter> birthRateShiftTimesInput = new Input<>(
             "birthRateShiftTimes", "Birth rate shift times.");
 
-    public Input<RealParameter> deathRateInput = new Input<>(
+    public Input<Function> deathRateInput = new Input<>(
             "deathRate", "Lineage death rate.", Validate.REQUIRED);
 
     public Input<RealParameter> deathRateShiftTimesInput = new Input<>(
             "deathRateShiftTimes", "Death rate shift times.");
 
     @Override
-    public RealParameter getInfectionRateParam() {
+    public Function getInfectionRateParam() {
         return birthRateInput.get();
     }
 
@@ -54,7 +55,7 @@ public class BirthDeathModel extends EpidemicModel {
     }
 
     @Override
-    public RealParameter getRecoveryRateParam() {
+    public Function getRecoveryRateParam() {
         return deathRateInput.get();
     }
 

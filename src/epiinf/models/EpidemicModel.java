@@ -18,6 +18,7 @@
 package epiinf.models;
 
 import beast.core.CalculationNode;
+import beast.core.Function;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
@@ -39,7 +40,7 @@ import java.util.List;
  */
 public abstract class EpidemicModel extends CalculationNode {
     
-    public Input<RealParameter> psiSamplingRateInput = new Input<>(
+    public Input<Function> psiSamplingRateInput = new Input<>(
             "psiSamplingRate",
             "Rate at which (destructive) psi-sampling is performed.");
 
@@ -47,15 +48,15 @@ public abstract class EpidemicModel extends CalculationNode {
             "psiSamplingRateShiftTimes",
             "Times at which psi-sampling rate changes.");
 
-    public Input<RealParameter> removalProbInput = new Input<>(
+    public Input<Function> removalProbInput = new Input<>(
             "removalProb",
-            "Probability that sample individual is removed from population.");
+            "Probability that sample individual is removed from population (Default 1).");
 
     public Input<RealParameter> removalProbShiftTimesInput = new Input<>(
             "removalProbShiftTimes",
             "Times at which removal probability changes.");
 
-    public Input<RealParameter> rhoSamplingProbInput = new Input<>(
+    public Input<Function> rhoSamplingProbInput = new Input<>(
             "rhoSamplingProb",
             "Probability with which a lineage at the corresponding time"
                     + "is sampled.");
@@ -122,9 +123,9 @@ public abstract class EpidemicModel extends CalculationNode {
      */
     public abstract EpidemicState getInitialState();
 
-    public abstract RealParameter getInfectionRateParam();
+    public abstract Function getInfectionRateParam();
     public abstract RealParameter getInfectionRateShiftTimesParam();
-    public abstract RealParameter getRecoveryRateParam();
+    public abstract Function getRecoveryRateParam();
     public abstract RealParameter getRecoveryRateShiftTimesParam();
 
     public final void calculatePropensities(EpidemicState state) {
@@ -135,7 +136,7 @@ public abstract class EpidemicModel extends CalculationNode {
         propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE] = calculatePsiSamplingNoRemovePropensity(state);
     }
 
-    protected double getCurrentRate(RealParameter rateParam, RealParameter rateShiftTimeParam,
+    protected double getCurrentRate(Function rateParam, RealParameter rateShiftTimeParam,
                           double time) {
         if (rateParam != null) {
             if (rateShiftTimeParam != null) {
@@ -144,9 +145,9 @@ public abstract class EpidemicModel extends CalculationNode {
                 if (idx<0)
                     idx = -(idx+1);
 
-                return rateParam.getValue(idx);
+                return rateParam.getArrayValue(idx);
             } else
-                return rateParam.getValue();
+                return rateParam.getArrayValue();
         } else
             return 0.0;
     }
@@ -227,7 +228,7 @@ public abstract class EpidemicModel extends CalculationNode {
             for (int i = 0; i < rhoSamplingProbInput.get().getDimension(); i++) {
                 ModelEvent event = new ModelEvent();
                 event.type = ModelEvent.Type.RHO_SAMPLING;
-                event.rho = rhoSamplingProbInput.get().getValue(i);
+                event.rho = rhoSamplingProbInput.get().getArrayValue(i);
                 event.time = rhoSamplingTimeInput.get().getValue(i);
                 modelEventList.add(event);
             }

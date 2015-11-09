@@ -1,5 +1,7 @@
 source("plotTraj.R")
 
+#par(mfrow=c(1,3))
+
 #pdf('SIS_rhoSamp_trajInference.pdf', width=7, height=5)
 #plotTraj("SIS_rhoSamp_Inference.traj", col=rgb(0,0,0,0.2), main="SIS", includeFinalState=F)
 #df <- read.table("SIS_rhoSamp_Inference_truth.traj", header=T)

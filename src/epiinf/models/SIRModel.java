@@ -17,6 +17,7 @@
 
 package epiinf.models;
 
+import beast.core.Function;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.IntegerParameter;
@@ -34,20 +35,20 @@ public class SIRModel extends EpidemicModel {
     public Input<IntegerParameter> S0Input = new Input<>(
             "S0", "Initial size of susceptible population.", Validate.REQUIRED);
     
-    public Input<RealParameter> infectionRateInput = new Input<>(
+    public Input<Function> infectionRateInput = new Input<>(
             "infectionRate", "Infection rate.", Validate.REQUIRED);
 
     public Input<RealParameter> infectionRateShiftTimesInput = new Input<>(
             "infectionRateShiftTimes", "Infection rate shift times.");
 
-    public Input<RealParameter> recoveryRateInput = new Input<>(
+    public Input<Function> recoveryRateInput = new Input<>(
             "recoveryRate", "Recovery rate.", Validate.REQUIRED);
 
     public Input<RealParameter> recoveryRateShiftTimesInput = new Input<>(
             "recoveryRateShiftTimes", "Recovery rate shift times.");
 
     @Override
-    public RealParameter getInfectionRateParam() {
+    public Function getInfectionRateParam() {
         return infectionRateInput.get();
     }
 
@@ -57,7 +58,7 @@ public class SIRModel extends EpidemicModel {
     }
 
     @Override
-    public RealParameter getRecoveryRateParam() {
+    public Function getRecoveryRateParam() {
         return recoveryRateInput.get();
     }
 

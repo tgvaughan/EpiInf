@@ -7,6 +7,7 @@
     :epiinf.models
     :epiinf.distribs
     :epiinf.util
+    :feast.expressions
     :feast.mapping">
 
 
@@ -30,7 +31,7 @@
         </siteModel>
     </alignment>
 
-    <run spec="MCMC" id="mcmc" chainLength="100000">
+    <run spec="MCMC" id="mcmc" chainLength="1000000">
         <state>
             <!--stateNode id="tree" spec="beast.evolution.tree.RandomTree" taxa="@alignment">
                 <populationModel spec="beast.evolution.tree.coalescent.ConstantPopulation" popSize="0.1"/>
@@ -44,8 +45,10 @@
                 </trait>
             </stateNode>
             <stateNode id="beta" spec="RealParameter" value="0.01"/>
-            <stateNode id="recoveryRate" spec="RealParameter" value="0.1"/>
-            <stateNode id="psiSamplingRate" spec="RealParameter" value="0.1"/>
+            <!--stateNode id="recoveryRate" spec="RealParameter" value="0.1"/-->
+            <!--stateNode id="psiSamplingRate" spec="RealParameter" value="0.1"/-->
+            <stateNode id="removalRate" spec="RealParameter" value="0.1"/>
+            <stateNode id="samplingProp" spec="RealParameter" value="0.5" lower="0.0" upper="1.0"/>
             <stateNode id="origin" spec="RealParameter" value="10.0"/>
         </state>
 
@@ -61,10 +64,18 @@
                 <model spec="SIRModel">
                     <S0 spec="IntegerParameter" value="199"/>
                     <infectionRate idref="beta" />
-                    <recoveryRate idref="recoveryRate" />
-                    <psiSamplingRate idref="psiSamplingRate" />
-                    <!--rhoSamplingProb spec="RealParameter" value="0.5"/>
-                    <rhoSamplingTime idref="origin"/-->
+                    <!--recoveryRate idref="recoveryRate" />
+                    <psiSamplingRate idref="psiSamplingRate" /-->
+
+                    <recoveryRate id="recoveryRate" spec="ExpCalculator" expression="removalRate*(1-samplingProp)">
+                        <parameter idref="removalRate"/>
+                        <parameter idref="samplingProp"/>
+                    </recoveryRate>
+
+                    <psiSamplingRate id="psiSamplingRate" spec="ExpCalculator" expression="removalRate*samplingProp">
+                        <parameter idref="removalRate"/>
+                        <parameter idref="samplingProp"/>
+                    </psiSamplingRate>
                 </model>
             </distribution>
 
@@ -75,12 +86,15 @@
                 <distribution spec="beast.math.distributions.Prior" x="@beta">
                     <distr spec="beast.math.distributions.OneOnX"/>
                 </distribution>
-                <distribution spec="beast.math.distributions.Prior" x="@recoveryRate">
+                <distribution spec="beast.math.distributions.Prior" x="@removalRate">
+                    <distr spec="beast.math.distributions.OneOnX"/>
+                </distribution>
+                <!--distribution spec="beast.math.distributions.Prior" x="@recoveryRate">
                     <distr spec="beast.math.distributions.OneOnX"/>
                 </distribution>
                 <distribution spec="beast.math.distributions.Prior" x="@psiSamplingRate">
                     <distr spec="beast.math.distributions.OneOnX"/>
-                </distribution>
+                </distribution-->
             </distribution>
         </distribution>
 
@@ -88,12 +102,25 @@
             <parameter idref="beta"/>
         </operator>
 
-        <operator id='recoveryRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+        <operator id='removalRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="removalRate"/>
+        </operator>
+
+        <operator id='samplingPropScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="samplingProp"/>
+        </operator>
+
+        <!--operator id='recoveryRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
             <parameter idref="recoveryRate"/>
         </operator>
 
         <operator id='psiSamplingRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
             <parameter idref="psiSamplingRate"/>
+        </operator-->
+
+        <operator id="removalSampPropUpDown" spec="UpDownOperator" scaleFactor="0.8" weight="1">
+            <up idref="removalRate"/>
+            <down idref="samplingProp"/>
         </operator>
 
         <operator id='originScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
@@ -108,8 +135,9 @@
             <up idref="tree"/>
             <up idref="origin"/>
             <down idref="beta"/>
-            <down idref="recoveryRate"/>
-            <down idref="psiSamplingRate"/>
+            <down idref="removalRate"/>
+            <!--down idref="recoveryRate"/>
+            <down idref="psiSamplingRate"/-->
         </operator>
 
         <operator spec='Uniform' weight="10">
@@ -131,7 +159,11 @@
 
         <logger id="screenlog" spec="Logger" logEvery="1000">
             <log idref="posterior"/>
+            <log idref="treeLikelihood"/>
+            <log idref="treePrior"/>
             <log idref="beta"/>
+            <log idref="removalRate"/>
+            <log idref="samplingProp"/>
             <log idref="recoveryRate"/>
             <log idref="psiSamplingRate"/>
             <log idref="origin"/>
@@ -141,13 +173,17 @@
             <log idref="tree"/>
         </logger>
 
-        <logger logEvery="100" fileName="$(filebase).traj">
+        <logger logEvery="250" fileName="$(filebase).traj">
             <log spec='TrajectoryLogger' treeDensity="@treePrior" />
         </logger>
 
         <logger id="filelog" spec="Logger" logEvery="1000" fileName="$(filebase).log">
             <log idref="posterior"/>
+            <log idref="treeLikelihood"/>
+            <log idref="treePrior"/>
             <log idref="beta"/>
+            <log idref="removalRate"/>
+            <log idref="samplingProp"/>
             <log idref="recoveryRate"/>
             <log idref="psiSamplingRate"/>
             <log idref="origin"/>
