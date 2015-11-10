@@ -19,8 +19,16 @@ parseTrajectoryString <- function(trajString) {
     return(res)
 }
 
-plotTraj <- function(fileName, burninFrac=0.1, includeFinalState=TRUE, col=rgb(0,0,0,0.3), xlab='Time', ylab='Prevalence', main='Trajectory distribution', ...) {
+plotTraj <- function(fileName, header, unconditioned=NA,
+                     burninFrac=0.1,
+                     col=rgb(1,0,0,0.3), colUnconditioned=rgb(0,0,1,0.3),
+                     xlab='Time', ylab='Prevalence', main='Trajectory distribution', ...) {
     df <- read.table(fileName, header=T, as.is=T)
+
+    # Determine which columns contain traj data
+    colidx <- which(colnames(df)==header)
+    if (!is.na(unconditioned))
+        colidxUC <- which(colnames(df)==unconditioned)
 
     # Remove burnin
     nRecords <- dim(df)[1]
@@ -33,24 +41,40 @@ plotTraj <- function(fileName, burninFrac=0.1, includeFinalState=TRUE, col=rgb(0
     maxOccupancy <- 0
     maxHeight <- 0
     traj <- list()
+    trajUC <- list()
     for (i in 1:nRecords) {
-        if (is.na(df$traj[i]))
-            next
-
-        traj[[i]] <- parseTrajectoryString(df$traj[i])
-        maxOccupancy <- max(maxOccupancy, traj[[i]]$S)
-        maxOccupancy <- max(maxOccupancy, traj[[i]]$I)
-        maxOccupancy <- max(maxOccupancy, traj[[i]]$R)
-        maxHeight <- max(maxHeight, traj[[i]]$t)
+        if (!is.na(df[[colidx]][i])) {
+            traj[[i]] <- parseTrajectoryString(df[[colidx]][i])
+            maxOccupancy <- max(maxOccupancy, traj[[i]]$S)
+            maxOccupancy <- max(maxOccupancy, traj[[i]]$I)
+            maxOccupancy <- max(maxOccupancy, traj[[i]]$R)
+            maxHeight <- max(maxHeight, traj[[i]]$t)
+        }
+        if (!is.na(unconditioned) && !is.na(df[[colidxUC]][i])) {
+            trajUC[[i]] <- parseTrajectoryString(df[[colidxUC]][i])
+        }
     }
     plot(traj[[1]]$t, traj[[1]]$I, col=NA, xlim=c(0, maxHeight), ylim=c(0, maxOccupancy), xlab=xlab, ylab=ylab, main=main, ...)
 
-    for (i in 1:nRecords) {
-        if (includeFinalState) {
-            lines(traj[[i]]$t, traj[[i]]$I, 's', col=col, ...)
-        } else {
-            n <- length(traj[[i]]$t)
-            lines(traj[[i]]$t[-n], traj[[i]]$I[-n], 's', col=col, ...)
+    if (length(trajUC) > 0) {
+        for (i in 1:length(trajUC)) {
+            indices <- which(trajUC[[i]]$t>=0)
+            lines(trajUC[[i]]$t[indices], trajUC[[i]]$I[indices], 's', col=colUnconditioned, ...)
+
+            midx <- which.min(trajUC[[i]]$t[indices])
+            mval <- trajUC[[i]]$t[indices][midx]
+            lines(c(0, mval), rep(trajUC[[i]]$I[indices][midx],2), col=colUnconditioned, ...)
         }
     }
+
+    for (i in 1:length(traj)) {
+        indices <- which(traj[[i]]$t>=0)
+        lines(traj[[i]]$t[indices], traj[[i]]$I[indices], 's', col=col, ...)
+
+        midx <- which.min(traj[[i]]$t[indices])
+        mval <- traj[[i]]$t[indices][midx]
+        lines(c(0, mval), rep(traj[[i]]$I[indices][midx],2), col=col, ...)
+    }
+
+
 }

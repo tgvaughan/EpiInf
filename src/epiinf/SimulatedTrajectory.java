@@ -18,14 +18,14 @@
 package epiinf;
 
 import beast.core.Description;
+import beast.core.Function;
 import beast.core.Input;
 import beast.core.Input.Validate;
-import beast.core.StateNode;
-import beast.core.StateNodeInitialiser;
+import beast.core.parameter.RealParameter;
 import epiinf.models.EpidemicModel;
+
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,7 +35,7 @@ import java.util.logging.Logger;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 @Description("Simulate an epidemic trajectory under a stochastic SIR model.")
-public class SimulatedTrajectory extends EpidemicTrajectory implements StateNodeInitialiser {
+public class SimulatedTrajectory extends EpidemicTrajectory {
     
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
@@ -43,7 +43,12 @@ public class SimulatedTrajectory extends EpidemicTrajectory implements StateNode
     public Input<Double> durationInput = new Input<>(
             "maxDuration", "Maximum duration of epidemic to simulate. "
                     + "Defaults to infinity.", Double.POSITIVE_INFINITY);
-    
+
+    public Input<Function> originInput = new Input<>(
+            "origin", "Origin with respect to most recent sample in tree. " +
+            "If provided, trimes will be logged as ages before most recent " +
+            "sample.");
+
     public Input<String> fileNameInput = new Input<>(
             "fileName",
             "Optional name of file to write simulated trajectory to.");
@@ -54,7 +59,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory implements StateNode
     public SimulatedTrajectory() { }
     
     @Override
-    public void initAndValidate() {
+    public void initAndValidate() throws Exception {
         super.initAndValidate();
         
         model = modelInput.get();
@@ -81,15 +86,14 @@ public class SimulatedTrajectory extends EpidemicTrajectory implements StateNode
         eventList.addAll(model.getEpidemicEventList());
         stateList.addAll(model.getEpidemicStateList().subList(0, model.getEpidemicStateList().size()));
     }
-    
-    @Override
-    public void initStateNodes() throws Exception {
-        //simulate();
-    }
 
     @Override
-    public void getInitialisedStateNodes(List<StateNode> stateNodes) {
-        stateNodes.add(this);
+    public void log(int nSample, PrintStream out) {
+        simulate();
+
+        if (originInput.get() != null)
+            origin = originInput.get().getArrayValue();
+
+        super.log(nSample, out);
     }
-    
 }

@@ -17,32 +17,33 @@
 
 package epiinf;
 
+import beast.core.BEASTObject;
 import beast.core.Description;
-import beast.core.StateNode;
+import beast.core.Input;
+import beast.core.Loggable;
+import beast.core.parameter.RealParameter;
 import com.google.common.collect.Lists;
+
 import java.io.PrintStream;
 import java.util.List;
-import org.w3c.dom.Node;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 @Description("StateNode representing a complete epidemic trajectory.")
-public class EpidemicTrajectory extends StateNode {
+public abstract class EpidemicTrajectory extends BEASTObject implements Loggable {
+
+    protected List<EpidemicEvent> eventList;
+    protected List<EpidemicState> stateList;
+    protected Double origin;
     
-    protected List<EpidemicEvent> eventList, storedEventList;
-    protected List<EpidemicState> stateList, storedStateList;
     
-    
-    public EpidemicTrajectory () { };
+    public EpidemicTrajectory () { }
     
     @Override
-    public void initAndValidate() {
+    public void initAndValidate() throws Exception {
         eventList = Lists.newArrayList();
-        storedEventList = Lists.newArrayList();
-
         stateList = Lists.newArrayList();
-        storedStateList = Lists.newArrayList();
     }
     
     /**
@@ -53,23 +54,7 @@ public class EpidemicTrajectory extends StateNode {
     public List<EpidemicState> getStateList() {
         return stateList;
     }
-    
-    /**
-     * Retrieve the initial state of the epidemic.
-     * 
-     * @return initial state
-     */
-    public EpidemicState getInitialState() {
-        return stateList.get(0);
-    }
 
-    public void setEventAndStateList(List<EpidemicEvent> eventList,
-            List<EpidemicState> stateList) {
-        startEditing();
-        this.eventList = eventList;
-        this.stateList = stateList;
-    }
-    
     /**
      * Retrieve list of events corresponding to complete epidemic trajectory.
      * 
@@ -95,118 +80,40 @@ public class EpidemicTrajectory extends StateNode {
         }
     }
 
-    /**
-     * If state exists, notify that state that this statenode has changed.
-     */
-    protected void startEditing() {
-        if (getState() != null)
-            startEditing(null);
-    }
-
-    @Override
-    public void setEverythingDirty(boolean isDirty) {
-        setSomethingIsDirty(isDirty);
-    }
-
-    @Override
-    public StateNode copy() {
-        EpidemicTrajectory trajCopy = new EpidemicTrajectory();
-        
-        trajCopy.initAndValidate();
-        trajCopy.eventList.addAll(eventList);
-        trajCopy.storedEventList.addAll(storedEventList);
-        trajCopy.stateList.addAll(stateList);
-        trajCopy.storedStateList.addAll(storedStateList);
-        
-        return trajCopy;
-    }
-
-    @Override
-    public void assignTo(StateNode other) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void assignFrom(StateNode other) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void assignFromFragile(StateNode other) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void fromXML(Node node) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public int scale(double fScale) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    protected void store() {
-        storedEventList.clear();
-        storedEventList.addAll(eventList);
-        storedStateList.clear();
-        storedStateList.addAll(stateList);
-    }
-
-    @Override
-    public void restore() {
-        eventList.clear();
-        eventList.addAll(storedEventList);
-        stateList.clear();
-        stateList.addAll(storedStateList);
-
-        hasStartedEditing = false;
-    }
-
     @Override
     public void init(PrintStream out) throws Exception {
-        out.print(getID() + ".duration\t");
-        out.print(getID() + ".timeAtPeak\t");
-        out.print(getID() + ".infected\t");
+        if (getID() == null)
+            out.print("trajectory\t");
+        else
+            out.print(getID() + "\t");
     }
 
     @Override
     public void log(int nSample, PrintStream out) {
-        out.print(eventList.get(eventList.size()-1).time + "\t");
-        
-        double tpeak = 0.0;
-        double Ipeak = 0;
-        for (int idx=0; idx<getEventList().size(); idx++) {
-            EpidemicEvent epiEvent = getEventList().get(idx);
-            EpidemicState epiState = getStateList().get(idx);
-            if (epiState.I>Ipeak) {
-                Ipeak = epiState.I;
-                tpeak = epiEvent.time;
-            }
+        if (stateList.isEmpty()) {
+            out.print("NA\t");
+            return;
         }
-        out.print(tpeak + "\t");
-        
-        EpidemicState finalState = getStateList().get(getStateList().size()-1);
-        out.print((finalState.I+finalState.R) + "\t");
+
+        boolean isFirst = true;
+        for (EpidemicState state : stateList) {
+            if (!isFirst)
+                out.print(",");
+            else
+                isFirst = false;
+
+            if (origin != null)
+                out.print(origin - state.time);
+            else
+                out.print(state.time);
+
+            out.print(":" + state.S + ":" + state.I + ":" + state.R);
+        }
+
+        out.print("\t");
     }
 
     @Override
     public void close(PrintStream out) { }
 
-    @Override
-    public int getDimension() {
-        return 1;
-    }
-
-    @Override
-    public double getArrayValue() {
-        return 0.0;
-    }
-
-    @Override
-    public double getArrayValue(int iDim) {
-        return 0.0;
-    }
-    
 }

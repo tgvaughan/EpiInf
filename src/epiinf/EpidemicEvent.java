@@ -31,6 +31,14 @@ public class EpidemicEvent extends Event {
     public static final int PSI_SAMPLE_NOREMOVE = 4;
     public static final int OTHER_SAMPLE= 5;
     public static final int nTypes = 6;
+    public static final String[] typeNames = {
+            "INFECTION",
+            "RECOVERY",
+            "RHO_SAMPLE",
+            "PSI_SAMPLE_REMOVE",
+            "PSI_SAMPLE_NOREMOVE",
+            "OTHER_SAMPLE"
+    };
 
     public int type;
     public int multiplicity;
@@ -59,12 +67,19 @@ public class EpidemicEvent extends Event {
      * @return record
      */
     public String getRecord() {
-        return type + " " + multiplicity;
+        return typeNames[type] + " " + multiplicity;
     }
 
     @Override
     public String toString() {
-        return "t: " + time + " type: " + type + " mult: " + multiplicity;
+        return "t: " + time + " type: " + typeNames[type] + " mult: " + multiplicity;
+    }
+
+    /**
+     * @return string representation of event type
+     */
+    public String getTypeName() {
+        return typeNames[type];
     }
     
     public static final EpidemicEvent Infection = new EpidemicEvent(-1, INFECTION, 1);

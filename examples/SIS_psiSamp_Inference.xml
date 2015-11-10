@@ -172,7 +172,15 @@
         </logger>
 
         <logger logEvery="250" fileName="$(filebase).traj">
-            <log spec='TrajectoryLogger' treeDensity="@treePrior" />
+            <log id="trajConditioned" spec='ConditionedTrajectory' treeDensity="@treePrior" />
+            <log id="trajUnconditioned" spec="SimulatedTrajectory" origin="@origin" maxDuration="7.0">
+                <model spec="SISModel">
+                    <S0 spec="IntegerParameter" value="199"/>
+                    <infectionRate idref="beta"/>
+                    <recoveryRate idref="recoveryRate"/>
+                    <psiSamplingRate idref="psiSamplingRate"/>
+                </model>
+            </log>
         </logger>
 
         <logger id="filelog" spec="Logger" logEvery="1000" fileName="$(filebase).log">

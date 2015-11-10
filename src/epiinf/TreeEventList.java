@@ -19,6 +19,7 @@ package epiinf;
 
 import beast.core.CalculationNode;
 import beast.core.Description;
+import beast.core.Function;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
@@ -37,12 +38,12 @@ public class TreeEventList extends CalculationNode {
     public Input<Tree> treeInput = new Input<>("tree",
             "Transmission tree.", Validate.REQUIRED);
     
-    public Input<RealParameter> treeOriginInput = new Input<>(
+    public Input<Function> treeOriginInput = new Input<>(
             "treeOrigin", "Age of the epidemic measured relative to the"
                     + "most recent sample on the tree.", Validate.REQUIRED);
     
     private Tree tree;
-    private RealParameter treeOrigin;
+    private Function treeOrigin;
     private List<TreeEvent> eventList, eventListStored;
 
     
@@ -135,14 +136,14 @@ public class TreeEventList extends CalculationNode {
      * @return time
      */
     public double getTimeFromHeight (double height) {
-        return treeOrigin.getValue() - height;
+        return treeOrigin.getArrayValue() - height;
     }
 
     /**
      * @return The time before the most recent sample that the epidemic began.
      */
     public double getOrigin() {
-        return treeOrigin.getValue();
+        return treeOrigin.getArrayValue();
     }
     
     /**

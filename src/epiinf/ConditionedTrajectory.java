@@ -28,7 +28,7 @@ import java.io.PrintStream;
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class TrajectoryLogger extends BEASTObject implements Loggable {
+public class ConditionedTrajectory extends EpidemicTrajectory {
 
     public Input<SMCTreeDensity> treeDensityInput = new Input<>("treeDensity",
             "SMC Tree density from which to log trajectories.",
@@ -36,41 +36,21 @@ public class TrajectoryLogger extends BEASTObject implements Loggable {
 
     SMCTreeDensity treeDensity;
 
-    public TrajectoryLogger() { }
+    public ConditionedTrajectory() {
+    }
 
     @Override
     public void initAndValidate() throws Exception {
         treeDensity = treeDensityInput.get();
-    }
-
-    @Override
-    public void init(PrintStream out) throws Exception {
-        out.print("trajectory" + "\t");
+        super.initAndValidate();
     }
 
     @Override
     public void log(int nSample, PrintStream out) {
-
         treeDensity.calculateLogP(true);
-        if (treeDensity.getRecordedTrajectory().isEmpty()) {
-            out.print("NA\t");
-            return;
-        }
-
-        boolean isFirst = true;
-        for (EpidemicState state : treeDensity.getRecordedTrajectory()) {
-            if (!isFirst)
-                out.print(",");
-            else
-                isFirst = false;
-
-            out.print((treeDensity.getRecordedOrigin() - state.time)
-                    + ":" + state.S + ":" + state.I + ":" + state.R);
-        }
-
-        out.print("\t");
+        stateList.clear();
+        stateList.addAll((treeDensity.getRecordedTrajectory()));
+        origin = treeDensity.getRecordedOrigin();
+        super.log(nSample, out);
     }
-
-    @Override
-    public void close(PrintStream out) { }
 }
