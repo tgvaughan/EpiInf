@@ -81,18 +81,22 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
         stateList.clear();
         
         EpidemicState currentState = model.getInitialState();
-        
-        model.generateTrajectory(currentState, duration);
+
+        if (origin != null)
+            model.generateTrajectory(currentState, origin);
+        else
+            model.generateTrajectory(currentState, duration);
+
         eventList.addAll(model.getEpidemicEventList());
         stateList.addAll(model.getEpidemicStateList().subList(0, model.getEpidemicStateList().size()));
     }
 
     @Override
     public void log(int nSample, PrintStream out) {
-        simulate();
-
         if (originInput.get() != null)
             origin = originInput.get().getArrayValue();
+
+        simulate();
 
         super.log(nSample, out);
     }

@@ -7,6 +7,7 @@
     :epiinf.models
     :epiinf.distribs
     :epiinf.util
+    :feast.expressions
     :feast.mapping">
 
 
@@ -31,20 +32,16 @@
 
     <run spec="MCMC" id="mcmc" chainLength="1000000">
         <state>
-            <!--stateNode id="tree" spec="beast.evolution.tree.RandomTree" taxa="@alignment">
-                <populationModel spec="beast.evolution.tree.coalescent.ConstantPopulation" popSize="0.1"/>
-                <trait spec='TipDatesFromTree' tree="@simulated_tree">
-                    <taxa spec='beast.evolution.alignment.TaxonSet' alignment="@alignment"/>
-                </trait>
-            </stateNode-->
             <stateNode id="tree" spec="beast.util.ClusterTree" taxa="@alignment" clusterType="upgma">
                 <trait spec='TipDatesFromTree' tree="@simulated_tree">
                     <taxa spec='beast.evolution.alignment.TaxonSet' alignment="@alignment"/>
                 </trait>
             </stateNode>
             <stateNode id="birthRate" spec="RealParameter" value="1.0"/>
-            <stateNode id="deathRate" spec="RealParameter" value="0.2"/>
-            <stateNode id="psiSamplingRate" spec="RealParameter" value="0.2"/>
+            <!--stateNode id="deathRate" spec="RealParameter" value="0.2"/>
+            <stateNode id="psiSamplingRate" spec="RealParameter" value="0.2"/-->
+            <stateNode id="removalRate" spec="RealParameter" value="0.4"/>
+            <stateNode id="samplingProp" spec="RealParameter" value="0.5" lower="0.0" upper="1.0"/>
             <stateNode id="origin" spec="RealParameter" value="10.0"/>
         </state>
 
@@ -59,8 +56,17 @@
                 <treeEventList spec="TreeEventList" treeOrigin="@origin" tree="@tree"/>
                 <model spec="BirthDeathModel">
                     <birthRate idref="birthRate" />
-                    <deathRate idref="deathRate" />
-                    <psiSamplingRate idref="psiSamplingRate" />
+                    <!--deathRate idref="deathRate" />
+                    <psiSamplingRate idref="psiSamplingRate" /-->
+                    <deathRate id="deathRate" spec="ExpCalculator" expression="removalRate*(1-samplingProp)">
+                        <parameter idref="removalRate"/>
+                        <parameter idref="samplingProp"/>
+                    </deathRate>
+
+                    <psiSamplingRate id="psiSamplingRate" spec="ExpCalculator" expression="removalRate*samplingProp">
+                        <parameter idref="removalRate"/>
+                        <parameter idref="samplingProp"/>
+                    </psiSamplingRate>
                 </model>
             </distribution>
 
@@ -71,23 +77,40 @@
                 <distribution spec="beast.math.distributions.Prior" x="@birthRate">
                     <distr spec="beast.math.distributions.OneOnX"/>
                 </distribution>
-                <distribution spec="beast.math.distributions.Prior" x="@deathRate">
+                <distribution spec="beast.math.distributions.Prior" x="@removalRate">
+                    <distr spec="beast.math.distributions.OneOnX"/>
+                </distribution>
+                <!--distribution spec="beast.math.distributions.Prior" x="@deathRate">
                     <distr spec="beast.math.distributions.OneOnX"/>
                 </distribution>
                 <distribution spec="beast.math.distributions.Prior" x="@psiSamplingRate">
                     <distr spec="beast.math.distributions.OneOnX"/>
-                </distribution>
+                </distribution-->
             </distribution>
         </distribution>
 
         <operator id='birthRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
             <parameter idref="birthRate"/>
         </operator>
-        <operator id='deathRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+
+        <operator id='removalRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="removalRate"/>
+        </operator>
+
+        <operator id='samplingPropScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="samplingProp"/>
+        </operator>
+
+        <!--operator id='deathRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
             <parameter idref="deathRate"/>
         </operator>
         <operator id='samplingRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
             <parameter idref="psiSamplingRate"/>
+        </operator-->
+
+        <operator id="removalSampPropUpDown" spec="UpDownOperator" scaleFactor="0.8" weight="1">
+            <up idref="removalRate"/>
+            <down idref="samplingProp"/>
         </operator>
 
         <operator id='originScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
@@ -102,8 +125,9 @@
             <up idref="tree"/>
             <up idref="origin"/>
             <down idref="birthRate"/>
-            <down idref="deathRate"/>
-            <down idref="psiSamplingRate"/>
+            <down idref="removalRate"/>
+            <!--down idref="deathRate"/>
+            <down idref="psiSamplingRate"/-->
         </operator>
 
         <operator spec='Uniform' weight="10">
@@ -126,6 +150,8 @@
         <logger id="screenlog" spec="Logger" logEvery="1000">
             <log idref="posterior"/>
             <log idref="birthRate"/>
+            <log idref="removalRate"/>
+            <log idref="samplingProp"/>
             <log idref="deathRate"/>
             <log idref="psiSamplingRate"/>
             <log idref="origin"/>
@@ -136,12 +162,22 @@
         </logger>
 
         <logger logEvery="250" fileName="$(filebase).traj">
-            <log spec='TrajectoryLogger' treeDensity="@treePrior" />
+            <log id="trajConditioned" spec='ConditionedTrajectory' treeDensity="@treePrior" />
+            <log id="trajUnconditioned" spec="SimulatedTrajectory" origin="@origin">
+                <model spec="BirthDeathModel">
+                    <birthRate idref="birthRate"/>
+                    <deathRate idref="deathRate"/>
+                    <psiSamplingRate idref="psiSamplingRate"/>
+                </model>
+            </log>
+
         </logger>
 
         <logger id="filelog" spec="Logger" logEvery="1000" fileName="$(filebase).log">
             <log idref="posterior"/>
             <log idref="birthRate"/>
+            <log idref="removalRate"/>
+            <log idref="samplingProp"/>
             <log idref="deathRate"/>
             <log idref="psiSamplingRate"/>
             <log idref="origin"/>
