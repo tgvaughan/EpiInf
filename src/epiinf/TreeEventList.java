@@ -17,15 +17,12 @@
 
 package epiinf;
 
-import beast.core.CalculationNode;
 import beast.core.Description;
 import beast.core.Function;
-import beast.core.Input;
-import beast.core.Input.Validate;
-import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
+import beast.evolution.tree.TreeInterface;
 import com.google.common.collect.Lists;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -33,20 +30,12 @@ import java.util.List;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 @Description("Maintains a sorted list of events in the tree.")
-public class TreeEventList extends CalculationNode {
-    
-    public Input<Tree> treeInput = new Input<>("tree",
-            "Transmission tree.", Validate.REQUIRED);
-    
-    public Input<Function> treeOriginInput = new Input<>(
-            "treeOrigin", "Age of the epidemic measured relative to the"
-                    + "most recent sample on the tree.", Validate.REQUIRED);
-    
-    private Tree tree;
-    private Function treeOrigin;
-    private List<TreeEvent> eventList, eventListStored;
+public class TreeEventList {
 
-    
+    private TreeInterface tree;
+    private Function treeOrigin;
+    private List<TreeEvent> eventList;
+
     /**
      * Tolerance for deviation between tree node ages and trajectory events.
      */
@@ -57,19 +46,15 @@ public class TreeEventList extends CalculationNode {
     /**
      * Default constructor.
      */
-    public TreeEventList() { }
-    
-    @Override
-    public void initAndValidate() {
-        tree = treeInput.get();
-        treeOrigin = treeOriginInput.get();
-        
+    public TreeEventList(TreeInterface tree, Function treeOrigin) {
+        this.tree = tree;
+        this.treeOrigin = treeOrigin;
+
         eventList = Lists.newArrayList();
-        eventListStored = Lists.newArrayList();
-        
+
         dirty = true;
     }
-    
+
     /**
      * Ensure list of tree events is up to date.
      */
@@ -132,7 +117,7 @@ public class TreeEventList extends CalculationNode {
     /**
      * Obtain absolute epidemic time corresponding to height on tree.
      * 
-     * @param height height to comvert
+     * @param height height to convert
      * @return time
      */
     public double getTimeFromHeight (double height) {
@@ -155,27 +140,11 @@ public class TreeEventList extends CalculationNode {
         updateEventList();
         return eventList;
     }
-    
-    @Override
-    protected boolean requiresRecalculation() {
+
+    /**
+     * Cause the event list to be updated before it is next queried
+     */
+    public void makeDirty() {
         dirty = true;
-        return true;
-    }
-
-    @Override
-    protected void store() {
-        eventListStored.clear();
-        eventListStored.addAll(eventList);
-        
-        super.store();
-    }
-
-    @Override
-    protected void restore() {
-        eventList.clear();
-        eventList.addAll(eventListStored);
-        dirty = false;
-        
-        super.restore();
     }
 }

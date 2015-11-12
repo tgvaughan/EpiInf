@@ -17,11 +17,10 @@
 
 package epiinf.distribs;
 
-import beast.core.Description;
-import beast.core.Distribution;
-import beast.core.Input;
+import beast.core.*;
 import beast.core.Input.Validate;
-import beast.core.State;
+import beast.core.parameter.RealParameter;
+import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
 import beast.util.Randomizer;
@@ -38,13 +37,18 @@ import java.util.Random;
  */
 @Description("Use SMC to estimate density of tree conditional on model "
     + "parameters.")
-public class SMCTreeDensity extends Distribution {
+public class SMCTreeDensity extends TreeDistribution {
 
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
 
-    public Input<TreeEventList> treeEventListInput = new Input<>(
-            "treeEventList", "Tree event list.", Validate.REQUIRED);
+//    public Input<TreeEventList> treeEventListInput = new Input<>(
+//            "treeEventList", "Tree event list.", Validate.REQUIRED);
+
+    public Input<Function> treeOriginInput = new Input<>(
+            "treeOrigin",
+            "Time before most recent sample that epidemic began.",
+            Validate.REQUIRED);
 
     public Input<Integer> nParticlesInput = new Input<>(
             "nParticles", "Number of particles to use in SMC calculation.",
@@ -65,12 +69,15 @@ public class SMCTreeDensity extends Distribution {
     List<List<EpidemicState>> particleTrajectories, particleTrajectoriesNew;
 
 
-    public SMCTreeDensity() { }
+    public SMCTreeDensity() {
+//        treeInput.setRule(Validate.FORBIDDEN);
+        treeIntervalsInput.setRule(Validate.FORBIDDEN);
+    }
 
     @Override
     public void initAndValidate() throws Exception {
         model = modelInput.get();
-        treeEventList = treeEventListInput.get();
+        treeEventList = new TreeEventList(treeInput.get(), treeOriginInput.get());
         nParticles = nParticlesInput.get();
 
         particleWeights = new double[nParticles];
@@ -266,11 +273,8 @@ public class SMCTreeDensity extends Distribution {
 
             if (conditionalP == 0) {
                 // Should never get here, as we explicitly condition against
-                // events that cause this.
-//                throw new IllegalStateException("Programmer error in " +
-//                        "SMCTreeDensity. Event: " + event
-//                        + ", particle state: " + particleState
-//                        + ", lineages: " + lineages);
+                // events that cause this. However, rounding errors mock
+                // this rule.
                 return 0.0;
             }
 
@@ -363,6 +367,18 @@ public class SMCTreeDensity extends Distribution {
 
     @Override
     public void sample(State state, Random random) {
+    }
+
+    @Override
+    protected boolean requiresRecalculation() {
+        treeEventList.makeDirty();
+        return true;
+    }
+
+    @Override
+    public void restore() {
+        treeEventList.makeDirty();
+        super.restore();
     }
 
     @Override

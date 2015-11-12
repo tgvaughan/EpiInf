@@ -1,0 +1,50 @@
+<!--
+  ~ Copyright (C) 2015 Tim Vaughan <tgvaughan@gmail.com>
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<beast version="2.0" namespace="
+    beast.app.beauti
+    :beast.core
+    :beast.core.parameter
+    :epiinf
+    :epiinf.models
+    :epiinf.distribs">
+
+    <mergewith point="treePriorTemplates">
+
+        <subtemplate id="EpiTreePrior" class="epiinf.distribs.SMCTreeDensity" mainid="EpiTreePrior.t:$(n)">
+            <![CDATA[
+            <distribution id="EpiTreePrior.t:$(n)" spec="epiinf.distribs.SMCTreeDensity" nParticles="100">
+                <tree idref="Tree.t:$(n)"/>
+                <treeOrigin id="origin.t:$(n)" spec="beast.core.parameter.RealParameter" value="10.0"/>
+                <model spec="epiinf.models.SISModel">
+                    <S0 spec="beast.core.parameter.IntegerParameter" value="199" estimate="false"/>
+                    <infectionRate spec="beast.core.parameter.RealParameter" value="0.01" estimate="false"/>
+                    <recoveryRate spec="beast.core.parameter.RealParameter" value="0.01" estimate="false"/>
+                    <psiSamplingRate spec="beast.core.parameter.RealParameter" value="0.0" estimate="false"/>
+                    <rhoSamplingTime idref="origin.t:$(n)"/>
+                </model>
+            </distribution>
+            ]]>
+
+            <connect srcID="EpiTreePrior.t:$(n)" targetID="prior" inputName="distribution"
+                     if="inlikelihood(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+        </subtemplate>
+
+
+    </mergewith>
+
+</beast>

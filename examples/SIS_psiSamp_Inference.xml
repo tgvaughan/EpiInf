@@ -31,12 +31,6 @@
 
     <run spec="MCMC" id="mcmc" chainLength="1000000">
         <state>
-            <!--stateNode id="tree" spec="beast.evolution.tree.RandomTree" taxa="@alignment">
-                <populationModel spec="beast.evolution.tree.coalescent.ConstantPopulation" popSize="0.1"/>
-                <trait spec='TipDatesFromTree' tree="@simulated_tree">
-                    <taxa spec='beast.evolution.alignment.TaxonSet' alignment="@alignment"/>
-                </trait>
-            </stateNode-->
             <stateNode id="tree" spec="beast.util.ClusterTree" taxa="@alignment" clusterType="upgma">
                 <trait spec='TipDatesFromTree' tree="@simulated_tree">
                     <taxa spec='beast.evolution.alignment.TaxonSet' alignment="@alignment"/>
@@ -45,8 +39,6 @@
             <stateNode id="beta" spec="RealParameter" value="0.01"/>
             <stateNode id="removalRate" spec="RealParameter" value="0.1" />
             <stateNode id="samplingProp" spec="RealParameter" value="0.5" lower="0.0" upper="1.0"/>
-            <!--stateNode id="recoveryRate" spec="RealParameter" value="0.05"/>
-            <stateNode id="psiSamplingRate" spec="RealParameter" value="0.05"/-->
             <stateNode id="origin" spec="RealParameter" value="6.0"/>
         </state>
 
@@ -57,13 +49,10 @@
                 <tree idref="tree"/>
             </distribution>
 
-            <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100">
-                <treeEventList spec="TreeEventList" treeOrigin="@origin" tree="@tree"/>
+            <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100" tree="@tree" treeOrigin="@origin">
                 <model spec="SISModel" id="model">
                     <S0 spec="IntegerParameter" value="199"/>
                     <infectionRate idref="beta"/>
-                    <!--recoveryRate idref="recoveryRate"/>
-                    <psiSamplingRate idref="psiSamplingRate"/-->
 
                     <recoveryRate id="recoveryRate" spec="ExpCalculator" expression="removalRate*(1-samplingProp)">
                         <parameter idref="removalRate"/>
@@ -87,12 +76,6 @@
                 <distribution spec="beast.math.distributions.Prior" x="@removalRate">
                     <distr spec="beast.math.distributions.OneOnX"/>
                 </distribution>
-                <!--distribution spec="beast.math.distributions.Prior" x="@recoveryRate">
-                    <distr spec="beast.math.distributions.OneOnX"/>
-                </distribution>
-                <distribution spec="beast.math.distributions.Prior" x="@psiSamplingRate">
-                    <distr spec="beast.math.distributions.OneOnX"/>
-                </distribution-->
             </distribution>
         </distribution>
 
@@ -113,14 +96,6 @@
             <down idref="samplingProp"/>
         </operator>
 
-        <!--operator id='recoveryRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
-            <parameter idref="recoveryRate"/>
-        </operator>
-
-        <operator id='psiSamplingRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
-            <parameter idref="psiSamplingRate"/>
-        </operator-->
-
         <operator id='originScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
             <parameter idref="origin"/>
         </operator>
@@ -134,8 +109,6 @@
             <up idref="origin"/>
             <down idref="beta"/>
             <down idref="removalRate"/>
-            <!--down idref="recoveryRate"/>
-            <down idref="psiSamplingRate"/-->
         </operator>
 
         <operator spec='Uniform' weight="10">
