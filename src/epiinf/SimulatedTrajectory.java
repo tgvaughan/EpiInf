@@ -21,7 +21,7 @@ import beast.core.Description;
 import beast.core.Function;
 import beast.core.Input;
 import beast.core.Input.Validate;
-import beast.core.parameter.RealParameter;
+import beast.util.Randomizer;
 import epiinf.models.EpidemicModel;
 
 import java.io.FileNotFoundException;
@@ -75,22 +75,97 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
             }
         }
     }
-    
-    private void simulate() {
+
+
+    /**
+     * Simulate an epidemic using the provided model.
+     *
+     */
+    public void simulate() {
+
+        double endTime;
+        if (origin != null)
+            endTime = origin;
+        else
+            endTime = duration;
+
         eventList.clear();
         stateList.clear();
-        
-        EpidemicState currentState = model.getInitialState();
 
-        if (origin != null)
-            model.generateTrajectory(currentState, origin);
-        else
-            model.generateTrajectory(currentState, duration);
+        EpidemicState thisState = model.getInitialState();
+        stateList.add(model.getInitialState());
 
-        eventList.addAll(model.getEpidemicEventList());
-        stateList.addAll(model.getEpidemicStateList().subList(0, model.getEpidemicStateList().size()));
+        thisState.time = 0;
+
+        while (true) {
+            model.calculatePropensities(thisState);
+
+            double totalPropensity = model.propensities[EpidemicEvent.INFECTION]
+                    + model.propensities[EpidemicEvent.RECOVERY]
+                    + model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                    + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE];
+
+            double dt;
+            if (totalPropensity>0.0)
+                dt = Randomizer.nextExponential(totalPropensity);
+            else
+                dt = Double.POSITIVE_INFINITY;
+
+            thisState.time += dt;
+
+            EpidemicEvent nextEvent = new EpidemicEvent();
+
+            double nextModelEventTime = model.getNextModelEventTime(thisState);
+            if (nextModelEventTime < endTime && thisState.time > nextModelEventTime) {
+                ModelEvent event = model.getNextModelEvent(thisState);
+
+                if (event.type == ModelEvent.Type.RHO_SAMPLING) {
+                    nextEvent.type = EpidemicEvent.RHO_SAMPLE;
+
+                    // Got to be a better way of sampling from a binomial distribution
+                    nextEvent.multiplicity = 0;
+                    for (int i = 0; i < thisState.I; i++) {
+                        if (Randomizer.nextDouble() < event.rho)
+                            nextEvent.multiplicity += 1;
+                    }
+
+
+                    nextEvent.time = event.time;
+                    thisState.time = event.time;
+
+                    model.incrementState(thisState, nextEvent);
+                    eventList.add(nextEvent);
+                    stateList.add(thisState.copy());
+                }
+
+                thisState.intervalIdx += 1;
+
+                continue;
+            }
+
+            if (thisState.time>=endTime)
+                break;
+
+
+            nextEvent.time = thisState.time;
+
+            double u = totalPropensity*Randomizer.nextDouble();
+
+            for (int type = 0; type<EpidemicEvent.nTypes; type++) {
+                u -= model.propensities[type];
+
+                if (u<0) {
+                    nextEvent.type = type;
+                    break;
+                }
+            }
+
+            model.incrementState(thisState, nextEvent);
+            eventList.add(nextEvent);
+            stateList.add(thisState.copy());
+        }
     }
-
+    
     @Override
     public void log(int nSample, PrintStream out) {
         if (originInput.get() != null)

@@ -19,16 +19,13 @@ parseTrajectoryString <- function(trajString) {
     return(res)
 }
 
-plotTraj <- function(fileName, header, unconditioned=NA,
-                     burninFrac=0.1,
-                     col=rgb(1,0,0,0.3), colUnconditioned=rgb(0,0,1,0.3),
+plotTraj <- function(fileName, header, burninFrac=0.1,
+                     col=rgb(1,0,0,0.3), add=FALSE,
                      xlab='Time', ylab='Prevalence', main='Trajectory distribution', ...) {
     df <- read.table(fileName, header=T, as.is=T)
 
     # Determine which columns contain traj data
     colidx <- which(colnames(df)==header)
-    if (!is.na(unconditioned))
-        colidxUC <- which(colnames(df)==unconditioned)
 
     # Remove burnin
     nRecords <- dim(df)[1]
@@ -41,7 +38,7 @@ plotTraj <- function(fileName, header, unconditioned=NA,
     maxOccupancy <- 0
     maxHeight <- 0
     traj <- list()
-    trajUC <- list()
+#    trajUC <- list()
     for (i in 1:nRecords) {
         if (!is.na(df[[colidx]][i])) {
             traj[[i]] <- parseTrajectoryString(df[[colidx]][i])
@@ -50,21 +47,12 @@ plotTraj <- function(fileName, header, unconditioned=NA,
             maxOccupancy <- max(maxOccupancy, traj[[i]]$R)
             maxHeight <- max(maxHeight, traj[[i]]$t)
         }
-        if (!is.na(unconditioned) && !is.na(df[[colidxUC]][i])) {
-            trajUC[[i]] <- parseTrajectoryString(df[[colidxUC]][i])
-        }
     }
-    plot(traj[[1]]$t, traj[[1]]$I, col=NA, xlim=c(0, maxHeight), ylim=c(0, maxOccupancy), xlab=xlab, ylab=ylab, main=main, ...)
 
-    if (length(trajUC) > 0) {
-        for (i in 1:length(trajUC)) {
-            indices <- which(trajUC[[i]]$t>=0)
-            lines(trajUC[[i]]$t[indices], trajUC[[i]]$I[indices], 's', col=colUnconditioned, ...)
-
-            midx <- which.min(trajUC[[i]]$t[indices])
-            mval <- trajUC[[i]]$t[indices][midx]
-            lines(c(0, mval), rep(trajUC[[i]]$I[indices][midx],2), col=colUnconditioned, ...)
-        }
+    # Create plot if necessary
+    if (!add) {
+        plot(traj[[1]]$t, traj[[1]]$I, col=NA, xlim=c(0, maxHeight), ylim=c(0, maxOccupancy),
+             xlab=xlab, ylab=ylab, main=main, ...)
     }
 
     for (i in 1:length(traj)) {
@@ -75,6 +63,90 @@ plotTraj <- function(fileName, header, unconditioned=NA,
         mval <- traj[[i]]$t[indices][midx]
         lines(c(0, mval), rep(traj[[i]]$I[indices][midx],2), col=col, ...)
     }
+}
 
+simSIR <- function(origin, beta, gamma, N) {
+    S <- N - 1
+    I <- 1
+    R <- 0
 
+    tidx <- 1
+    t <- origin
+
+    while (TRUE) {
+
+        a_infect <- beta*S[tidx]*I[tidx]
+        a_recov <- gamma*I[tidx]
+        a_tot <- a_infect + a_recov
+
+        if (a_tot > 0)
+            t[tidx+1] <- t[tidx] - rexp(1, a_tot)
+        else
+            t[tidx+1] <- -Inf
+
+        if (t[tidx+1]<0)
+            break
+
+        if (runif(1, min=0, max=a_tot) < a_infect) {
+            # Infection
+            S[tidx+1] = S[tidx] - 1
+            I[tidx+1] = I[tidx] + 1
+            R[tidx+1] = R[tidx]
+        } else {
+            # Recovery
+            S[tidx+1] = S[tidx]
+            I[tidx+1] = I[tidx] - 1
+            R[tidx+1] = R[tidx] + 1
+        }
+
+        tidx <- tidx + 1
+    }
+
+    t[tidx+1] = 0
+    S[tidx+1] = S[tidx]
+    I[tidx+1] = I[tidx]
+    R[tidx+1] = R[tidx]
+
+    return(data.frame(t=t, S=S, I=I, R=R))
+}
+
+simSIS <- function(origin, beta, gamma, N) {
+    S <- N - 1
+    I <- 1
+
+    tidx <- 1
+    t <- origin
+
+    while (TRUE) {
+
+        a_infect <- beta*S[tidx]*I[tidx]
+        a_recov <- gamma*I[tidx]
+        a_tot <- a_infect + a_recov
+
+        if (a_tot > 0)
+            t[tidx+1] <- t[tidx] - rexp(1, a_tot)
+        else
+            t[tidx+1] <- -Inf
+
+        if (t[tidx+1]<0)
+            break
+
+        if (runif(1, min=0, max=a_tot) < a_infect) {
+            # Infection
+            S[tidx+1] = S[tidx] - 1
+            I[tidx+1] = I[tidx] + 1
+        } else {
+            # Recovery
+            S[tidx+1] = S[tidx] + 1
+            I[tidx+1] = I[tidx] - 1
+        }
+
+        tidx <- tidx + 1
+    }
+
+    t[tidx+1] = 0
+    S[tidx+1] = S[tidx]
+    I[tidx+1] = I[tidx]
+
+    return(data.frame(t=t, S=S, I=I))
 }

@@ -2,8 +2,14 @@ source("plotTraj.R")
 require(rjson)
 
 #png("SIS_psiSamp_Inference.png", width=640, height=480)
-#plotTraj("SIS_psiSamp_Inference.traj", "trajConditioned", unconditioned="trajUnconditioned",
-#         col=rgb(1,0,0,0.1), colUnconditioned=rgb(0,0,1,0.1), main="SIS", includeFinalState=F)
+#df <- read.table("SIS_psiSamp_Inference.log", header=T)
+#df <- df[-(1:dim(df)[1]*.1),]
+#plot(1, type='n', xlim=c(0, max(df$origin)), ylim=c(0,200),
+#     xlab="Time", ylab="Prevalence", main="SIS")
+#plotTraj("SIS_psiSamp_Inference.traj", "trajUnconditioned",
+#         col=rgb(0,0,1,0.1), add=T)
+#plotTraj("SIS_psiSamp_Inference.traj", "trajConditioned",
+#         col=rgb(1,0,0,0.1), add=T)
 #origin <- as.numeric(system2("phylostat", "-n SIS_psiSamp_Inference_truth.tree origin", stdout=T))
 #df <- read.table("SIS_psiSamp_Inference_truth.traj", header=T)
 #sampIdx <- which(df$eventType=="PSI_SAMPLE_REMOVE")
@@ -14,32 +20,48 @@ require(rjson)
 #legend('topright', inset=0.05, c("Truth", "Conditioned", "Unconditioned"), lty=1, lwd=4, col=c("black", "red", "blue"))
 #dev.off()
 
-
 #png("SIR_psiSamp_Inference.png", width=640, height=480)
-#plotTraj("SIR_psiSamp_Inference.traj", "trajConditioned", unconditioned="trajUnconditioned",
-#         col=rgb(1,0,0,0.1), colUnconditioned=rgb(0,0,1,0.1), main="SIR")
-#origin <- as.numeric(system2("phylostat", "-n SIR_psiSamp_Inference_truth.tree origin", stdout=T))
-#df <- read.table("SIR_psiSamp_Inference_truth.traj", header=T)
+df <- read.table("SIR_psiSamp_Inference.log", header=T)
+df <- df[-(1:dim(df)[1]*0.1),]
+plot(1, type="n", xlim=c(0, max(df$origin)), ylim=c(0, 200),
+     xlab="Time", ylab="Prevalence", main="SIR")
+
+#for (i in 1:length(df$origin)) {
+#    traj <- simSIR(df$origin[i], df$beta[i], df$removalRate[i], 200)
+#    lines(traj$t, traj$I, 's', col=rgb(0,0,1,0.1))
+#}
+
+plotTraj("SIR_psiSamp_Inference.traj", "trajUnconditioned",
+         col=rgb(0,0,1,0.05), add=T)
+plotTraj("SIR_psiSamp_Inference.traj", "trajConditioned",
+         col=rgb(1,0,0,0.05), add=T)
+
+origin <- as.numeric(system2("phylostat", "-n SIR_psiSamp_Inference_truth.tree origin", stdout=T))
+df <- read.table("SIR_psiSamp_Inference_truth.traj", header=T)
+sampIdx <- which(df$eventType=="PSI_SAMPLE_REMOVE")
+lastIdx <- sampIdx[length(sampIdx)]
+lines(origin - df$t[1:lastIdx], df$I[1:lastIdx], 's', col='white', lwd=4)
+lines(origin - df$t[1:lastIdx], df$I[1:lastIdx], 's', col='black', lwd=2)
+
+legend('topright', inset=0.05,
+       c("Truth", "Conditioned", "Unconditioned"),
+       lty=1, lwd=4,
+       col=c("black", "red", "blue"),
+       )
+#dev.off()
+
+
+#png("BD_psiSamp_Inference.png", width=640, height=480)
+#plotTraj("BD_psiSamp_Inference.traj", "trajConditioned", unconditioned="trajUnconditioned",
+#         col=rgb(1,0,0,0.2), colUnconditioned=rgb(0,0,1,0.2), main="BD")
+#origin <- as.numeric(system2("phylostat", "-n BD_psiSamp_Inference_truth.tree origin", stdout=T))
+#df <- read.table("BD_psiSamp_Inference_truth.traj", header=T)
 #sampIdx <- which(df$eventType=="PSI_SAMPLE_REMOVE")
 #lastIdx <- sampIdx[length(sampIdx)]
 #lines(origin - df$t[1:lastIdx], df$I[1:lastIdx], 's', col='white', lwd=4)
 #lines(origin - df$t[1:lastIdx], df$I[1:lastIdx], 's', col='black', lwd=2)
 #
 #legend('topright', inset=0.05, c("Truth", "Conditioned", "Unconditioned"), lty=1, lwd=4, col=c("black", "red", "blue"))
-#dev.off()
-
-
-#png("BD_psiSamp_Inference.png", width=640, height=480)
-plotTraj("BD_psiSamp_Inference.traj", "trajConditioned", unconditioned="trajUnconditioned",
-         col=rgb(1,0,0,0.2), colUnconditioned=rgb(0,0,1,0.2), main="BD")
-origin <- as.numeric(system2("phylostat", "-n BD_psiSamp_Inference_truth.tree origin", stdout=T))
-df <- read.table("BD_psiSamp_Inference_truth.traj", header=T)
-sampIdx <- which(df$eventType=="PSI_SAMPLE_REMOVE")
-lastIdx <- sampIdx[length(sampIdx)]
-lines(origin - df$t[1:lastIdx], df$I[1:lastIdx], 's', col='white', lwd=4)
-lines(origin - df$t[1:lastIdx], df$I[1:lastIdx], 's', col='black', lwd=2)
-
-legend('topright', inset=0.05, c("Truth", "Conditioned", "Unconditioned"), lty=1, lwd=4, col=c("black", "red", "blue"))
 #dev.off()
 
 #par(mfrow=c(1,3))
