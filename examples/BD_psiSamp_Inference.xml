@@ -14,7 +14,7 @@
     <tree spec="SimulatedTransmissionTree" id="simulated_tree" fileName="$(filebase)_truth.tree">
         <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="7.0" fileName="$(filebase)_truth.traj">
             <model spec="BirthDeathModel">
-                <birthRate spec="RealParameter" value="1.0"/>
+                <birthRate spec="RealParameter" value="1.2"/>
                 <deathRate spec="RealParameter" value="0.2"/>
                 <psiSamplingRate spec="RealParameter" value="0.2"/>
                 <!--rhoSamplingProb spec="RealParameter" value="0.5"/>
@@ -37,11 +37,11 @@
                     <taxa spec='beast.evolution.alignment.TaxonSet' alignment="@alignment"/>
                 </trait>
             </stateNode>
-            <stateNode id="birthRate" spec="RealParameter" value="1.0"/>
+            <stateNode id="birthRate" spec="RealParameter" value="0.3"/>
             <!--stateNode id="deathRate" spec="RealParameter" value="0.2"/>
             <stateNode id="psiSamplingRate" spec="RealParameter" value="0.2"/-->
-            <stateNode id="removalRate" spec="RealParameter" value="0.4"/>
-            <stateNode id="samplingProp" spec="RealParameter" value="0.5" lower="0.0" upper="1.0"/>
+            <stateNode id="removalRate" spec="RealParameter" value="0.1"/>
+            <stateNode id="samplingProp" spec="RealParameter" value="0.1" lower="0.0" upper="1.0"/>
             <stateNode id="origin" spec="RealParameter" value="10.0"/>
         </state>
 
@@ -163,17 +163,9 @@
 
         <logger logEvery="250" fileName="$(filebase).traj">
             <log id="trajConditioned" spec='ConditionedTrajectory' treeDensity="@treePrior" />
-            <log id="trajUnconditioned" spec="SimulatedTrajectory" origin="@origin">
-                <model spec="BirthDeathModel">
-                    <birthRate idref="birthRate"/>
-                    <deathRate idref="deathRate"/>
-                    <psiSamplingRate idref="psiSamplingRate"/>
-                </model>
-            </log>
-
         </logger>
 
-        <logger id="filelog" spec="Logger" logEvery="1000" fileName="$(filebase).log">
+        <logger id="filelog" spec="Logger" logEvery="250" fileName="$(filebase).log">
             <log idref="posterior"/>
             <log idref="birthRate"/>
             <log idref="removalRate"/>

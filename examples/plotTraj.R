@@ -150,3 +150,42 @@ simSIS <- function(origin, beta, gamma, N) {
 
     return(data.frame(t=t, S=S, I=I))
 }
+
+simBD <- function(origin, lambda, mu) {
+    I <- 1
+
+    tidx <- 1
+    t <- origin
+
+    while (TRUE) {
+
+        a_birth <- lambda*I[tidx]
+        a_death <- mu*I[tidx]
+        a_tot <- a_birth + a_death
+
+        if (a_tot > 0)
+            t[tidx+1] <- t[tidx] - rexp(1, a_tot)
+        else
+            t[tidx+1] <- -Inf
+
+        if (t[tidx+1]<0)
+            break
+
+        if (runif(1, min=0, max=a_tot) < a_birth) {
+            # Birth
+            I[tidx+1] = I[tidx] + 1
+        } else {
+            # Death
+            I[tidx+1] = I[tidx] - 1
+        }
+
+        tidx <- tidx + 1
+    }
+
+    t[tidx+1] = 0
+    I[tidx+1] = I[tidx]
+
+    return(data.frame(t=t, I=I))
+}
+
+

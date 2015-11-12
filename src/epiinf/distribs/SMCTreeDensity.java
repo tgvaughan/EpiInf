@@ -267,8 +267,11 @@ public class SMCTreeDensity extends Distribution {
             if (conditionalP == 0) {
                 // Should never get here, as we explicitly condition against
                 // events that cause this.
-                throw new IllegalStateException("Programmer error in " +
-                        "SMCTreeDensity. Particle state: " + particleState);
+//                throw new IllegalStateException("Programmer error in " +
+//                        "SMCTreeDensity. Event: " + event
+//                        + ", particle state: " + particleState
+//                        + ", lineages: " + lineages);
+                return 0.0;
             }
 
         }
