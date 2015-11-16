@@ -39,7 +39,19 @@ import java.util.List;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public abstract class EpidemicModel extends CalculationNode {
-    
+
+    public Input<Function> infectionRateInput = new Input<>(
+            "infectionRate", "Infection rate.", Input.Validate.REQUIRED);
+
+    public Input<RealParameter> infectionRateShiftTimesInput = new Input<>(
+            "infectionRateShiftTimes", "Infection rate shift times.");
+
+    public Input<Function> recoveryRateInput = new Input<>(
+            "recoveryRate", "Recovery rate.", Input.Validate.REQUIRED);
+
+    public Input<RealParameter> recoveryRateShiftTimesInput = new Input<>(
+            "recoveryRateShiftTimes", "Recovery rate shift times.");
+
     public Input<Function> psiSamplingRateInput = new Input<>(
             "psiSamplingRate",
             "Rate at which (destructive) psi-sampling is performed.");
@@ -123,11 +135,6 @@ public abstract class EpidemicModel extends CalculationNode {
      */
     public abstract EpidemicState getInitialState();
 
-    public abstract Function getInfectionRateParam();
-    public abstract RealParameter getInfectionRateShiftTimesParam();
-    public abstract Function getRecoveryRateParam();
-    public abstract RealParameter getRecoveryRateShiftTimesParam();
-
     public final void calculatePropensities(EpidemicState state) {
         update();
         propensities[EpidemicEvent.RECOVERY] = calculateRecoveryPropensity(state);
@@ -189,9 +196,9 @@ public abstract class EpidemicModel extends CalculationNode {
             double t = i>0 ? modelEventList.get(i-1).time : 0.0;
 
             rateCache.get(i)[EpidemicEvent.INFECTION] = getCurrentRate(
-                    getInfectionRateParam(), getInfectionRateShiftTimesParam(), t);
+                    infectionRateInput.get(), infectionRateShiftTimesInput.get(), t);
             rateCache.get(i)[EpidemicEvent.RECOVERY] = getCurrentRate(
-                    getRecoveryRateParam(), getRecoveryRateShiftTimesParam(), t);
+                    recoveryRateInput.get(), recoveryRateShiftTimesInput.get(), t);
 
             double psiSamplingRate, removalProb;
 
@@ -236,8 +243,8 @@ public abstract class EpidemicModel extends CalculationNode {
 
         addRateShiftEvents(psiSamplingRateShiftTimesInput.get());
         addRateShiftEvents(removalProbShiftTimesInput.get());
-        addRateShiftEvents(getInfectionRateShiftTimesParam());
-        addRateShiftEvents(getRecoveryRateShiftTimesParam());
+        addRateShiftEvents(infectionRateShiftTimesInput.get());
+        addRateShiftEvents(recoveryRateShiftTimesInput.get());
 
         Collections.sort(modelEventList, (e1, e2) -> {
             if (e1.time < e2.time)

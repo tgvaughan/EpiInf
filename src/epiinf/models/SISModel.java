@@ -34,38 +34,6 @@ public class SISModel extends EpidemicModel {
     
     public Input<IntegerParameter> S0Input = new Input<>(
             "S0", "Initial size of susceptible population.", Validate.REQUIRED);
-    
-    public Input<Function> infectionRateInput = new Input<>(
-            "infectionRate", "Infection rate.", Validate.REQUIRED);
-
-    public Input<RealParameter> infectionRateShiftTimesInput = new Input<>(
-            "infectionRateShiftTimes", "Infection rate shift times.");
-
-    public Input<Function> recoveryRateInput = new Input<>(
-            "recoveryRate", "Recovery rate.", Validate.REQUIRED);
-
-    public Input<RealParameter> recoveryRateShiftTimesInput = new Input<>(
-            "recoveryRateShiftTimes", "Recovery rate shift times rate.");
-
-    @Override
-    public Function getInfectionRateParam() {
-        return infectionRateInput.get();
-    }
-
-    @Override
-    public RealParameter getInfectionRateShiftTimesParam() {
-        return infectionRateShiftTimesInput.get();
-    }
-
-    @Override
-    public Function getRecoveryRateParam() {
-        return recoveryRateInput.get();
-    }
-
-    @Override
-    public RealParameter getRecoveryRateShiftTimesParam() {
-        return recoveryRateShiftTimesInput.get();
-    }
 
     @Override
     public EpidemicState getInitialState() {

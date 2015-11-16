@@ -14,8 +14,8 @@
     <tree spec="SimulatedTransmissionTree" id="simulated_tree" fileName="$(filebase)_truth.tree">
         <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="7.0" fileName="$(filebase)_truth.traj">
             <model spec="BirthDeathModel">
-                <birthRate spec="RealParameter" value="1.2"/>
-                <deathRate spec="RealParameter" value="0.2"/>
+                <infectionRate spec="RealParameter" value="1.2"/>
+                <recoveryRate spec="RealParameter" value="0.2"/>
                 <psiSamplingRate spec="RealParameter" value="0.2"/>
                 <!--rhoSamplingProb spec="RealParameter" value="0.5"/>
                 <rhoSamplingTime spec="RealParameter" value="4.0"/-->
@@ -55,13 +55,13 @@
             <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100">
                 <treeEventList spec="TreeEventList" treeOrigin="@origin" tree="@tree"/>
                 <model spec="BirthDeathModel">
-                    <birthRate idref="birthRate" />
+                    <infectionRate idref="birthRate" />
                     <!--deathRate idref="deathRate" />
                     <psiSamplingRate idref="psiSamplingRate" /-->
-                    <deathRate id="deathRate" spec="ExpCalculator" expression="removalRate*(1-samplingProp)">
+                    <recoveryRate id="deathRate" spec="ExpCalculator" expression="removalRate*(1-samplingProp)">
                         <parameter idref="removalRate"/>
                         <parameter idref="samplingProp"/>
-                    </deathRate>
+                    </recoveryRate>
 
                     <psiSamplingRate id="psiSamplingRate" spec="ExpCalculator" expression="removalRate*samplingProp">
                         <parameter idref="removalRate"/>

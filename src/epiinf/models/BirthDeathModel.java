@@ -32,38 +32,6 @@ import epiinf.EpidemicState;
  */
 public class BirthDeathModel extends EpidemicModel {
     
-    public Input<Function> birthRateInput = new Input<>(
-            "birthRate", "Lineage birth rate.", Validate.REQUIRED);
-
-    public Input<RealParameter> birthRateShiftTimesInput = new Input<>(
-            "birthRateShiftTimes", "Birth rate shift times.");
-
-    public Input<Function> deathRateInput = new Input<>(
-            "deathRate", "Lineage death rate.", Validate.REQUIRED);
-
-    public Input<RealParameter> deathRateShiftTimesInput = new Input<>(
-            "deathRateShiftTimes", "Death rate shift times.");
-
-    @Override
-    public Function getInfectionRateParam() {
-        return birthRateInput.get();
-    }
-
-    @Override
-    public RealParameter getInfectionRateShiftTimesParam() {
-        return birthRateShiftTimesInput.get();
-    }
-
-    @Override
-    public Function getRecoveryRateParam() {
-        return deathRateInput.get();
-    }
-
-    @Override
-    public RealParameter getRecoveryRateShiftTimesParam() {
-        return deathRateShiftTimesInput.get();
-    }
-
     @Override
     public EpidemicState getInitialState() {
         return new EpidemicState(0, 1, 0);
