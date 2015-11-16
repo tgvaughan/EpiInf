@@ -25,7 +25,7 @@
 
     <mergewith point="treePriorTemplates">
 
-        <subtemplate id="EpiTreePriorSIS" class="epiinf.distribs.SMCTreeDensity" mainid="EpiTreePrior.t:$(n)"
+        <subtemplate id="EpidemicTreePrior" class="epiinf.distribs.SMCTreeDensity" mainid="EpiTreePrior.t:$(n)"
                      suppressInputs="epiinf.distribs.SMCTreeDensity.tree,
                      epiinf.distribs.SMCTreeDensity.treeIntervals,
                      epiinf.models.SISModel.tolerance"
@@ -35,10 +35,10 @@
                 <tree idref="Tree.t:$(n)"/>
                 <treeOrigin id="origin.t:$(n)" spec="beast.core.parameter.RealParameter" value="10.0" estimate="true"/>
                 <model spec="epiinf.models.SISModel">
-                    <S0 id="S0.t:$(n)" spec="beast.core.parameter.IntegerParameter" value="199" estimate="true"/>
-                    <infectionRate id="infectionRate.t:$(n)" spec="beast.core.parameter.RealParameter" value="0.01" estimate="true"/>
-                    <recoveryRate id="recoveryRate.t:$(n)" spec="beast.core.parameter.RealParameter" value="0.01" estimate="true"/>
-                    <psiSamplingRate id="psiSamplingRate.t:$(n)" spec="beast.core.parameter.RealParameter" value="0.0" estimate="true"/>
+                    <S0 id="S0.t:$(n)" spec="beast.core.parameter.IntegerParameter" value="199" lower="0" estimate="true"/>
+                    <infectionRate id="infectionRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.01" estimate="true"/>
+                    <recoveryRate id="recoveryRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.01" estimate="true"/>
+                    <psiSamplingRate id="psiSamplingRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.0" estimate="true"/>
                 </model>
             </distribution>
 
