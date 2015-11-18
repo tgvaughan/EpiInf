@@ -30,9 +30,7 @@ import epiinf.models.SISModel;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.table.DefaultTableModel;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -45,7 +43,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
     String[] modelNames = {"Linear birth-death", "SIS", "SIR"};
 
     IntegerParameter S0;
-    RealParameter infectionRate, recoveryRate, psiSamplingRate;
+    RealParameter infectionRate, recoveryRate, psiSamplingRate, rhoSamplingProb;
     RealParameter infectionRateChangeTimes, recoveryRateChangeTimes, psiSamplingRateChangeTimes;
 
     ComboBoxModel<String> emSelectorModel;
@@ -65,10 +63,12 @@ public class EpiModelInputEditor extends InputEditor.Base {
             nRecoveryRateShiftsSpinner,
             nPsiSamplingRateShiftsSpinner;
 
-    JTextField S0TextField;
+    JTextField S0TextField, rhoSamplingProbTextField;
 
     JCheckBox estimateS0, estimateInfectionRate, estimateRecoveryRate;
     JCheckBox estimateInfectionRateShiftTimes, estimateRecoveryRateShiftTimes;
+    JCheckBox estimatePsiSamplingRate, estimatePsiSamplingRateShiftTimes;
+    JCheckBox estimateRhoSamplingProb;
 
     public EpiModelInputEditor(BeautiDoc doc) {
         super(doc);
@@ -158,6 +158,39 @@ public class EpiModelInputEditor extends InputEditor.Base {
         box.add(estimateRecoveryRateShiftTimes);
         panel.add(box);
 
+        box = Box.createHorizontalBox();
+        box.add(new JLabel("Psi sampling rate:"));
+        psiSamplingRateModel = new DefaultTableModel(1,1);
+        psiSamplingRateTable = new JTable(psiSamplingRateModel);
+        psiSamplingRateTable.setShowGrid(true);
+        box.add(psiSamplingRateTable);
+        estimatePsiSamplingRate = new JCheckBox("estimate");
+        box.add(estimatePsiSamplingRate);
+        panel.add(box);
+
+        box = Box.createHorizontalBox();
+        box.add(new JLabel("Num. changes:"));
+        nPsiSamplingRateShiftsModel = new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1);
+        nPsiSamplingRateShiftsSpinner = new JSpinner(nPsiSamplingRateShiftsModel);
+        box.add(nPsiSamplingRateShiftsSpinner);
+
+        box.add(new JLabel("Change times:"));
+        psiSamplingRateChangeTimesModel = new DefaultTableModel(1,1);
+        psiSamplingRateChangeTimesTable = new JTable(psiSamplingRateChangeTimesModel);
+        psiSamplingRateChangeTimesTable.setShowGrid(true);
+        box.add(psiSamplingRateChangeTimesTable);
+        estimatePsiSamplingRateShiftTimes = new JCheckBox("estimate");
+        box.add(estimatePsiSamplingRateShiftTimes);
+        panel.add(box);
+
+        box = Box.createHorizontalBox();
+        box.add(new JLabel("Rho sampling probability:"));
+        rhoSamplingProbTextField = new JTextField();
+        box.add(rhoSamplingProbTextField);
+        estimateRhoSamplingProb = new JCheckBox("estimate");
+        box.add(estimateRhoSamplingProb);
+        panel.add(box);
+
         add(panel);
 
         loadFromModel();
@@ -205,6 +238,25 @@ public class EpiModelInputEditor extends InputEditor.Base {
             }
         } else {
             recoveryRateChangeTimesTable.setEnabled(false);
+        }
+
+        psiSamplingRate = (RealParameter)epidemicModel.psiSamplingRateInput.get();
+        psiSamplingRateModel.setColumnCount(psiSamplingRate.getDimension());
+        for (int i=0; i<psiSamplingRate.getDimension(); i++) {
+            psiSamplingRateModel.setValueAt(psiSamplingRate.getValue(i), 0, i);
+        }
+
+        nPsiSamplingRateShiftsModel.setValue(psiSamplingRate.getDimension()-1);
+        psiSamplingRateChangeTimes = epidemicModel.psiSamplingRateShiftTimesInput.get();
+        if (psiSamplingRate.getDimension()>1) {
+            psiSamplingRateChangeTimesTable.setEnabled(true);
+            psiSamplingRateChangeTimesModel.setColumnCount(psiSamplingRate.getDimension()-1);
+            for (int i=0; i<psiSamplingRate.getDimension()-1; i++) {
+                psiSamplingRateChangeTimesModel.setValueAt(
+                        psiSamplingRateChangeTimes.getValue(i), 0, i);
+            }
+        } else {
+            psiSamplingRateChangeTimesTable.setEnabled(false);
         }
 
         if (epidemicModel instanceof SISModel) {
