@@ -59,8 +59,8 @@
                 <tree idref="tree"/>
             </distribution>
 
-            <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100">
-                <treeEventList spec="TreeEventList" treeOrigin="@origin" tree="@tree"/>
+            <distribution spec="SMCTreeDensity" id="treePrior"
+                          tree="@tree" treeOrigin="@origin" nParticles="100">
                 <model id="model" spec="SIRModel">
                     <S0 spec="IntegerParameter" value="199"/>
                     <infectionRate idref="beta" />
