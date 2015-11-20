@@ -21,13 +21,19 @@ import beast.core.Description;
 import beast.core.Input;
 import beast.evolution.alignment.Alignment;
 import beast.evolution.alignment.Sequence;
+import beast.evolution.alignment.TaxonSet;
 import beast.evolution.datatype.DataType;
 import beast.evolution.sitemodel.SiteModel;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.AddOnManager;
 import beast.util.Randomizer;
+import feast.nexus.CharactersBlock;
+import feast.nexus.NexusBlock;
+import feast.nexus.NexusBuilder;
+import feast.nexus.TaxaBlock;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -54,10 +60,16 @@ public class SimulatedAlignment extends Alignment {
             "Length of sequence to simulate.",
             Input.Validate.REQUIRED);
 
+    public Input<String> outputFileNameInput = new Input<>(
+            "outputFileName",
+            "Name of file (if any) simulated alignment should be saved to.");
+
     private Tree tree;
     private SiteModel siteModel;
     private int seqLength;
     private DataType dataType;
+
+    private String ancestralSeqStr;
 
     public SimulatedAlignment() {
         sequenceInput.setRule(Input.Validate.OPTIONAL);
@@ -75,6 +87,28 @@ public class SimulatedAlignment extends Alignment {
         simulate();
 
         super.initAndValidate();
+
+        // Write simulated alignment to disk if required
+        if (outputFileNameInput.get() != null) {
+            PrintStream pstream = new PrintStream(outputFileNameInput.get());
+            NexusBuilder nb = new NexusBuilder();
+            nb.append(new TaxaBlock(new TaxonSet(this)));
+            nb.append(new CharactersBlock(this));
+            nb.append(new NexusBlock() {
+                @Override
+                public String getBlockName() {
+                    return "EpiInf";
+                }
+
+                @Override
+                public List<String> getBlockLines() {
+                    List<String> lines = new ArrayList<>();
+                    lines.add("ancestralSeq " + ancestralSeqStr);
+                    return lines;
+                }
+            });
+            nb.write(pstream);
+        }
     }
 
     /**
@@ -101,6 +135,8 @@ public class SimulatedAlignment extends Alignment {
         double[] frequencies = siteModel.getSubstitutionModel().getFrequencies();
         for (int i=0; i<parentSequence.length; i++)
             parentSequence[i] = Randomizer.randomChoicePDF(frequencies);
+
+        ancestralSeqStr = dataType.state2string(parentSequence);
 
         traverse(root, parentSequence,
                 categories, transitionProbs,

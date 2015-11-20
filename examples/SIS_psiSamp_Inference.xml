@@ -22,7 +22,8 @@
         </epidemicTrajectory>
     </tree>
 
-    <alignment id="alignment" spec="epiinf.SimulatedAlignment" tree="@simulated_tree" sequenceLength="2000">
+    <alignment id="alignment" spec="epiinf.SimulatedAlignment"
+        tree="@simulated_tree" sequenceLength="2000" outputFileName="$(filebase)_alignment.nexus">
         <siteModel id="siteModel" spec="beast.evolution.sitemodel.SiteModel">
             <substModel spec="beast.evolution.substitutionmodel.JukesCantor"/>
             <mutationRate spec="RealParameter" value="0.005"/>
@@ -40,6 +41,7 @@
             <stateNode id="removalRate" spec="RealParameter" value="0.1" />
             <stateNode id="samplingProp" spec="RealParameter" value="0.5" lower="0.0" upper="1.0"/>
             <stateNode id="origin" spec="RealParameter" value="6.0"/>
+            <stateNode id="S0" spec="IntegerParameter" value="300" lower="1"/>
         </state>
 
         <distribution id="posterior" spec="CompoundDistribution">
@@ -51,7 +53,7 @@
 
             <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100" tree="@tree" treeOrigin="@origin">
                 <model spec="SISModel" id="model">
-                    <S0 spec="IntegerParameter" value="199"/>
+                    <S0 idref="S0"/>
                     <infectionRate idref="beta"/>
 
                     <recoveryRate id="recoveryRate" spec="ExpCalculator" expression="removalRate*(1-samplingProp)">
@@ -76,6 +78,9 @@
                 <distribution spec="beast.math.distributions.Prior" x="@removalRate">
                     <distr spec="beast.math.distributions.OneOnX"/>
                 </distribution>
+                <distribution spec="beast.math.distributions.Prior" x="@S0">
+                    <distr spec="beast.math.distributions.Poisson" lambda="300"/>
+                </distribution>
             </distribution>
         </distribution>
 
@@ -89,6 +94,10 @@
 
         <operator id='samplingPropScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
             <parameter idref="samplingProp"/>
+        </operator>
+
+        <operator id="S0walker" spec="IntRandomWalkOperator" windowSize="10" weight="1">
+            <parameter idref="S0"/>
         </operator>
 
         <operator id="removalSampPropUpDown" spec="UpDownOperator" scaleFactor="0.8" weight="1">
@@ -137,6 +146,7 @@
             <log idref="samplingProp"/>
             <log idref="recoveryRate"/>
             <log idref="psiSamplingRate"/>
+            <log idref="S0"/>
             <log idref="origin"/>
         </logger>
 
@@ -158,6 +168,7 @@
             <log idref="samplingProp"/>
             <log idref="recoveryRate"/>
             <log idref="psiSamplingRate"/>
+            <log idref="S0"/>
             <log idref="origin"/>
         </logger>
     </run>

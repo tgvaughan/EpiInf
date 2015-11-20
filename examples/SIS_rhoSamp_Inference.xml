@@ -23,7 +23,8 @@
         </epidemicTrajectory>
     </tree>
 
-    <alignment id="alignment" spec="epiinf.SimulatedAlignment" tree="@simulated_tree" sequenceLength="2000">
+    <alignment id="alignment" spec="epiinf.SimulatedAlignment"
+        tree="@simulated_tree" sequenceLength="2000" outputFileName="$(filebase)_alignment.nexus">
         <siteModel id="siteModel" spec="beast.evolution.sitemodel.SiteModel">
             <substModel spec="beast.evolution.substitutionmodel.JukesCantor"/>
             <mutationRate spec="RealParameter" value="0.005"/>

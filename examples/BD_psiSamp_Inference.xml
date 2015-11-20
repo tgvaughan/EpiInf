@@ -17,13 +17,12 @@
                 <infectionRate spec="RealParameter" value="1.2"/>
                 <recoveryRate spec="RealParameter" value="0.2"/>
                 <psiSamplingRate spec="RealParameter" value="0.2"/>
-                <!--rhoSamplingProb spec="RealParameter" value="0.5"/>
-                <rhoSamplingTime spec="RealParameter" value="4.0"/-->
             </model>
         </epidemicTrajectory>
     </tree>
 
-    <alignment id="alignment" spec="epiinf.SimulatedAlignment" tree="@simulated_tree" sequenceLength="2000">
+    <alignment id="alignment" spec="epiinf.SimulatedAlignment"
+        tree="@simulated_tree" sequenceLength="2000" outputFileName="$(filebase)_alignment.nexus">
         <siteModel id="siteModel" spec="beast.evolution.sitemodel.SiteModel">
             <substModel spec="beast.evolution.substitutionmodel.JukesCantor"/>
             <mutationRate spec="RealParameter" value="0.005"/>
@@ -38,8 +37,6 @@
                 </trait>
             </stateNode>
             <stateNode id="birthRate" spec="RealParameter" value="0.3"/>
-            <!--stateNode id="deathRate" spec="RealParameter" value="0.2"/>
-            <stateNode id="psiSamplingRate" spec="RealParameter" value="0.2"/-->
             <stateNode id="removalRate" spec="RealParameter" value="0.1"/>
             <stateNode id="samplingProp" spec="RealParameter" value="0.1" lower="0.0" upper="1.0"/>
             <stateNode id="origin" spec="RealParameter" value="10.0"/>
@@ -56,8 +53,6 @@
                           tree="@tree" treeOrigin="@origin" nParticles="100">
                 <model spec="BirthDeathModel">
                     <infectionRate idref="birthRate" />
-                    <!--deathRate idref="deathRate" />
-                    <psiSamplingRate idref="psiSamplingRate" /-->
                     <recoveryRate id="deathRate" spec="ExpCalculator" expression="removalRate*(1-samplingProp)">
                         <parameter idref="removalRate"/>
                         <parameter idref="samplingProp"/>
@@ -80,12 +75,6 @@
                 <distribution spec="beast.math.distributions.Prior" x="@removalRate">
                     <distr spec="beast.math.distributions.OneOnX"/>
                 </distribution>
-                <!--distribution spec="beast.math.distributions.Prior" x="@deathRate">
-                    <distr spec="beast.math.distributions.OneOnX"/>
-                </distribution>
-                <distribution spec="beast.math.distributions.Prior" x="@psiSamplingRate">
-                    <distr spec="beast.math.distributions.OneOnX"/>
-                </distribution-->
             </distribution>
         </distribution>
 
