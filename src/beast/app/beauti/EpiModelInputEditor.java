@@ -434,9 +434,9 @@ public class EpiModelInputEditor extends InputEditor.Base {
                 epidemicModel.setInputValue("S0", S0);
                 S0.initAndValidate();
             } else {
-//                if (S0 != null) {
-//                    doc.unregisterPlugin(S0);
-//                }
+                if (S0 != null) {
+                    S0.isEstimatedInput.setValue(false, S0);
+                }
             }
 
 
