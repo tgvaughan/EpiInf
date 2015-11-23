@@ -25,7 +25,7 @@
 
     <mergewith point="treePriorTemplates">
 
-        <subtemplate id="EpidemicTreePrior" class="epiinf.distribs.SMCTreeDensity" mainid="EpiTreePrior.t:$(n)"
+        <subtemplate id="EpiTreePrior" class="epiinf.distribs.SMCTreeDensity" mainid="EpiTreePrior.t:$(n)"
                      suppressInputs="epiinf.distribs.SMCTreeDensity.tree,
                      epiinf.distribs.SMCTreeDensity.treeIntervals,
                      epiinf.models.SISModel.tolerance"
@@ -81,49 +81,51 @@
             <plate fragment="TreeOperators" var="m" range="EpiTreePrior"/>
 
             <connect srcID="EpiTreePrior.t:$(n)" targetID="prior" inputName="distribution"
-                     if="inlikelihood(Tree.t:$(n))"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true">
+                Epidemic tree prior on tree t:$(n)
+            </connect>
 
             <connect srcID="origin.t:$(n)" targetID="state" inputName="stateNode"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and origin.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and origin.t:$(n)/estimate=true"/>
             <connect srcID="originPrior.t:$(n)" targetID="prior" inputName="distribution"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and origin.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and origin.t:$(n)/estimate=true"/>
             <connect srcID="originScaler.t:$(n)" targetID="mcmc" inputName="operator"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and origin.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and origin.t:$(n)/estimate=true"/>
 
             <connect srcID="S0.t:$(n)" targetID="state" inputName="stateNode"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and S0.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and S0.t:$(n)/estimate=true"/>
             <connect srcID="S0Prior.t:$(n)" targetID="prior" inputName="distribution"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and S0.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and S0.t:$(n)/estimate=true"/>
             <connect srcID="S0Walker.t:$(n)" targetID="mcmc" inputName="operator"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and S0.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and S0.t:$(n)/estimate=true"/>
 
             <connect srcID="infectionRate.t:$(n)" targetID="state" inputName="stateNode"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
             <connect srcID="infectionRatePrior.t:$(n)" targetID="prior" inputName="distribution"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
             <connect srcID="infectionRateScaler.t:$(n)" targetID="mcmc" inputName="operator"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
 
             <connect srcID="recoveryRate.t:$(n)" targetID="state" inputName="stateNode"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and recoveryRate.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and recoveryRate.t:$(n)/estimate=true"/>
             <connect srcID="recoveryRatePrior.t:$(n)" targetID="prior" inputName="distribution"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and recoveryRate.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and recoveryRate.t:$(n)/estimate=true"/>
             <connect srcID="recoveryRateScaler.t:$(n)" targetID="mcmc" inputName="operator"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and recoveryRate.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and recoveryRate.t:$(n)/estimate=true"/>
 
             <connect srcID="psiSamplingRate.t:$(n)" targetID="state" inputName="stateNode"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and psiSamplingRate.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and psiSamplingRate.t:$(n)/estimate=true"/>
             <connect srcID="psiSamplingRatePrior.t:$(n)" targetID="prior" inputName="distribution"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and psiSamplingRate.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and psiSamplingRate.t:$(n)/estimate=true"/>
             <connect srcID="psiSamplingRateScaler.t:$(n)" targetID="mcmc" inputName="operator"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and psiSamplingRate.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and psiSamplingRate.t:$(n)/estimate=true"/>
 
             <connect srcID="rhoSamplingProb.t:$(n)" targetID="state" inputName="stateNode"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
             <connect srcID="rhoSamplingProbPrior.t:$(n)" targetID="prior" inputName="distribution"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
             <connect srcID="rhoSamplingProbScaler.t:$(n)" targetID="mcmc" inputName="operator"
-                     if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
+                     if="inposterior(EpiTreePrior.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
         </subtemplate>
 
 
