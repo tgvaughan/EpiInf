@@ -34,11 +34,12 @@
             <distribution id="EpiTreePrior.t:$(n)" spec="epiinf.distribs.SMCTreeDensity" nParticles="100">
                 <tree idref="Tree.t:$(n)"/>
                 <treeOrigin id="origin.t:$(n)" spec="beast.core.parameter.RealParameter" value="10.0" estimate="true"/>
-                <model spec="epiinf.models.SISModel">
+                <model spec="epiinf.models.SISModel" rhoSamplingTime="@origin.t:$(n)">
                     <S0 id="S0.t:$(n)" spec="beast.core.parameter.IntegerParameter" value="199" lower="0" estimate="true"/>
                     <infectionRate id="infectionRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.01" estimate="true"/>
-                    <recoveryRate id="recoveryRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.01" estimate="true"/>
-                    <psiSamplingRate id="psiSamplingRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.0" estimate="true"/>
+                    <recoveryRate id="recoveryRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.1" estimate="true"/>
+                    <psiSamplingRate id="psiSamplingRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.1" estimate="true"/>
+                    <rhoSamplingProb id="rhoSamplingProb.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.0" estimate="false"/>
                 </model>
             </distribution>
 
@@ -64,12 +65,17 @@
                 <x idref="psiSamplingRate.t:$(n)"/>
                 <distr spec="beast.math.distributions.OneOnX"/>
             </distribution>
+            <distribution id="rhoSamplingProbPrior.t:$(n)" spec="beast.math.distributions.Prior">
+                <x idref="rhoSamplingProb.t:$(n)"/>
+                <distr spec="beast.math.distributions.Uniform"/>
+            </distribution>
 
             <operator id='originScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@origin.t:$(n)" weight="1"/>
             <operator id='S0Walker.t:$(n)' spec='IntRandomWalkOperator' windowSize="10" parameter="@S0.t:$(n)" weight="1"/>
             <operator id='infectionRateScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@infectionRate.t:$(n)" weight="1"/>
             <operator id='recoveryRateScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@recoveryRate.t:$(n)" weight="1"/>
             <operator id='psiSamplingRateScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@psiSamplingRate.t:$(n)" weight="1"/>
+            <operator id='rhoSamplingProbScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@rhoSamplingProb.t:$(n)" weight="1"/>
             ]]>
 
             <connect srcID="EpiTreePrior.t:$(n)" targetID="prior" inputName="distribution"
@@ -109,6 +115,13 @@
                      if="inlikelihood(Tree.t:$(n)) and psiSamplingRate.t:$(n)/estimate=true"/>
             <connect srcID="psiSamplingRateScaler.t:$(n)" targetID="mcmc" inputName="operator"
                      if="inlikelihood(Tree.t:$(n)) and psiSamplingRate.t:$(n)/estimate=true"/>
+
+            <connect srcID="rhoSamplingProb.t:$(n)" targetID="state" inputName="stateNode"
+                     if="inlikelihood(Tree.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
+            <connect srcID="rhoSamplingProbPrior.t:$(n)" targetID="prior" inputName="distribution"
+                     if="inlikelihood(Tree.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
+            <connect srcID="rhoSamplingProbScaler.t:$(n)" targetID="mcmc" inputName="operator"
+                     if="inlikelihood(Tree.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
         </subtemplate>
 
 

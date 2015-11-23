@@ -29,10 +29,11 @@ import epiinf.models.SISModel;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
@@ -43,18 +44,21 @@ public class EpiModelInputEditor extends InputEditor.Base {
     String[] modelNames = {"Linear birth-death", "SIS", "SIR"};
 
     IntegerParameter S0;
-    RealParameter infectionRate, recoveryRate, psiSamplingRate, rhoSamplingProb;
+    RealParameter infectionRate, recoveryRate, psiSamplingRate, rhoSamplingProb, rhoSamplingTime;
     RealParameter infectionRateChangeTimes, recoveryRateChangeTimes, psiSamplingRateChangeTimes;
 
     ComboBoxModel<String> emSelectorModel;
     DefaultTableModel infectionRateModel, infectionRateChangeTimesModel;
     JTable infectionRateTable, infectionRateChangeTimesTable;
+    JLabel infectionRateChangeTimesLabel;
 
     DefaultTableModel recoveryRateModel, recoveryRateChangeTimesModel;
     JTable recoveryRateTable, recoveryRateChangeTimesTable;
+    JLabel recoveryRateChangeTimesLabel;
 
     DefaultTableModel psiSamplingRateModel, psiSamplingRateChangeTimesModel;
     JTable psiSamplingRateTable, psiSamplingRateChangeTimesTable;
+    JLabel psiSamplingRateChangeTimesLabel;
 
     SpinnerNumberModel nInfectionRateShiftsModel,
             nRecoveryRateShiftsModel,
@@ -113,6 +117,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
         infectionRateModel = new DefaultTableModel(1,1);
         infectionRateTable = new JTable(infectionRateModel);
         infectionRateTable.setShowGrid(true);
+        infectionRateTable.setCellSelectionEnabled(false);
         box.add(infectionRateTable);
         estimateInfectionRate = new JCheckBox("estimate");
         box.add(estimateInfectionRate);
@@ -124,7 +129,8 @@ public class EpiModelInputEditor extends InputEditor.Base {
         nInfectionRateShiftsSpinner = new JSpinner(nInfectionRateShiftsModel);
         box.add(nInfectionRateShiftsSpinner);
 
-        box.add(new JLabel("Change times:"));
+        infectionRateChangeTimesLabel = new JLabel("Change times:");
+        box.add(infectionRateChangeTimesLabel);
         infectionRateChangeTimesModel = new DefaultTableModel(1,1);
         infectionRateChangeTimesTable = new JTable(infectionRateChangeTimesModel);
         infectionRateChangeTimesTable.setShowGrid(true);
@@ -149,7 +155,8 @@ public class EpiModelInputEditor extends InputEditor.Base {
         nRecoveryRateShiftsSpinner = new JSpinner(nRecoveryRateShiftsModel);
         box.add(nRecoveryRateShiftsSpinner);
 
-        box.add(new JLabel("Change times:"));
+        recoveryRateChangeTimesLabel = new JLabel("Change times:");
+        box.add(recoveryRateChangeTimesLabel);
         recoveryRateChangeTimesModel = new DefaultTableModel(1,1);
         recoveryRateChangeTimesTable = new JTable(recoveryRateChangeTimesModel);
         recoveryRateChangeTimesTable.setShowGrid(true);
@@ -174,7 +181,8 @@ public class EpiModelInputEditor extends InputEditor.Base {
         nPsiSamplingRateShiftsSpinner = new JSpinner(nPsiSamplingRateShiftsModel);
         box.add(nPsiSamplingRateShiftsSpinner);
 
-        box.add(new JLabel("Change times:"));
+        psiSamplingRateChangeTimesLabel = new JLabel("Change times:");
+        box.add(psiSamplingRateChangeTimesLabel);
         psiSamplingRateChangeTimesModel = new DefaultTableModel(1,1);
         psiSamplingRateChangeTimesTable = new JTable(psiSamplingRateChangeTimesModel);
         psiSamplingRateChangeTimesTable.setShowGrid(true);
@@ -191,13 +199,50 @@ public class EpiModelInputEditor extends InputEditor.Base {
         box.add(estimateRhoSamplingProb);
         panel.add(box);
 
+        box = Box.createHorizontalBox();
+        box.add(new JLabel("Initial Susceptible population size:"));
+        S0TextField = new JTextField();
+        box.add(S0TextField);
+        estimateS0 = new JCheckBox("estimate");
+        box.add(estimateS0);
+        panel.add(box);
+
         add(panel);
 
         loadFromModel();
 
         // Event handlers
 
-        emSelector.addActionListener(e -> saveToModel());
+        emSelector.addItemListener(e -> saveToModel());
+
+        TableModelListener tableListener = e -> {
+            if (e.getType() == TableModelEvent.UPDATE)
+                saveToModel();
+        };
+
+        infectionRateModel.addTableModelListener(tableListener);
+        estimateInfectionRate.addItemListener(e -> saveToModel());
+        infectionRateChangeTimesModel.addTableModelListener(tableListener);
+        estimateInfectionRateShiftTimes.addItemListener(e -> saveToModel());
+        nInfectionRateShiftsModel.addChangeListener(e -> saveToModel());
+
+        recoveryRateModel.addTableModelListener(tableListener);
+        estimateRecoveryRate.addItemListener(e -> saveToModel());
+        recoveryRateChangeTimesModel.addTableModelListener(tableListener);
+        estimateRecoveryRateShiftTimes.addItemListener(e -> saveToModel());
+        nRecoveryRateShiftsModel.addChangeListener(e -> saveToModel());
+
+        psiSamplingRateModel.addTableModelListener(tableListener);
+        estimatePsiSamplingRate.addItemListener(e -> saveToModel());
+        psiSamplingRateChangeTimesModel.addTableModelListener(tableListener);
+        estimatePsiSamplingRateShiftTimes.addItemListener(e -> saveToModel());
+        nPsiSamplingRateShiftsModel.addChangeListener(e -> saveToModel());
+
+        S0TextField.addActionListener(e -> saveToModel());
+        estimateS0.addItemListener(e -> saveToModel());
+        rhoSamplingProbTextField.addActionListener(e -> saveToModel());
+        estimateRhoSamplingProb.addItemListener(e -> saveToModel());
+
     }
 
     public void loadFromModel() {
@@ -207,18 +252,25 @@ public class EpiModelInputEditor extends InputEditor.Base {
         for (int i=0; i<infectionRate.getDimension(); i++) {
             infectionRateModel.setValueAt(infectionRate.getValue(i), 0, i);
         }
+        estimateInfectionRate.setSelected(infectionRate.isEstimatedInput.get());
 
         nInfectionRateShiftsModel.setValue(infectionRate.getDimension()-1);
         infectionRateChangeTimes = epidemicModel.infectionRateShiftTimesInput.get();
         if (infectionRate.getDimension()>1) {
             infectionRateChangeTimesTable.setEnabled(true);
+            infectionRateChangeTimesLabel.setEnabled(true);
             infectionRateChangeTimesModel.setColumnCount(infectionRate.getDimension()-1);
             for (int i=0; i<infectionRate.getDimension()-1; i++) {
                 infectionRateChangeTimesModel.setValueAt(
                         infectionRateChangeTimes.getValue(i), 0, i);
             }
+            estimateInfectionRateShiftTimes.setEnabled(true);
+            estimateInfectionRateShiftTimes.setSelected(infectionRateChangeTimes.isEstimatedInput.get());
         } else {
             infectionRateChangeTimesTable.setEnabled(false);
+            infectionRateChangeTimesLabel.setEnabled(false);
+            estimateInfectionRateShiftTimes.setSelected(false);
+            estimateInfectionRateShiftTimes.setEnabled(false);
         }
 
         recoveryRate = (RealParameter)epidemicModel.recoveryRateInput.get();
@@ -226,18 +278,25 @@ public class EpiModelInputEditor extends InputEditor.Base {
         for (int i=0; i<recoveryRate.getDimension(); i++) {
             recoveryRateModel.setValueAt(recoveryRate.getValue(i), 0, i);
         }
+        estimateRecoveryRate.setSelected(recoveryRate.isEstimatedInput.get());
 
         nRecoveryRateShiftsModel.setValue(recoveryRate.getDimension()-1);
         recoveryRateChangeTimes = epidemicModel.recoveryRateShiftTimesInput.get();
         if (recoveryRate.getDimension()>1) {
             recoveryRateChangeTimesTable.setEnabled(true);
+            recoveryRateChangeTimesLabel.setEnabled(true);
             recoveryRateChangeTimesModel.setColumnCount(recoveryRate.getDimension()-1);
             for (int i=0; i<recoveryRate.getDimension()-1; i++) {
                 recoveryRateChangeTimesModel.setValueAt(
                         recoveryRateChangeTimes.getValue(i), 0, i);
             }
+            estimateRecoveryRateShiftTimes.setEnabled(true);
+            estimateRecoveryRateShiftTimes.setSelected(recoveryRateChangeTimes.isEstimatedInput.get());
         } else {
             recoveryRateChangeTimesTable.setEnabled(false);
+            recoveryRateChangeTimesLabel.setEnabled(false);
+            estimateRecoveryRateShiftTimes.setEnabled(false);
+            estimateRecoveryRateShiftTimes.setSelected(false);
         }
 
         psiSamplingRate = (RealParameter)epidemicModel.psiSamplingRateInput.get();
@@ -245,18 +304,36 @@ public class EpiModelInputEditor extends InputEditor.Base {
         for (int i=0; i<psiSamplingRate.getDimension(); i++) {
             psiSamplingRateModel.setValueAt(psiSamplingRate.getValue(i), 0, i);
         }
+        estimatePsiSamplingRate.setSelected(psiSamplingRate.isEstimatedInput.get());
 
         nPsiSamplingRateShiftsModel.setValue(psiSamplingRate.getDimension()-1);
         psiSamplingRateChangeTimes = epidemicModel.psiSamplingRateShiftTimesInput.get();
         if (psiSamplingRate.getDimension()>1) {
             psiSamplingRateChangeTimesTable.setEnabled(true);
+            psiSamplingRateChangeTimesLabel.setEnabled(true);
             psiSamplingRateChangeTimesModel.setColumnCount(psiSamplingRate.getDimension()-1);
             for (int i=0; i<psiSamplingRate.getDimension()-1; i++) {
                 psiSamplingRateChangeTimesModel.setValueAt(
                         psiSamplingRateChangeTimes.getValue(i), 0, i);
             }
+            estimatePsiSamplingRateShiftTimes.setEnabled(true);
+            estimatePsiSamplingRateShiftTimes.setSelected(psiSamplingRateChangeTimes.isEstimatedInput.get());
         } else {
             psiSamplingRateChangeTimesTable.setEnabled(false);
+            psiSamplingRateChangeTimesLabel.setEnabled(false);
+            estimatePsiSamplingRateShiftTimes.setEnabled(false);
+            estimatePsiSamplingRateShiftTimes.setSelected(false);
+        }
+
+        rhoSamplingProb = (RealParameter)epidemicModel.rhoSamplingProbInput.get();
+        rhoSamplingProbTextField.setText(String.valueOf(rhoSamplingProb.getValue()));
+        rhoSamplingTime = epidemicModel.rhoSamplingTimeInput.get();
+        if (rhoSamplingProb.getValue()>0) {
+            estimateRhoSamplingProb.setEnabled(true);
+            estimateRhoSamplingProb.setSelected(rhoSamplingProb.isEstimatedInput.get());
+        } else {
+            estimateRhoSamplingProb.setEnabled(false);
+            estimateRhoSamplingProb.setSelected(false);
         }
 
         if (epidemicModel instanceof SISModel) {
@@ -264,32 +341,120 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
             emSelectorModel.setSelectedItem("SIS");
             S0 = sisModel.S0Input.get();
+            S0TextField.setText(String.valueOf(S0.getValue()));
+            S0TextField.setEnabled(true);
+            estimateS0.setEnabled(true);
+            estimateS0.setSelected(S0.isEstimatedInput.get());
 
         } else if (epidemicModel instanceof SIRModel){
             SIRModel sirModel = (SIRModel)epidemicModel;
 
             emSelectorModel.setSelectedItem("SIR");
             S0 = sirModel.S0Input.get();
+            S0TextField.setText(String.valueOf(S0.getValue()));
+            S0TextField.setEnabled(true);
+            estimateS0.setEnabled(true);
+            estimateS0.setSelected(S0.isEstimatedInput.get());
 
         } else {
-            BirthDeathModel bdModel = (BirthDeathModel)epidemicModel;
-
             emSelectorModel.setSelectedItem("Linear birth-death");
-            S0 = null;
+            S0TextField.setText("");
+            S0TextField.setEnabled(false);
+            estimateS0.setEnabled(false);
+            estimateS0.setSelected(false);
         }
     }
 
     public void saveToModel() {
-        EpidemicModel newEpiModel;
-        switch ((String)emSelectorModel.getSelectedItem()) {
-            case "SIS":
-                break;
-            case "SIR":
-                break;
-            case "Linear birth-death":
-                break;
+
+
+        infectionRate.setDimension(infectionRateModel.getColumnCount());
+        StringBuilder sbInfectionRate = new StringBuilder();
+        for (int i=0; i<infectionRateTable.getColumnCount(); i++)
+            sbInfectionRate.append(" ").append(infectionRateModel.getValueAt(0, i));
+        infectionRate.valuesInput.setValue(sbInfectionRate.toString(), infectionRate);
+        infectionRate.isEstimatedInput.setValue(estimateInfectionRate.isSelected(), infectionRate);
+
+        recoveryRate.setDimension(recoveryRateModel.getColumnCount());
+        StringBuilder sbRecoveryRate = new StringBuilder();
+        for (int i=0; i<recoveryRateTable.getColumnCount(); i++)
+            sbRecoveryRate.append(" ").append(recoveryRateModel.getValueAt(0, i));
+        recoveryRate.valuesInput.setValue(sbRecoveryRate.toString(), recoveryRate);
+        recoveryRate.isEstimatedInput.setValue(estimateRecoveryRate.isSelected(), recoveryRate);
+
+        psiSamplingRate.setDimension(psiSamplingRateModel.getColumnCount());
+        StringBuilder sbPsiSamplingRate = new StringBuilder();
+        for (int i=0; i<psiSamplingRateTable.getColumnCount(); i++)
+            sbPsiSamplingRate.append(" ").append(psiSamplingRateModel.getValueAt(0, i));
+        psiSamplingRate.valuesInput.setValue(sbPsiSamplingRate.toString(), psiSamplingRate);
+        psiSamplingRate.isEstimatedInput.setValue(estimatePsiSamplingRate.isSelected(), psiSamplingRate);
+
+        rhoSamplingProb.valuesInput.setValue(rhoSamplingProbTextField.getText(), rhoSamplingProb);
+        rhoSamplingProb.isEstimatedInput.setValue(estimateRhoSamplingProb.isSelected(), rhoSamplingProb);
+
+        try {
+            switch ((String)emSelectorModel.getSelectedItem()) {
+                case "SIS":
+                    epidemicModel = new SISModel();
+                    break;
+                case "SIR":
+                    epidemicModel = new SIRModel();
+                    break;
+                case "Linear birth-death":
+                    epidemicModel = new BirthDeathModel();
+                    break;
+                default:
+                    throw new RuntimeException("Incompatible epidemic model.");
+            }
+
+            if (epidemicModel instanceof SISModel || epidemicModel instanceof SIRModel) {
+                if (S0 == null) {
+                    try {
+                        PartitionContext pc = doc.getContextFor(m_plugin);
+                        String S0id = "S0.t:" + pc.tree;
+                        if (doc.pluginmap.containsKey(S0id))
+                            S0 = (IntegerParameter)doc.pluginmap.get(S0id);
+                        else {
+                            S0 = new IntegerParameter("199");
+                            S0.setID("S0.t:" + pc.tree);
+                            doc.registerPlugin(S0);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (!S0TextField.getText().trim().isEmpty())
+                    S0.valuesInput.setValue(S0TextField.getText(), S0);
+
+                S0.isEstimatedInput.setValue(estimateS0.isSelected(), S0);
+
+                epidemicModel.setInputValue("S0", S0);
+                S0.initAndValidate();
+            } else {
+//                if (S0 != null)
+//                    doc.unregisterPlugin(S0);
+            }
+
+            epidemicModel.setInputValue("infectionRate", infectionRate);
+            epidemicModel.setInputValue("infectionRateShiftTimes", infectionRateChangeTimes);
+            epidemicModel.setInputValue("recoveryRate", recoveryRate);
+            epidemicModel.setInputValue("recoveryRateShiftTimes", recoveryRateChangeTimes);
+            epidemicModel.setInputValue("psiSamplingRate", psiSamplingRate);
+            epidemicModel.setInputValue("psiSamplingRateShiftTimes", psiSamplingRateChangeTimes);
+            epidemicModel.setInputValue("rhoSamplingProb", rhoSamplingProb);
+            epidemicModel.setInputValue("rhoSamplingTime", rhoSamplingTime);
+
+            m_input.setValue(epidemicModel, m_plugin);
+
+            infectionRate.initAndValidate();
+            recoveryRate.initAndValidate();
+            psiSamplingRate.initAndValidate();
+            rhoSamplingProb.initAndValidate();
+            epidemicModel.initAndValidate();
+        } catch (Exception e) {
+            System.err.println("Error updating epidemic model.");
+            e.printStackTrace();
         }
-
+        refreshPanel();
     }
-
 }
