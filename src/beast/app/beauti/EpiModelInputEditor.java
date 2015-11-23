@@ -17,6 +17,7 @@
 
 package beast.app.beauti;
 
+import beast.app.draw.BEASTObjectPanel;
 import beast.app.draw.InputEditor;
 import beast.core.BEASTInterface;
 import beast.core.Input;
@@ -367,6 +368,9 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
     public void saveToModel() {
 
+        PartitionContext partitionContext = doc.getContextFor(m_plugin);
+        String partionID = ".t:" + partitionContext.tree;
+
 
         infectionRate.setDimension(infectionRateModel.getColumnCount());
         StringBuilder sbInfectionRate = new StringBuilder();
@@ -393,6 +397,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
         rhoSamplingProb.isEstimatedInput.setValue(estimateRhoSamplingProb.isSelected(), rhoSamplingProb);
 
         try {
+//            doc.disconnect(epidemicModel, m_plugin.getID(), "model");
             switch ((String)emSelectorModel.getSelectedItem()) {
                 case "SIS":
                     epidemicModel = new SISModel();
@@ -410,14 +415,12 @@ public class EpiModelInputEditor extends InputEditor.Base {
             if (epidemicModel instanceof SISModel || epidemicModel instanceof SIRModel) {
                 if (S0 == null) {
                     try {
-                        PartitionContext pc = doc.getContextFor(m_plugin);
-                        String S0id = "S0.t:" + pc.tree;
+                        String S0id = "S0" + partionID;
                         if (doc.pluginmap.containsKey(S0id))
                             S0 = (IntegerParameter)doc.pluginmap.get(S0id);
                         else {
                             S0 = new IntegerParameter("199");
-                            S0.setID("S0.t:" + pc.tree);
-                            doc.registerPlugin(S0);
+                            S0.setID(S0id);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -431,9 +434,11 @@ public class EpiModelInputEditor extends InputEditor.Base {
                 epidemicModel.setInputValue("S0", S0);
                 S0.initAndValidate();
             } else {
-//                if (S0 != null)
+//                if (S0 != null) {
 //                    doc.unregisterPlugin(S0);
+//                }
             }
+
 
             epidemicModel.setInputValue("infectionRate", infectionRate);
             epidemicModel.setInputValue("infectionRateShiftTimes", infectionRateChangeTimes);
@@ -444,17 +449,20 @@ public class EpiModelInputEditor extends InputEditor.Base {
             epidemicModel.setInputValue("rhoSamplingProb", rhoSamplingProb);
             epidemicModel.setInputValue("rhoSamplingTime", rhoSamplingTime);
 
-            m_input.setValue(epidemicModel, m_plugin);
-
             infectionRate.initAndValidate();
             recoveryRate.initAndValidate();
             psiSamplingRate.initAndValidate();
             rhoSamplingProb.initAndValidate();
             epidemicModel.initAndValidate();
+
+            m_input.setValue(epidemicModel, m_plugin);
+            BEASTObjectPanel.addPluginToMap(epidemicModel, doc);
+//            doc.scrubAll(true, false);
         } catch (Exception e) {
             System.err.println("Error updating epidemic model.");
             e.printStackTrace();
         }
+
         refreshPanel();
     }
 }

@@ -34,7 +34,7 @@
             <distribution id="EpiTreePrior.t:$(n)" spec="epiinf.distribs.SMCTreeDensity" nParticles="100">
                 <tree idref="Tree.t:$(n)"/>
                 <treeOrigin id="origin.t:$(n)" spec="beast.core.parameter.RealParameter" value="10.0" estimate="true"/>
-                <model spec="epiinf.models.SISModel" rhoSamplingTime="@origin.t:$(n)">
+                <model id="model.t:$(n)" spec="epiinf.models.SISModel" rhoSamplingTime="@origin.t:$(n)">
                     <S0 id="S0.t:$(n)" spec="beast.core.parameter.IntegerParameter" value="199" lower="0" estimate="true"/>
                     <infectionRate id="infectionRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.01" estimate="true"/>
                     <recoveryRate id="recoveryRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.1" estimate="true"/>
@@ -89,18 +89,18 @@
                      if="inlikelihood(Tree.t:$(n)) and origin.t:$(n)/estimate=true"/>
 
             <connect srcID="S0.t:$(n)" targetID="state" inputName="stateNode"
-                     if="inlikelihood(Tree.t:$(n)) and S0.t:$(n)/estimate=true"/>
+                     if="inposterior(S0.t:$(n)) and S0.t:$(n)/estimate=true"/>
             <connect srcID="S0Prior.t:$(n)" targetID="prior" inputName="distribution"
-                     if="inlikelihood(Tree.t:$(n)) and S0.t:$(n)/estimate=true"/>
+                     if="inposterior(S0.t:$(n)) and S0.t:$(n)/estimate=true"/>
             <connect srcID="S0Walker.t:$(n)" targetID="mcmc" inputName="operator"
-                     if="inlikelihood(Tree.t:$(n)) and S0.t:$(n)/estimate=true"/>
+                     if="inposterior(S0.t:$(n)) and S0.t:$(n)/estimate=true"/>
 
             <connect srcID="infectionRate.t:$(n)" targetID="state" inputName="stateNode"
-                     if="inlikelihood(Tree.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
+                     if="inposterior(infectionRate.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
             <connect srcID="infectionRatePrior.t:$(n)" targetID="prior" inputName="distribution"
-                     if="inlikelihood(Tree.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
+                     if="inposterior(infectionRate.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
             <connect srcID="infectionRateScaler.t:$(n)" targetID="mcmc" inputName="operator"
-                     if="inlikelihood(Tree.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
+                     if="inposterior(infectionRate.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
 
             <connect srcID="recoveryRate.t:$(n)" targetID="state" inputName="stateNode"
                      if="inlikelihood(Tree.t:$(n)) and recoveryRate.t:$(n)/estimate=true"/>
