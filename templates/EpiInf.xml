@@ -23,6 +23,65 @@
     :epiinf.models
     :epiinf.distribs">
 
+
+    <mergewith point='misc'>
+        <fragment id='EpiModelParameter' spec="beast.app.beauti.Fragment">
+            <![CDATA[
+            <operator id='$(p)Scaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@$(p).t:$(n)" weight="1"/>
+            <distribution id="$(p)Prior.t:$(n)" spec="beast.math.distributions.Prior">
+                <x idref="$(p).t:$(n)"/>
+                <distr spec="beast.math.distributions.OneOnX"/>
+            </distribution>
+            <distribution id="$(p)ChangeTimesPrior.t:$(n)" spec="epiinf.util.ExponentialChangeTimesPrior">
+                <changeTimes idref="$(p)ChangeTimes.t:$(n)"/>
+                <meanIntervalLength spec="beast.core.parameter.RealParameter" value="1.0" id="$(p)ChangeInterval.t:$(n)" estimate="false"/>
+            </distribution>
+            <distribution id="$(p)ChangeIntervalPrior.t:$(n)" spec="beast.math.distributions.Prior">
+                <x idref="$(p)ChangeInterval.t:$(n)"/>
+                <distr spec="beast.math.distributions.OneOnX"/>
+            </distribution>
+            <operator id='$(p)ChangeTimesScaler.t:$(n)' spec='epiinf.util.ChangeTimesOperator' scaleFactor="0.8" weight="1">
+                <changeTimes id="$(p)ChangeTimes.t:$(n)" spec="beast.core.parameter.RealParameter" value="0.0" estimate="false"/>
+            </operator>
+            <operator id="$(p)ChangeIntervalScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.8" parameter="@$(p)ChangeInterval.t:$(n)" weight="1"/>
+            ]]>
+
+            <connect srcID="$(p).t:$(n)" targetID="state" inputName="stateNode"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p).t:$(n)/estimate=true"/>
+            <connect srcID="$(p)Prior.t:$(n)" targetID="prior" inputName="distribution"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p).t:$(n)/estimate=true"/>
+            <connect srcID="$(p)Scaler.t:$(n)" targetID="mcmc" inputName="operator"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p).t:$(n)/estimate=true"/>
+            <connect srcID="$(p).t:$(n)" targetID="tracelog" inputName="log"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p).t:$(n)/estimate=true"/>
+            <connect srcID="$(p).t:$(n)" targetID="screenlog" inputName="log"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p).t:$(n)/estimate=true"/>
+
+            <connect srcID="$(p)ChangeTimes.t:$(n)" targetID="state" inputName="stateNode"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeTimes.t:$(n)/estimate=true"/>
+            <connect srcID="$(p)ChangeTimesScaler.t:$(n)" targetID="mcmc" inputName="operator"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeTimes.t:$(n)/estimate=true"/>
+            <connect srcID="$(p)ChangeTimesPrior.t:$(n)" targetID="prior" inputName="distribution"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeTimes.t:$(n)/estimate=true"/>
+            <connect srcID="$(p)ChangeTimes.t:$(n)" targetID="tracelog" inputName="log"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeTimes.t:$(n)/estimate=true"/>
+            <connect srcID="$(p)ChangeTimes.t:$(n)" targetID="screenlog" inputName="log"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeTimes.t:$(n)/estimate=true"/>
+
+
+            <connect srcID="$(p)ChangeInterval.t:$(n)" targetID="state" inputName="stateNode"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeInterval.t:$(n)/estimate=true"/>
+            <connect srcID="$(p)ChangeIntervalScaler.t:$(n)" targetID="mcmc" inputName="operator"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeInterval.t:$(n)/estimate=true"/>
+            <connect srcID="$(p)ChangeIntervalPrior.t:$(n)" targetID="prior" inputName="distribution"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeInterval.t:$(n)/estimate=true"/>
+            <connect srcID="$(p)ChangeInterval.t:$(n)" targetID="tracelog" inputName="log"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeInterval.t:$(n)/estimate=true"/>
+            <connect srcID="$(p)ChangeInterval.t:$(n)" targetID="screenlog" inputName="log"
+                     if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeInterval.t:$(n)/estimate=true"/>
+        </fragment>
+    </mergewith>
+
     <mergewith point="treePriorTemplates">
 
         <subtemplate id="EpiTreePrior" class="epiinf.distribs.SMCTreeDensity" mainid="EpiTreePrior.t:$(n)"
@@ -47,50 +106,29 @@
                 <x idref="epiOrigin.t:$(n)"/>
                 <distr spec="beast.math.distributions.OneOnX"/>
             </distribution>
+
             <distribution id="S0Prior.t:$(n)" spec="beast.math.distributions.Prior">
                 <x idref="S0.t:$(n)"/>
                 <distr spec="beast.math.distributions.Poisson">
                     <lambda spec="beast.core.parameter.RealParameter" value="100" estimate="false"/>
                 </distr>
             </distribution>
-            <distribution id="infectionRatePrior.t:$(n)" spec="beast.math.distributions.Prior">
-                <x idref="infectionRate.t:$(n)"/>
-                <distr spec="beast.math.distributions.OneOnX"/>
-            </distribution>
-            <distribution id="recoveryRatePrior.t:$(n)" spec="beast.math.distributions.Prior">
-                <x idref="recoveryRate.t:$(n)"/>
-                <distr spec="beast.math.distributions.OneOnX"/>
-            </distribution>
-            <distribution id="psiSamplingRatePrior.t:$(n)" spec="beast.math.distributions.Prior">
-                <x idref="psiSamplingRate.t:$(n)"/>
-                <distr spec="beast.math.distributions.OneOnX"/>
-            </distribution>
+
             <distribution id="rhoSamplingProbPrior.t:$(n)" spec="beast.math.distributions.Prior">
                 <x idref="rhoSamplingProb.t:$(n)"/>
                 <distr spec="beast.math.distributions.Uniform"/>
             </distribution>
-            <distribution id="infectionRateChangeTimesPrior.t:$(n)" spec="epiinf.util.ExponentialChangeTimesPrior">
-                <changeTimes idref="infectionRateChangeTimes.t:$(n)"/>
-                <meanIntervalLength spec="beast.core.parameter.RealParameter" value="1.0" id="infectionRateChangeInterval.t:$(n)" estimate="false"/>
-            </distribution>
-            <distribution id="infectionRateChangeIntervalPrior.t:$(n)" spec="beast.math.distributions.Prior">
-                <x idref="infectionRateChangeInterval.t:$(n)"/>
-                <distr spec="beast.math.distributions.OneOnX"/>
-            </distribution>
 
             <operator id='epiOriginScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@epiOrigin.t:$(n)" weight="1"/>
             <operator id='S0Walker.t:$(n)' spec='IntRandomWalkOperator' windowSize="10" parameter="@S0.t:$(n)" weight="1"/>
-            <operator id='infectionRateScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@infectionRate.t:$(n)" weight="1"/>
-            <operator id='recoveryRateScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@recoveryRate.t:$(n)" weight="1"/>
-            <operator id='psiSamplingRateScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@psiSamplingRate.t:$(n)" weight="1"/>
             <operator id='rhoSamplingProbScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@rhoSamplingProb.t:$(n)" weight="1"/>
-            <operator id='infectionRateChangeTimesScaler.t:$(n)' spec='epiinf.util.ChangeTimesOperator' scaleFactor="0.8" weight="1">
-                <changeTimes id="infectionRateChangeTimes.t:$(n)" spec="beast.core.parameter.RealParameter" value="0.0" estimate="false"/>
-            </operator>
-            <operator id="infectionRateChangeIntervalScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.8" parameter="@infectionRateChangeInterval.t:$(n)" weight="1"/>
+
             ]]>
 
             <plate fragment="TreeOperators" var="m" range="EpiTreePrior"/>
+            <plate fragment="EpiModelParameter" var="p" range="infectionRate"/>
+            <plate fragment="EpiModelParameter" var="p" range="recoveryRate"/>
+            <plate fragment="EpiModelParameter" var="p" range="psiSamplingRate"/>
 
             <connect srcID="EpiTreePrior.t:$(n)" targetID="prior" inputName="distribution"
                      if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true">
@@ -115,33 +153,6 @@
             <connect srcID="S0Walker.t:$(n)" targetID="mcmc" inputName="operator"
                      if="inposterior(EpiTreePrior.t:$(n)) and S0.t:$(n)/estimate=true"/>
 
-            <connect srcID="infectionRate.t:$(n)" targetID="state" inputName="stateNode"
-                     if="inposterior(EpiTreePrior.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
-            <connect srcID="infectionRatePrior.t:$(n)" targetID="prior" inputName="distribution"
-                     if="inposterior(EpiTreePrior.t:$(n)) and infectionRate.t:$(n)/estimate=true">
-                Prior on per infected per susceptible infection rate.
-            </connect>
-            <connect srcID="infectionRateScaler.t:$(n)" targetID="mcmc" inputName="operator"
-                     if="inposterior(EpiTreePrior.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
-
-            <connect srcID="recoveryRate.t:$(n)" targetID="state" inputName="stateNode"
-                     if="inposterior(EpiTreePrior.t:$(n)) and recoveryRate.t:$(n)/estimate=true"/>
-            <connect srcID="recoveryRatePrior.t:$(n)" targetID="prior" inputName="distribution"
-                     if="inposterior(EpiTreePrior.t:$(n)) and recoveryRate.t:$(n)/estimate=true">
-                Prior on recovery/removal rate.
-            </connect>
-            <connect srcID="recoveryRateScaler.t:$(n)" targetID="mcmc" inputName="operator"
-                     if="inposterior(EpiTreePrior.t:$(n)) and recoveryRate.t:$(n)/estimate=true"/>
-
-            <connect srcID="psiSamplingRate.t:$(n)" targetID="state" inputName="stateNode"
-                     if="inposterior(EpiTreePrior.t:$(n)) and psiSamplingRate.t:$(n)/estimate=true"/>
-            <connect srcID="psiSamplingRatePrior.t:$(n)" targetID="prior" inputName="distribution"
-                     if="inposterior(EpiTreePrior.t:$(n)) and psiSamplingRate.t:$(n)/estimate=true">
-                Prior on serial sampling rate.
-            </connect>
-            <connect srcID="psiSamplingRateScaler.t:$(n)" targetID="mcmc" inputName="operator"
-                     if="inposterior(EpiTreePrior.t:$(n)) and psiSamplingRate.t:$(n)/estimate=true"/>
-
             <connect srcID="rhoSamplingProb.t:$(n)" targetID="state" inputName="stateNode"
                      if="inposterior(EpiTreePrior.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
             <connect srcID="rhoSamplingProbPrior.t:$(n)" targetID="prior" inputName="distribution"
@@ -150,21 +161,6 @@
             </connect>
             <connect srcID="rhoSamplingProbScaler.t:$(n)" targetID="mcmc" inputName="operator"
                      if="inposterior(EpiTreePrior.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
-
-            <connect srcID="infectionRateChangeTimes.t:$(n)" targetID="state" inputName="stateNode"
-                     if="inposterior(EpiTreePrior.t:$(n)) and infectionRateChangeTimes.t:$(n)/estimate=true"/>
-            <connect srcID="infectionRateChangeTimesScaler.t:$(n)" targetID="mcmc" inputName="operator"
-                     if="inposterior(EpiTreePrior.t:$(n)) and infectionRateChangeTimes.t:$(n)/estimate=true"/>
-            <connect srcID="infectionRateChangeTimesPrior.t:$(n)" targetID="prior" inputName="distribution"
-                     if="inposterior(EpiTreePrior.t:$(n)) and infectionRateChangeTimes.t:$(n)/estimate=true"/>
-
-
-            <connect srcID="infectionRateChangeInterval.t:$(n)" targetID="state" inputName="stateNode"
-                     if="inposterior(EpiTreePrior.t:$(n)) and infectionRateChangeInterval.t:$(n)/estimate=true"/>
-            <connect srcID="infectionRateChangeIntervalScaler.t:$(n)" targetID="mcmc" inputName="operator"
-                     if="inposterior(EpiTreePrior.t:$(n)) and infectionRateChangeInterval.t:$(n)/estimate=true"/>
-            <connect srcID="infectionRateChangeIntervalPrior.t:$(n)" targetID="prior" inputName="distribution"
-                     if="inposterior(EpiTreePrior.t:$(n)) and infectionRateChangeInterval.t:$(n)/estimate=true"/>
 
         </subtemplate>
 
