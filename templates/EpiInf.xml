@@ -123,6 +123,10 @@
             <operator id='S0Walker.t:$(n)' spec='IntRandomWalkOperator' windowSize="10" parameter="@S0.t:$(n)" weight="1"/>
             <operator id='rhoSamplingProbScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@rhoSamplingProb.t:$(n)" weight="1"/>
 
+            <!-- Trajectory logging -->
+            <logger id="trajlog.t:$(n)" logEvery="1000" fileName="$(filebase).$(n).traj">
+                <log id="trajectory.t:$(n)" spec='epiinf.ConditionedTrajectory' treeDensity="@EpiTreePrior.t:$(n)"/>
+            </logger>
             ]]>
 
             <plate fragment="TreeOperators" var="m" range="EpiTreePrior"/>
@@ -161,6 +165,9 @@
             </connect>
             <connect srcID="rhoSamplingProbScaler.t:$(n)" targetID="mcmc" inputName="operator"
                      if="inposterior(EpiTreePrior.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
+
+            <connect srcID="trajlog.t:$(n)" targetID="mcmc" inputName="logger"
+                     if="inposterior(EpiTreePrior.t:$(n))"/>
 
         </subtemplate>
 
