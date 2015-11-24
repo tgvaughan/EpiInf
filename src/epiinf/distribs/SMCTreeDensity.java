@@ -37,6 +37,8 @@ import java.util.Random;
  */
 @Description("Use SMC to estimate density of tree conditional on model "
     + "parameters.")
+@Citation("Gabriel Leventhal, Timothy Vaughan, David Welch, Alexei Drummond, Tanja Stadler,\n" +
+        "\"Exact phylodynamic inference using particle filtering\", in preparation.")
 public class SMCTreeDensity extends TreeDistribution {
 
     public Input<EpidemicModel> modelInput = new Input<>(
