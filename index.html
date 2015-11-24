@@ -8,7 +8,17 @@
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    <title>Epiinf</title>
+    <script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-44492203-6', 'auto');
+ga('send', 'pageview');
+    </script>
+
+    <title>EpiInf</title>
   </head>
 
   <body>
@@ -18,13 +28,13 @@
         <header class="inner">
           <a id="forkme_banner" href="https://github.com/tgvaughan/EpiInf">View on GitHub</a>
 
-          <h1 id="project_title">Epiinf</h1>
+          <h1 id="project_title">EpiInf</h1>
           <h2 id="project_tagline">BEAST 2 package for performing inference on epidemiological parameters using the exact likelihood.</h2>
 
-            <section id="downloads">
+            <!--section id="downloads">
               <a class="zip_download_link" href="https://github.com/tgvaughan/EpiInf/zipball/master">Download this project as a .zip file</a>
               <a class="tar_download_link" href="https://github.com/tgvaughan/EpiInf/tarball/master">Download this project as a tar.gz file</a>
-            </section>
+            </section-->
         </header>
     </div>
 
@@ -38,25 +48,34 @@
 parameters using particle filtering to compute the prior probability density of
 a tree.  Joint inference of prevalence trajectories is also performed.</p>
 
-<p>EpiInf is currently at the early pre-release stage, so some things may not work perfectly and there is still very little in the way of documentation.  Even the name may change!</p>
+<p>EpiInf is currently at the early pre-release stage, so some things may not
+work perfectly and there is still very little in the way of documentation.
+Even the name may change!</p>
 
 <h1>
 <a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h1>
 
-<p>To install EpiInf, follow these steps:
-1. Install the most recent version of <a href="http://www.beast2.org/">BEAST 2</a>
-2. Open the BEAUti programme.
-3. Select "Manage Packages" from the "File" menu.
-4. Click the "Package repositories" button at the bottom of the package manager dialog box.
-5. Choose "Add URL"
-6. Enter <a href="http://tgvaughan.github.io/EpiInf/package.xml">http://tgvaughan.github.io/EpiInf/package.xml</a>, click OK, then select Done to return to the package manger.
-7. EpiInf should now be in the list of packages.  Select this and then click Install/Upgrade.
-8. Once the successful installation is reported, close the package manager and <strong>RESTART BEAUti</strong>.</p>
+<p>To install EpiInf, follow these steps:</p>
+<ol>
+    <li>Install the most recent version of <a href="http://www.beast2.org/">BEAST 2</a>.</li>
+    <li>Open the BEAUti programme.</li>
+    <li> Select "Manage Packages" from the "File" menu.</li>
+    <li> Click the "Package repositories" button at the bottom of the package manager dialog box.</li>
+    <li> Choose "Add URL"</li>
+    <li> Enter <a href="http://tgvaughan.github.io/EpiInf/package.xml">http://tgvaughan.github.io/EpiInf/package.xml</a>,
+        click OK, then select Done to return to the package manger.</li>
+    <li> EpiInf should now be in the list of packages.  Select this and then click Install/Upgrade.</li>
+    <li> Once the successful installation is reported, close the package manager and <strong>RESTART BEAUti</strong>.</li>
+</ol>
 
 <h1>
 <a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h1>
 
-<p>From BEAUti, load a sequence alignment and set up your analysis as usual.  From the Priors panel, select the EpiTreePrior.  This allows you to select from the available compartmental models and choose parameters to infer or fix.  At this point, choosing File-&gt;Save will produce an XML file that you can run using BEAST which will perform the analysis.</p>
+<p>From BEAUti, load a sequence alignment and set up your analysis as usual.
+From the Priors panel, select the EpiTreePrior.  This allows you to select from
+the available compartmental models and choose parameters to infer or fix.  At
+this point, choosing File-&gt;Save will produce an XML file that you can run
+using BEAST which will perform the analysis.</p>
 
 <h1>
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h1>
@@ -68,8 +87,7 @@ a tree.  Joint inference of prevalence trajectories is also performed.</p>
     <!-- FOOTER  -->
     <div id="footer_wrap" class="outer">
       <footer class="inner">
-        <p class="copyright">Epiinf maintained by <a href="https://github.com/tgvaughan">tgvaughan</a></p>
-        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+        <p class="copyright">Epiinf maintained by <a href="https://github.com/tgvaughan">Tim Vaughan</a></p>
       </footer>
     </div>
 
