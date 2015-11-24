@@ -87,8 +87,7 @@
         <subtemplate id="EpiTreePrior" class="epiinf.distribs.SMCTreeDensity" mainid="EpiTreePrior.t:$(n)"
                      suppressInputs="epiinf.distribs.SMCTreeDensity.tree,
                      epiinf.distribs.SMCTreeDensity.treeIntervals,
-                     epiinf.models.SISModel.tolerance"
-                     inlineInputs="epiinf.distribs.SMCTreeDensity.model">
+                     epiinf.models.SISModel.tolerance">
             <![CDATA[
             <distribution id="EpiTreePrior.t:$(n)" spec="epiinf.distribs.SMCTreeDensity" nParticles="100">
                 <tree idref="Tree.t:$(n)"/>
