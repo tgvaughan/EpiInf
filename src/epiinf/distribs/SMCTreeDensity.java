@@ -19,7 +19,6 @@ package epiinf.distribs;
 
 import beast.core.*;
 import beast.core.Input.Validate;
-import beast.core.parameter.RealParameter;
 import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
@@ -28,6 +27,7 @@ import epiinf.*;
 import epiinf.models.EpidemicModel;
 import epiinf.util.ReplacementSampler;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -133,9 +133,11 @@ public class SMCTreeDensity extends TreeDistribution {
             double sumOfWeights = 0.0;
             for (int p = 0; p < nParticles; p++) {
 
-                double newWeight = recordTrajectory ?
+                double newLogWeight = recordTrajectory ?
                         updateParticle(particleStates[p], k, treeEvent, particleTrajectories.get(p))
                         : updateParticle(particleStates[p], k, treeEvent, null);
+
+                double newWeight = Math.exp(newLogWeight);
 
                 particleWeights[p] = newWeight;
                 sumOfWeights += newWeight;
@@ -198,12 +200,12 @@ public class SMCTreeDensity extends TreeDistribution {
      * @param finalTreeEvent tree event which terminates interval
      * @param particleTrajectory if non-null, add particle states to this trajectory
      *
-     * @return conditional prob of tree interval under trajectory
+     * @return log conditional prob of tree interval under trajectory
      */
     private double updateParticle(EpidemicState particleState,
                                   int lineages, TreeEvent finalTreeEvent,
                                   List<EpidemicState> particleTrajectory) {
-        double conditionalP = 1.0;
+        double conditionalLogP = 0;
 
         while (true) {
             model.calculatePropensities(particleState);
@@ -231,9 +233,9 @@ public class SMCTreeDensity extends TreeDistribution {
 
             // Condition against psi-sampling and illegal recovery within interval
             double trueDt = Math.min(dt, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);
-            conditionalP *= Math.exp(-trueDt*(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+            conditionalLogP += -trueDt*(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
                     + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
-                    + forbiddenRecovProp));
+                    + forbiddenRecovProp);
 
             // Increment time
             particleState.time += dt;
@@ -243,7 +245,7 @@ public class SMCTreeDensity extends TreeDistribution {
 
                 ModelEvent nextModelEvent = model.getNextModelEvent(particleState);
                 if (nextModelEvent.type == ModelEvent.Type.RHO_SAMPLING)
-                    return 0.0;
+                    return Double.NEGATIVE_INFINITY;
                 else {
                     particleState.time = nextModelEventTime;
                     particleState.intervalIdx += 1;
@@ -266,18 +268,18 @@ public class SMCTreeDensity extends TreeDistribution {
             // Condition against infection events that produce coalescences not
             // observed in tree.
             if (event.type == EpidemicEvent.INFECTION)
-                conditionalP *= 1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1);
+                conditionalLogP += Math.log(1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1));
 
             model.incrementState(particleState, event);
 
             if (particleTrajectory != null)
                 particleTrajectory.add(particleState.copy());
 
-            if (conditionalP == 0) {
+            if (conditionalLogP == Double.NEGATIVE_INFINITY) {
                 // Should never get here, as we explicitly condition against
                 // events that cause this. However, rounding errors mock
                 // this rule.
-                return 0.0;
+                return Double.NEGATIVE_INFINITY;
             }
 
         }
@@ -288,8 +290,8 @@ public class SMCTreeDensity extends TreeDistribution {
         if (finalTreeEvent.type == TreeEvent.Type.COALESCENCE) {
             model.calculatePropensities(particleState);
             model.incrementState(particleState, EpidemicEvent.Infection);
-            conditionalP *= 2.0 / particleState.I / (particleState.I - 1)
-                    * model.propensities[EpidemicEvent.INFECTION];
+            conditionalLogP += Math.log(2.0 / particleState.I / (particleState.I - 1)
+                    * model.propensities[EpidemicEvent.INFECTION]);
 
         } else {
 
@@ -297,7 +299,7 @@ public class SMCTreeDensity extends TreeDistribution {
             if (model.timesEqual(finalTreeEvent.time, model.getNextModelEventTime(particleState))
                     && model.getNextModelEvent(particleState).type == ModelEvent.Type.RHO_SAMPLING) {
 
-                sampleProb = 0.0;
+                sampleProb = Double.NEGATIVE_INFINITY;
 
                 // If model contains a rho sampling event at this time, calculate the probability
                 // of sampling the number of samples in finalTreeEvent given the current
@@ -309,8 +311,10 @@ public class SMCTreeDensity extends TreeDistribution {
                     if (Math.abs(rhoTime - finalTreeEvent.time) < model.getTolerance()) {
                         int I = (int) Math.round(particleState.I);
                         int k = finalTreeEvent.multiplicity;
-                        sampleProb += Binomial.choose(I, k)
-                                * Math.pow(rhoProb, k) * Math.pow(1.0 - rhoProb, I - k);
+                        sampleProb = Binomial.logChoose(I, k)
+                                + k*Math.log(rhoProb) + (I-k)*Math.log(1.0 - rhoProb);
+
+                        break;
                     }
                 }
 
@@ -321,32 +325,32 @@ public class SMCTreeDensity extends TreeDistribution {
                 if (model.psiSamplingRateInput.get() != null && finalTreeEvent.multiplicity == 1) {
                     model.calculatePropensities(particleState);
                     if (finalTreeEvent.type == TreeEvent.Type.LEAF) {
-                        sampleProb = model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
+                        sampleProb = Math.log(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]);
                         model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
                     } else {
                         // Sampled ancestor
-                        sampleProb = model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE];
+                        sampleProb = Math.log(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
 //                        model.incrementState(particleState, EpidemicEvent.PsiSampleNoRemove);
                     }
                 } else {
                     // No explicit sampling process
-                    sampleProb = 1.0;
+                    sampleProb = 0;
                     model.incrementState(particleState,
                             EpidemicEvent.MultipleOtherSamples(finalTreeEvent.multiplicity));
                 }
 
             }
 
-            conditionalP *= sampleProb * Math.exp(GammaFunction.lnGamma(1 + finalTreeEvent.multiplicity));
+            conditionalLogP += sampleProb + GammaFunction.lnGamma(1 + finalTreeEvent.multiplicity);
         }
 
         if (particleTrajectory != null)
             particleTrajectory.add(particleState.copy());
 
         if (!particleState.isValid())
-            return 0.0; // Can occur due to susceptible pool depletion
+            return Double.NEGATIVE_INFINITY; // Can occur due to susceptible pool depletion
         else
-            return conditionalP;
+            return conditionalLogP;
     }
 
     public List<EpidemicState> getRecordedTrajectory() {

@@ -20,9 +20,8 @@
         </epidemicTrajectory>
     </tree>
 
-    <run spec="DensityMapper">
-        <distribution spec="SMCTreeDensity" id="density" nParticles="10000">
-            <treeEventList spec="TreeEventList" treeOrigin="@origin" tree="@tree"/>
+    <run spec="feast.mapping.DensityMapper">
+        <distribution spec="SMCTreeDensity" id="density" tree="@tree" treeOrigin="@origin" nParticles="10000">
             <model spec="SISModel">
                 <S0 spec="IntegerParameter" value="99"/>
                 <infectionRate idref="beta"/>

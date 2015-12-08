@@ -19,10 +19,8 @@
     </tree>
 
     <run spec="DensityMapper">
-        <distribution spec="SMCTreeDensity" id="density" nParticles="2000">
-            <treeEventList spec="TreeEventList" tree="@tree">
-                <treeOrigin spec="OriginFromTrajectory" trajectory="@trajectory"/>
-            </treeEventList>
+        <distribution spec="SMCTreeDensity" id="density" tree="@tree" nParticles="10000">
+            <treeOrigin spec="OriginFromTrajectory" trajectory="@trajectory"/>
             <model spec="SISModel">
                 <S0 spec="IntegerParameter" value="99"/>
                 <infectionRate spec="RealParameter" value="0.02"/>
@@ -31,8 +29,8 @@
             </model>
         </distribution>
 
-        <realParam spec="RealParameter" id="psi" value="0.1" lower="0.05" upper="0.2"/>
-        <steps spec="IntegerParameter" value="11"/>
+        <realParam spec="RealParameter" id="psi" value="0.1" lower="0.05" upper="0.15"/>
+        <steps spec="IntegerParameter" value="21"/>
 
         <logger spec="Logger" logEvery="1">
             <log idref="psi"/>
