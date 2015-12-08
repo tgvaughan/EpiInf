@@ -30,6 +30,7 @@ import epiinf.models.SISModel;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
@@ -114,6 +115,10 @@ public class EpiModelInputEditor extends InputEditor.Base {
         box.add(emSelector);
         panel.add(box);
 
+        JPanel infectionPanel = new JPanel();
+        infectionPanel.setLayout(new BoxLayout(infectionPanel, BoxLayout.PAGE_AXIS));
+        infectionPanel.setBorder(new TitledBorder("Infection"));
+
         box = Box.createHorizontalBox();
         box.add(new JLabel("Infection rate:"));
         infectionRateModel = new DefaultTableModel(1,1);
@@ -123,7 +128,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
         box.add(infectionRateTable);
         estimateInfectionRate = new JCheckBox("estimate");
         box.add(estimateInfectionRate);
-        panel.add(box);
+        infectionPanel.add(box);
 
         box = Box.createHorizontalBox();
         box.add(new JLabel("Num. changes:"));
@@ -140,7 +145,13 @@ public class EpiModelInputEditor extends InputEditor.Base {
         box.add(infectionRateChangeTimesTable);
         estimateInfectionRateShiftTimes = new JCheckBox("estimate");
         box.add(estimateInfectionRateShiftTimes);
-        panel.add(box);
+        infectionPanel.add(box);
+
+        panel.add(infectionPanel);
+
+        JPanel recoveryPanel = new JPanel();
+        recoveryPanel.setLayout(new BoxLayout(recoveryPanel, BoxLayout.PAGE_AXIS));
+        recoveryPanel.setBorder(new TitledBorder("Recovery"));
 
         box = Box.createHorizontalBox();
         box.add(new JLabel("Recovery rate:"));
@@ -151,7 +162,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
         box.add(recoveryRateTable);
         estimateRecoveryRate = new JCheckBox("estimate");
         box.add(estimateRecoveryRate);
-        panel.add(box);
+        recoveryPanel.add(box);
 
         box = Box.createHorizontalBox();
         box.add(new JLabel("Num. changes:"));
@@ -168,7 +179,13 @@ public class EpiModelInputEditor extends InputEditor.Base {
         box.add(recoveryRateChangeTimesTable);
         estimateRecoveryRateShiftTimes = new JCheckBox("estimate");
         box.add(estimateRecoveryRateShiftTimes);
-        panel.add(box);
+        recoveryPanel.add(box);
+
+        panel.add(recoveryPanel);
+
+        JPanel psiSamplingPanel = new JPanel();
+        psiSamplingPanel.setLayout(new BoxLayout(psiSamplingPanel, BoxLayout.PAGE_AXIS));
+        psiSamplingPanel.setBorder(new TitledBorder("Psi Sampling"));
 
         box = Box.createHorizontalBox();
         box.add(new JLabel("Psi sampling rate:"));
@@ -179,7 +196,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
         box.add(psiSamplingRateTable);
         estimatePsiSamplingRate = new JCheckBox("estimate");
         box.add(estimatePsiSamplingRate);
-        panel.add(box);
+        psiSamplingPanel.add(box);
 
         box = Box.createHorizontalBox();
         box.add(new JLabel("Num. changes:"));
@@ -196,7 +213,9 @@ public class EpiModelInputEditor extends InputEditor.Base {
         box.add(psiSamplingRateChangeTimesTable);
         estimatePsiSamplingRateShiftTimes = new JCheckBox("estimate");
         box.add(estimatePsiSamplingRateShiftTimes);
-        panel.add(box);
+        psiSamplingPanel.add(box);
+
+        panel.add(psiSamplingPanel);
 
         box = Box.createHorizontalBox();
         box.add(new JLabel("Rho sampling probability:"));
