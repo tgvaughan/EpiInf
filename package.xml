@@ -1,6 +1,6 @@
 <packages>
-    <package name='EpiInf' version='1.0.0-pre'
-           url="https://github.com/tgvaughan/EpiInf/releases/download/v1.0.0-pre/EpiInf.v1.0.0-pre.zip"
+    <package name='EpiInf' version='1.0.0'
+           url="https://github.com/tgvaughan/EpiInf/releases/download/v1.0.0/EpiInf.v1.0.0.zip"
            description="inference of epidemic trajectories" >
         <depends on='beast2' atleast='2.3.1'/>
     </package>
