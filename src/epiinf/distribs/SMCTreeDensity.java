@@ -56,10 +56,10 @@ public class SMCTreeDensity extends TreeDistribution {
             Validate.REQUIRED);
 
     public Input<Integer> nLeapsInput = new Input<>(
-            "nLeaps", "Maximum number of tau leaps to use.", 100);
+            "nTauLeaps", "Maximum number of tau leaps to use. Zero means no tau-leaping.", 5);
 
     public Input<Integer> alphaInput = new Input<>(
-            "alpha", "Reaction criticality parameter.", 1000);
+            "alpha", "Reaction criticality parameter. Zero means always leap.", 2);
 
     EpidemicModel model;
     TreeEventList treeEventList;
@@ -116,7 +116,7 @@ public class SMCTreeDensity extends TreeDistribution {
 
         double tau;
         if (nLeaps>0)
-            tau = treeInput.get().getRoot().getHeight()/nLeaps;
+            tau = treeOriginInput.get().getArrayValue()/nLeaps;
         else
             tau = 0.0;
 
@@ -243,7 +243,8 @@ public class SMCTreeDensity extends TreeDistribution {
 
             // Do we leap?
 
-            if (particleTrajectory == null || tau<=0 || model.isCritical(particleState, alpha, tau)) {
+            if (particleTrajectory == null
+                    && (tau<=0 || (alpha>0 && model.isCritical(particleState, alpha, tau)))) {
 
                 // Determine size of time increment
                 double dt;
