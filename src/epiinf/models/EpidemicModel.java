@@ -42,20 +42,20 @@ public abstract class EpidemicModel extends CalculationNode {
     public Input<Function> infectionRateInput = new Input<>(
             "infectionRate", "Infection rate.", Input.Validate.REQUIRED);
 
-    public Input<RealParameter> infectionRateShiftTimesInput = new Input<>(
+    public Input<Function> infectionRateShiftTimesInput = new Input<>(
             "infectionRateShiftTimes", "Infection rate shift times.");
 
     public Input<Function> recoveryRateInput = new Input<>(
             "recoveryRate", "Recovery rate.", Input.Validate.REQUIRED);
 
-    public Input<RealParameter> recoveryRateShiftTimesInput = new Input<>(
+    public Input<Function> recoveryRateShiftTimesInput = new Input<>(
             "recoveryRateShiftTimes", "Recovery rate shift times.");
 
     public Input<Function> psiSamplingRateInput = new Input<>(
             "psiSamplingRate",
             "Rate at which (destructive) psi-sampling is performed.");
 
-    public Input<RealParameter> psiSamplingRateShiftTimesInput = new Input<>(
+    public Input<Function> psiSamplingRateShiftTimesInput = new Input<>(
             "psiSamplingRateShiftTimes",
             "Times at which psi-sampling rate changes.");
 
@@ -63,7 +63,7 @@ public abstract class EpidemicModel extends CalculationNode {
             "removalProb",
             "Probability that sample individual is removed from population (Default 1).");
 
-    public Input<RealParameter> removalProbShiftTimesInput = new Input<>(
+    public Input<Function> removalProbShiftTimesInput = new Input<>(
             "removalProbShiftTimes",
             "Times at which removal probability changes.");
 
@@ -142,20 +142,43 @@ public abstract class EpidemicModel extends CalculationNode {
         propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE] = calculatePsiSamplingNoRemovePropensity(state);
     }
 
-    protected double getCurrentRate(Function rateParam, RealParameter rateShiftTimeParam,
+    protected double getCurrentRate(Function rateParam, Function rateShiftTimeParam,
                           double time) {
         if (rateParam != null) {
             if (rateShiftTimeParam != null) {
-                int idx = Arrays.binarySearch(
-                        rateShiftTimeParam.getValues(), time);
-                if (idx<0)
-                    idx = -(idx+1);
-
-                return rateParam.getArrayValue(idx);
+                return rateParam.getArrayValue(
+                        binarySearch(rateShiftTimeParam, time));
             } else
                 return rateParam.getArrayValue();
         } else
             return 0.0;
+    }
+
+    /**
+     * Use binary search to identify interval index corresponding to given time.
+     * @param rateShiftTimeParam function identifying rate shift times
+     * @param time time to place
+     * @return index into corresponding interval
+     */
+    protected static int binarySearch(Function rateShiftTimeParam, double time) {
+
+        int N = rateShiftTimeParam.getDimension()+1;
+        int imin=0, imax=N-1;
+
+        while (imax>imin) {
+            int imid = imin + (imax-imin)/2;
+
+            if (imid==N-1 || rateShiftTimeParam.getArrayValue(imid)>time) {
+                if (imid==0 || rateShiftTimeParam.getArrayValue(imid-1)<=time)
+                    return imid;
+                else
+                    imax = imid;
+            } else {
+                imin = imid+1;
+            }
+        }
+
+        return imin;
     }
 
     protected double calculatePsiSamplingRemovePropensity(EpidemicState state) {
@@ -258,13 +281,13 @@ public abstract class EpidemicModel extends CalculationNode {
 
     }
 
-    public void addRateShiftEvents(RealParameter rateShiftTimesParam) {
+    public void addRateShiftEvents(Function rateShiftTimesParam) {
 
         if (rateShiftTimesParam != null) {
             for (int i=0; i<rateShiftTimesParam.getDimension(); i++) {
                 ModelEvent event = new ModelEvent();
                 event.type = ModelEvent.Type.RATE_CHANGE;
-                event.time = rateShiftTimesParam.getValue(i);
+                event.time = rateShiftTimesParam.getArrayValue(i);
                 modelEventList.add(event);
             }
         }

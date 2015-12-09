@@ -288,7 +288,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
                 recoveryRateChangeTimesModel, estimateRecoveryRateShiftTimes);
 
         psiSamplingRate = (RealParameter)epidemicModel.psiSamplingRateInput.get();
-        psiSamplingRateChangeTimes = epidemicModel.psiSamplingRateShiftTimesInput.get();
+        psiSamplingRateChangeTimes = (RealParameter)epidemicModel.psiSamplingRateShiftTimesInput.get();
         loadModelRateParameters(psiSamplingRate, psiSamplingRateModel,
                 estimatePsiSamplingRate, nPsiSamplingRateShiftsModel,
                 psiSamplingRateChangeTimes, psiSamplingRateChangeTimesLabel,
