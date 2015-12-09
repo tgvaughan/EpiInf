@@ -56,10 +56,10 @@ public class SMCTreeDensity extends TreeDistribution {
             Validate.REQUIRED);
 
     public Input<Integer> nLeapsInput = new Input<>(
-            "nLeaps", "Maximum number of tau leaps to use.", 0);
+            "nLeaps", "Maximum number of tau leaps to use.", 100);
 
     public Input<Integer> alphaInput = new Input<>(
-            "alpha", "Reaction criticality parameter.", 10);
+            "alpha", "Reaction criticality parameter.", 1000);
 
     EpidemicModel model;
     TreeEventList treeEventList;
@@ -239,7 +239,7 @@ public class SMCTreeDensity extends TreeDistribution {
 
             // Do we leap?
 
-            if (tau>0 || model.isCritical(particleState, alpha, tau)) {
+            if (particleTrajectory == null || tau<=0 || model.isCritical(particleState, alpha, tau)) {
 
                 // Determine size of time increment
                 double dt;
@@ -305,8 +305,9 @@ public class SMCTreeDensity extends TreeDistribution {
 
                 double nextModelEventTime = model.getNextModelEventTime(particleState);
                 double trueDt = Math.min(tau, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);
-
-                particleState.time += tau;
+                conditionalLogP += -trueDt * (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                        + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
+                        + forbiddenRecovProp);
 
                 EpidemicEvent infectEvent = new EpidemicEvent();
                 infectEvent.type = EpidemicEvent.INFECTION;
@@ -314,12 +315,32 @@ public class SMCTreeDensity extends TreeDistribution {
                         Randomizer.nextPoisson(trueDt*infectionProp));
 
                 EpidemicEvent recovEvent = new EpidemicEvent();
-                infectEvent.type = EpidemicEvent.RECOVERY;
-                infectEvent.multiplicity = (int)Math.round(
+                recovEvent.type = EpidemicEvent.RECOVERY;
+                recovEvent.multiplicity = (int)Math.round(
                         Randomizer.nextPoisson(trueDt*allowedRecovProp));
+
+                // Condition against infection events that produce coalescences not
+                // observed in tree.
+                conditionalLogP += infectEvent.multiplicity
+                        *Math.log(1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1));
+//                        + GammaFunction.lnGamma(infectEvent.multiplicity+1);
 
                 model.incrementState(particleState, infectEvent);
                 model.incrementState(particleState, recovEvent);
+
+                if (conditionalLogP == Double.NEGATIVE_INFINITY || !particleState.isValid())
+                    return Double.NEGATIVE_INFINITY;
+
+                if (nextModelEventTime < finalTreeEvent.time && particleState.time + tau > nextModelEventTime) {
+                    particleState.time = nextModelEventTime;
+                    continue;
+                } else {
+                    if (particleState.time + tau > finalTreeEvent.time) {
+                        break;
+                    } else {
+                        particleState.time += tau;
+                    }
+                }
 
             }
 
