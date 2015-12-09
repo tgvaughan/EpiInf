@@ -55,9 +55,16 @@ public class SMCTreeDensity extends TreeDistribution {
             "nParticles", "Number of particles to use in SMC calculation.",
             Validate.REQUIRED);
 
+    public Input<Integer> nLeapsInput = new Input<>(
+            "nLeaps", "Maximum number of tau leaps to use.", 100);
+
+    public Input<Integer> alphaInput = new Input<>(
+            "alpha", "Reaction criticality parameter.", 10);
+
     EpidemicModel model;
     TreeEventList treeEventList;
-    int nParticles;
+    int nParticles, nLeaps;
+    double alpha;
 
     // Keep these around so we don't have to create these arrays/lists
     // for every density evaluation.
@@ -80,6 +87,8 @@ public class SMCTreeDensity extends TreeDistribution {
         model = modelInput.get();
         treeEventList = new TreeEventList(treeInput.get(), treeOriginInput.get());
         nParticles = nParticlesInput.get();
+        nLeaps = nLeapsInput.get();
+        alpha = alphaInput.get();
 
         particleWeights = new double[nParticles];
         particleStates = new EpidemicState[nParticles];
@@ -206,6 +215,8 @@ public class SMCTreeDensity extends TreeDistribution {
                                   List<EpidemicState> particleTrajectory) {
         double conditionalLogP = 0;
 
+        double tau = treeInput.get().getRoot().getHeight()/nLeapsInput.get();
+
         while (true) {
             model.calculatePropensities(particleState);
 
@@ -220,65 +231,72 @@ public class SMCTreeDensity extends TreeDistribution {
             }
             double allowedEventProp = infectionProp + allowedRecovProp;
 
-            // Determine size of time increment
+            // Do we leap?
 
-            double dt;
-            if (allowedEventProp > 0.0)
-                dt = Randomizer.nextExponential(allowedEventProp);
-            else
-                dt = Double.POSITIVE_INFINITY;
+            if (model.isCritical(particleState, alpha, tau)) {
 
-            double nextModelEventTime = model.getNextModelEventTime(particleState);
+                // Determine size of time increment
+                double dt;
+                if (allowedEventProp > 0.0)
+                    dt = Randomizer.nextExponential(allowedEventProp);
+                else
+                    dt = Double.POSITIVE_INFINITY;
 
-            // Condition against psi-sampling and illegal recovery within interval
-            double trueDt = Math.min(dt, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);
-            conditionalLogP += -trueDt*(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
-                    + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
-                    + forbiddenRecovProp);
+                double nextModelEventTime = model.getNextModelEventTime(particleState);
 
-            // Increment time
-            particleState.time += dt;
+                // Condition against psi-sampling and illegal recovery within interval
+                double trueDt = Math.min(dt, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);
+                conditionalLogP += -trueDt * (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                        + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
+                        + forbiddenRecovProp);
 
-            // Deal with model events (rho sampling and rate shifts)
-            if (nextModelEventTime < finalTreeEvent.time && particleState.time > nextModelEventTime) {
+                // Increment time
+                particleState.time += dt;
 
-                ModelEvent nextModelEvent = model.getNextModelEvent(particleState);
-                if (nextModelEvent.type == ModelEvent.Type.RHO_SAMPLING)
-                    return Double.NEGATIVE_INFINITY;
-                else {
-                    particleState.time = nextModelEventTime;
-                    particleState.intervalIdx += 1;
-                    continue;
+                // Deal with model events (rho sampling and rate shifts)
+                if (nextModelEventTime < finalTreeEvent.time && particleState.time > nextModelEventTime) {
+
+                    ModelEvent nextModelEvent = model.getNextModelEvent(particleState);
+                    if (nextModelEvent.type == ModelEvent.Type.RHO_SAMPLING)
+                        return Double.NEGATIVE_INFINITY;
+                    else {
+                        particleState.time = nextModelEventTime;
+                        particleState.intervalIdx += 1;
+                        continue;
+                    }
                 }
-            }
 
-            // Stop here if we're past the end of the tree interval
-            if (particleState.time > finalTreeEvent.time)
-                break;
+                // Stop here if we're past the end of the tree interval
+                if (particleState.time > finalTreeEvent.time)
+                    break;
 
-            EpidemicEvent event = new EpidemicEvent();
-            event.time = particleState.time;
-            if (allowedEventProp*Randomizer.nextDouble() < infectionProp) {
-                event.type = EpidemicEvent.INFECTION;
-            } else
-                event.type = EpidemicEvent.RECOVERY;
+                EpidemicEvent event = new EpidemicEvent();
+                event.time = particleState.time;
+                if (allowedEventProp * Randomizer.nextDouble() < infectionProp) {
+                    event.type = EpidemicEvent.INFECTION;
+                } else
+                    event.type = EpidemicEvent.RECOVERY;
 
 
-            // Condition against infection events that produce coalescences not
-            // observed in tree.
-            if (event.type == EpidemicEvent.INFECTION)
-                conditionalLogP += Math.log(1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1));
+                // Condition against infection events that produce coalescences not
+                // observed in tree.
+                if (event.type == EpidemicEvent.INFECTION)
+                    conditionalLogP += Math.log(1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1));
 
-            model.incrementState(particleState, event);
+                model.incrementState(particleState, event);
 
-            if (particleTrajectory != null)
-                particleTrajectory.add(particleState.copy());
+                if (particleTrajectory != null)
+                    particleTrajectory.add(particleState.copy());
 
-            if (conditionalLogP == Double.NEGATIVE_INFINITY) {
-                // Should never get here, as we explicitly condition against
-                // events that cause this. However, rounding errors mock
-                // this rule.
-                return Double.NEGATIVE_INFINITY;
+                if (conditionalLogP == Double.NEGATIVE_INFINITY) {
+                    // Should never get here, as we explicitly condition against
+                    // events that cause this. However, rounding errors mock
+                    // this rule.
+                    return Double.NEGATIVE_INFINITY;
+                }
+
+            } else {
+
             }
 
         }

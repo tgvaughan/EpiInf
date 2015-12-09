@@ -63,4 +63,13 @@ public class BirthDeathModel extends EpidemicModel {
                 break;
         }
     }
+
+    @Override
+    public boolean isCritical(EpidemicState state, double alpha, double tau) {
+        double nRemove = propensities[EpidemicEvent.RECOVERY]
+                + propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
+                + propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
+
+        return nRemove > state.I;
+    }
 }

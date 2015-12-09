@@ -197,6 +197,10 @@ public abstract class EpidemicModel extends CalculationNode {
     public abstract void incrementState(EpidemicState state,
             EpidemicEvent event);
 
+    /**
+     *
+     */
+    public abstract boolean isCritical(EpidemicState state, double alpha, double tau);
 
     /**
      * Update model event list and reaction rate caches.
