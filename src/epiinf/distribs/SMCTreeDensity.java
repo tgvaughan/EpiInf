@@ -56,7 +56,7 @@ public class SMCTreeDensity extends TreeDistribution {
             Validate.REQUIRED);
 
     public Input<Integer> nLeapsInput = new Input<>(
-            "nLeaps", "Maximum number of tau leaps to use.", 100);
+            "nLeaps", "Maximum number of tau leaps to use.", 0);
 
     public Input<Integer> alphaInput = new Input<>(
             "alpha", "Reaction criticality parameter.", 10);
@@ -114,6 +114,12 @@ public class SMCTreeDensity extends TreeDistribution {
 
         double thisLogP = 0.0;
 
+        double tau;
+        if (nLeaps>0)
+            tau = treeInput.get().getRoot().getHeight()/nLeaps;
+        else
+            tau = 0.0;
+
         if (recordTrajectory) {
             recordedOrigin = treeEventList.getOrigin();
             recordedTrajectory.clear();
@@ -142,8 +148,8 @@ public class SMCTreeDensity extends TreeDistribution {
             for (int p = 0; p < nParticles; p++) {
 
                 double newLogWeight = recordTrajectory ?
-                        updateParticle(particleStates[p], k, treeEvent, particleTrajectories.get(p))
-                        : updateParticle(particleStates[p], k, treeEvent, null);
+                        updateParticle(particleStates[p], k, treeEvent, tau, particleTrajectories.get(p))
+                        : updateParticle(particleStates[p], k, treeEvent, tau, null);
 
                 double newWeight = Math.exp(newLogWeight);
 
@@ -206,16 +212,16 @@ public class SMCTreeDensity extends TreeDistribution {
      * @param particleState State of particle
      * @param lineages number of tree lineages in interval
      * @param finalTreeEvent tree event which terminates interval
+     * @param tau if non-zero, maximum size of tau leaping interval
      * @param particleTrajectory if non-null, add particle states to this trajectory
      *
      * @return log conditional prob of tree interval under trajectory
      */
     private double updateParticle(EpidemicState particleState,
                                   int lineages, TreeEvent finalTreeEvent,
+                                  double tau,
                                   List<EpidemicState> particleTrajectory) {
         double conditionalLogP = 0;
-
-        double tau = treeInput.get().getRoot().getHeight()/nLeapsInput.get();
 
         while (true) {
             model.calculatePropensities(particleState);
@@ -233,7 +239,7 @@ public class SMCTreeDensity extends TreeDistribution {
 
             // Do we leap?
 
-            if (model.isCritical(particleState, alpha, tau)) {
+            if (tau>0 || model.isCritical(particleState, alpha, tau)) {
 
                 // Determine size of time increment
                 double dt;
@@ -296,6 +302,24 @@ public class SMCTreeDensity extends TreeDistribution {
                 }
 
             } else {
+
+                double nextModelEventTime = model.getNextModelEventTime(particleState);
+                double trueDt = Math.min(tau, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);
+
+                particleState.time += tau;
+
+                EpidemicEvent infectEvent = new EpidemicEvent();
+                infectEvent.type = EpidemicEvent.INFECTION;
+                infectEvent.multiplicity = (int)Math.round(
+                        Randomizer.nextPoisson(trueDt*infectionProp));
+
+                EpidemicEvent recovEvent = new EpidemicEvent();
+                infectEvent.type = EpidemicEvent.RECOVERY;
+                infectEvent.multiplicity = (int)Math.round(
+                        Randomizer.nextPoisson(trueDt*allowedRecovProp));
+
+                model.incrementState(particleState, infectEvent);
+                model.incrementState(particleState, recovEvent);
 
             }
 
