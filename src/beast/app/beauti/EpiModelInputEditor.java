@@ -274,14 +274,14 @@ public class EpiModelInputEditor extends InputEditor.Base {
     public void loadFromModel() {
 
         infectionRate = (RealParameter)epidemicModel.infectionRateInput.get();
-        infectionRateChangeTimes = epidemicModel.infectionRateShiftTimesInput.get();
+        infectionRateChangeTimes = (RealParameter) epidemicModel.infectionRateShiftTimesInput.get();
         loadModelRateParameters(infectionRate, infectionRateModel,
                 estimateInfectionRate, nInfectionRateShiftsModel,
                 infectionRateChangeTimes, infectionRateChangeTimesLabel,
                 infectionRateChangeTimesModel, estimateInfectionRateShiftTimes);
 
         recoveryRate = (RealParameter)epidemicModel.recoveryRateInput.get();
-        recoveryRateChangeTimes = epidemicModel.recoveryRateShiftTimesInput.get();
+        recoveryRateChangeTimes = (RealParameter) epidemicModel.recoveryRateShiftTimesInput.get();
         loadModelRateParameters(recoveryRate, recoveryRateModel,
                 estimateRecoveryRate, nRecoveryRateShiftsModel,
                 recoveryRateChangeTimes, recoveryRateChangeTimesLabel,
