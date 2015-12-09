@@ -120,6 +120,8 @@ public class SMCTreeDensityTest {
     @org.junit.Test
     public void testSISTreeDensitySerialLeap() throws Exception {
 
+        Randomizer.setSeed(42);
+
         TreeParser tree = new TreeParser(
                 "(t19:0.5728982259951056,(t1:4.682548468426976,((((t13:0.1" +
                         "5140665947746434,t7:1.1107091305509993):1.8687945" +
@@ -152,7 +154,7 @@ public class SMCTreeDensityTest {
                 "tree", tree,
                 "treeOrigin", new RealParameter("4.96590947152"),
                 "model", model,
-                "nParticles", 500000,
+                "nParticles", 100000,
                 "nTauLeaps", 10,
                 "alpha", 0);
 
