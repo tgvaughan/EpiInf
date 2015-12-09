@@ -43,9 +43,6 @@ public class SMCTreeDensity extends TreeDistribution {
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
 
-//    public Input<TreeEventList> treeEventListInput = new Input<>(
-//            "treeEventList", "Tree event list.", Validate.REQUIRED);
-
     public Input<Function> treeOriginInput = new Input<>(
             "treeOrigin",
             "Time before most recent sample that epidemic began.",
@@ -56,10 +53,10 @@ public class SMCTreeDensity extends TreeDistribution {
             Validate.REQUIRED);
 
     public Input<Integer> nLeapsInput = new Input<>(
-            "nTauLeaps", "Maximum number of tau leaps to use. Zero means no tau-leaping.", 5);
+            "nTauLeaps", "Maximum number of tau leaps to use. Zero means no tau-leaping.", 0);
 
     public Input<Integer> alphaInput = new Input<>(
-            "alpha", "Reaction criticality parameter. Zero means always leap.", 2);
+            "alpha", "Reaction criticality parameter, with greater values giving more leaps. Zero means always leap.", 10);
 
     EpidemicModel model;
     TreeEventList treeEventList;
@@ -229,7 +226,7 @@ public class SMCTreeDensity extends TreeDistribution {
             double infectionProp = model.propensities[EpidemicEvent.INFECTION];
             double allowedInfectProp = infectionProp
                     *(1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1));
-            double forbbiddenInfectProp = infectionProp - allowedInfectProp;
+            double forbiddenInfectProp = infectionProp - allowedInfectProp;
 
             double allowedRecovProp, forbiddenRecovProp;
             if (particleState.I > lineages) {
@@ -239,6 +236,7 @@ public class SMCTreeDensity extends TreeDistribution {
                 allowedRecovProp = 0.0;
                 forbiddenRecovProp = model.propensities[EpidemicEvent.RECOVERY];
             }
+
             double allowedEventProp = allowedInfectProp + allowedRecovProp;
 
             // Do we leap?
@@ -259,7 +257,7 @@ public class SMCTreeDensity extends TreeDistribution {
                 double trueDt = Math.min(dt, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);
                 conditionalLogP += -trueDt * (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
                         + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
-                        + forbbiddenInfectProp + forbiddenRecovProp);
+                        + forbiddenInfectProp + forbiddenRecovProp);
 
                 // Increment time
                 particleState.time += dt;
@@ -307,7 +305,7 @@ public class SMCTreeDensity extends TreeDistribution {
                 double trueDt = Math.min(tau, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);
                 conditionalLogP += -trueDt * (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
                         + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
-                        + forbbiddenInfectProp + forbiddenRecovProp);
+                        + forbiddenInfectProp + forbiddenRecovProp);
 
                 EpidemicEvent infectEvent = new EpidemicEvent();
                 infectEvent.type = EpidemicEvent.INFECTION;
@@ -322,7 +320,8 @@ public class SMCTreeDensity extends TreeDistribution {
                 model.incrementState(particleState, infectEvent);
                 model.incrementState(particleState, recovEvent);
 
-                if (conditionalLogP == Double.NEGATIVE_INFINITY || !particleState.isValid())
+                if (conditionalLogP == Double.NEGATIVE_INFINITY
+                        || !particleState.isValid() || particleState.I < lineages)
                     return Double.NEGATIVE_INFINITY;
 
                 if (nextModelEventTime < finalTreeEvent.time && particleState.time + tau > nextModelEventTime)
@@ -333,9 +332,7 @@ public class SMCTreeDensity extends TreeDistribution {
                     else
                         particleState.time += tau;
                 }
-
             }
-
         }
 
         particleState.time = finalTreeEvent.time;
@@ -392,7 +389,6 @@ public class SMCTreeDensity extends TreeDistribution {
                     model.incrementState(particleState,
                             EpidemicEvent.MultipleOtherSamples(finalTreeEvent.multiplicity));
                 }
-
             }
 
             conditionalLogP += sampleProb + GammaFunction.lnGamma(1 + finalTreeEvent.multiplicity);
