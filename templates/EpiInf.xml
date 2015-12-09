@@ -54,8 +54,6 @@
                      if="inposterior(EpiTreePrior.t:$(n)) and $(p).t:$(n)/estimate=true"/>
             <connect srcID="$(p).t:$(n)" targetID="tracelog" inputName="log"
                      if="inposterior(EpiTreePrior.t:$(n)) and $(p).t:$(n)/estimate=true"/>
-            <connect srcID="$(p).t:$(n)" targetID="screenlog" inputName="log"
-                     if="inposterior(EpiTreePrior.t:$(n)) and $(p).t:$(n)/estimate=true"/>
 
             <connect srcID="$(p)ChangeTimes.t:$(n)" targetID="state" inputName="stateNode"
                      if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeTimes.t:$(n)/estimate=true"/>
@@ -64,8 +62,6 @@
             <connect srcID="$(p)ChangeTimesPrior.t:$(n)" targetID="prior" inputName="distribution"
                      if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeTimes.t:$(n)/estimate=true"/>
             <connect srcID="$(p)ChangeTimes.t:$(n)" targetID="tracelog" inputName="log"
-                     if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeTimes.t:$(n)/estimate=true"/>
-            <connect srcID="$(p)ChangeTimes.t:$(n)" targetID="screenlog" inputName="log"
                      if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeTimes.t:$(n)/estimate=true"/>
 
 
@@ -76,8 +72,6 @@
             <connect srcID="$(p)ChangeIntervalPrior.t:$(n)" targetID="prior" inputName="distribution"
                      if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeInterval.t:$(n)/estimate=true"/>
             <connect srcID="$(p)ChangeInterval.t:$(n)" targetID="tracelog" inputName="log"
-                     if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeInterval.t:$(n)/estimate=true"/>
-            <connect srcID="$(p)ChangeInterval.t:$(n)" targetID="screenlog" inputName="log"
                      if="inposterior(EpiTreePrior.t:$(n)) and $(p)ChangeInterval.t:$(n)/estimate=true"/>
         </fragment>
     </mergewith>
@@ -146,6 +140,8 @@
             </connect>
             <connect srcID="epiOriginScaler.t:$(n)" targetID="mcmc" inputName="operator"
                      if="inposterior(EpiTreePrior.t:$(n)) and epiOrigin.t:$(n)/estimate=true"/>
+            <connect srcID="epiOrigin.t:$(n)" targetID="tracelog" inputName="log"
+                     if="inposterior(EpiTreePrior.t:$(n)) and epiOrigin.t:$(n)/estimate=true"/>
 
             <connect srcID="S0.t:$(n)" targetID="state" inputName="stateNode"
                      if="inposterior(EpiTreePrior.t:$(n)) and S0.t:$(n)/estimate=true"/>
@@ -155,6 +151,8 @@
             </connect>
             <connect srcID="S0Walker.t:$(n)" targetID="mcmc" inputName="operator"
                      if="inposterior(EpiTreePrior.t:$(n)) and S0.t:$(n)/estimate=true"/>
+            <connect srcID="S0.t:$(n)" targetID="tracelog" inputName="log"
+                     if="inposterior(EpiTreePrior.t:$(n)) and S0.t:$(n)/estimate=true"/>
 
             <connect srcID="rhoSamplingProb.t:$(n)" targetID="state" inputName="stateNode"
                      if="inposterior(EpiTreePrior.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
@@ -163,6 +161,8 @@
                 Prior on contemporaneous sampling rate.
             </connect>
             <connect srcID="rhoSamplingProbScaler.t:$(n)" targetID="mcmc" inputName="operator"
+                     if="inposterior(EpiTreePrior.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
+            <connect srcID="rhoSamplingProb.t:$(n)" targetID="tracelog" inputName="log"
                      if="inposterior(EpiTreePrior.t:$(n)) and rhoSamplingProb.t:$(n)/estimate=true"/>
 
             <connect srcID="trajlog.t:$(n)" targetID="mcmc" inputName="logger"

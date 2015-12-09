@@ -21,7 +21,6 @@ import beast.core.CalculationNode;
 import beast.core.Function;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
-import beast.util.Randomizer;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.ModelEvent;
@@ -224,8 +223,6 @@ public abstract class EpidemicModel extends CalculationNode {
 
     /**
      * Assemble list of model events.
-     *
-     * @return the event list
      */
     public void updateModelEventList() {
 
@@ -233,6 +230,9 @@ public abstract class EpidemicModel extends CalculationNode {
 
         if (rhoSamplingProbInput.get() != null) {
             for (int i = 0; i < rhoSamplingProbInput.get().getDimension(); i++) {
+                if (rhoSamplingProbInput.get().getArrayValue(i) <= 0.0)
+                    continue; // Do not add zero-probability rho sampling events
+
                 ModelEvent event = new ModelEvent();
                 event.type = ModelEvent.Type.RHO_SAMPLING;
                 event.rho = rhoSamplingProbInput.get().getArrayValue(i);
