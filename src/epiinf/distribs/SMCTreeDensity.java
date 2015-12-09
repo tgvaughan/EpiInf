@@ -305,7 +305,7 @@ public class SMCTreeDensity extends TreeDistribution {
                 // state.
                 for (int i = 0; i < model.rhoSamplingProbInput.get().getDimension(); i++) {
                     double rhoProb = model.rhoSamplingProbInput.get().getArrayValue(i);
-                    double rhoTime = model.rhoSamplingTimeInput.get().getValue(i);
+                    double rhoTime = model.rhoSamplingTimeInput.get().getArrayValue(i);
 
                     if (Math.abs(rhoTime - finalTreeEvent.time) < model.getTolerance()) {
                         int I = (int) Math.round(particleState.I);

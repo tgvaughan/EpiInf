@@ -20,13 +20,11 @@ package epiinf.models;
 import beast.core.CalculationNode;
 import beast.core.Function;
 import beast.core.Input;
-import beast.core.parameter.RealParameter;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.ModelEvent;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -72,7 +70,7 @@ public abstract class EpidemicModel extends CalculationNode {
             "Probability with which a lineage at the corresponding time"
                     + "is sampled.");
     
-    public Input<RealParameter> rhoSamplingTimeInput = new Input<>(
+    public Input<Function> rhoSamplingTimeInput = new Input<>(
             "rhoSamplingTime",
             "Times at which rho sampling takes place");
     
@@ -259,7 +257,7 @@ public abstract class EpidemicModel extends CalculationNode {
                 ModelEvent event = new ModelEvent();
                 event.type = ModelEvent.Type.RHO_SAMPLING;
                 event.rho = rhoSamplingProbInput.get().getArrayValue(i);
-                event.time = rhoSamplingTimeInput.get().getValue(i);
+                event.time = rhoSamplingTimeInput.get().getArrayValue(i);
                 modelEventList.add(event);
             }
         }

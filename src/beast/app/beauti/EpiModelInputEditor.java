@@ -296,7 +296,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
         rhoSamplingProb = (RealParameter)epidemicModel.rhoSamplingProbInput.get();
         rhoSamplingProbTextField.setText(String.valueOf(rhoSamplingProb.getValue()));
-        rhoSamplingTime = epidemicModel.rhoSamplingTimeInput.get();
+        rhoSamplingTime = (RealParameter) epidemicModel.rhoSamplingTimeInput.get();
         if (rhoSamplingProb.getValue()>0) {
             estimateRhoSamplingProb.setEnabled(true);
             estimateRhoSamplingProb.setSelected(rhoSamplingProb.isEstimatedInput.get());
