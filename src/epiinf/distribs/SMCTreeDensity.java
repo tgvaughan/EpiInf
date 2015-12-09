@@ -227,6 +227,10 @@ public class SMCTreeDensity extends TreeDistribution {
             model.calculatePropensities(particleState);
 
             double infectionProp = model.propensities[EpidemicEvent.INFECTION];
+            double allowedInfectProp = infectionProp
+                    *(1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1));
+            double forbbiddenInfectProp = infectionProp - allowedInfectProp;
+
             double allowedRecovProp, forbiddenRecovProp;
             if (particleState.I > lineages) {
                 allowedRecovProp = model.propensities[EpidemicEvent.RECOVERY];
@@ -235,7 +239,7 @@ public class SMCTreeDensity extends TreeDistribution {
                 allowedRecovProp = 0.0;
                 forbiddenRecovProp = model.propensities[EpidemicEvent.RECOVERY];
             }
-            double allowedEventProp = infectionProp + allowedRecovProp;
+            double allowedEventProp = allowedInfectProp + allowedRecovProp;
 
             // Do we leap?
 
@@ -254,7 +258,7 @@ public class SMCTreeDensity extends TreeDistribution {
                 double trueDt = Math.min(dt, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);
                 conditionalLogP += -trueDt * (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
                         + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
-                        + forbiddenRecovProp);
+                        + forbbiddenInfectProp + forbiddenRecovProp);
 
                 // Increment time
                 particleState.time += dt;
@@ -278,16 +282,11 @@ public class SMCTreeDensity extends TreeDistribution {
 
                 EpidemicEvent event = new EpidemicEvent();
                 event.time = particleState.time;
-                if (allowedEventProp * Randomizer.nextDouble() < infectionProp) {
+                if (allowedEventProp * Randomizer.nextDouble() < allowedInfectProp)
                     event.type = EpidemicEvent.INFECTION;
-                } else
+                else
                     event.type = EpidemicEvent.RECOVERY;
 
-
-                // Condition against infection events that produce coalescences not
-                // observed in tree.
-                if (event.type == EpidemicEvent.INFECTION)
-                    conditionalLogP += Math.log(1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1));
 
                 model.incrementState(particleState, event);
 
@@ -307,23 +306,17 @@ public class SMCTreeDensity extends TreeDistribution {
                 double trueDt = Math.min(tau, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);
                 conditionalLogP += -trueDt * (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
                         + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
-                        + forbiddenRecovProp);
+                        + forbbiddenInfectProp + forbiddenRecovProp);
 
                 EpidemicEvent infectEvent = new EpidemicEvent();
                 infectEvent.type = EpidemicEvent.INFECTION;
                 infectEvent.multiplicity = (int)Math.round(
-                        Randomizer.nextPoisson(trueDt*infectionProp));
+                        Randomizer.nextPoisson(trueDt*allowedInfectProp));
 
                 EpidemicEvent recovEvent = new EpidemicEvent();
                 recovEvent.type = EpidemicEvent.RECOVERY;
                 recovEvent.multiplicity = (int)Math.round(
                         Randomizer.nextPoisson(trueDt*allowedRecovProp));
-
-                // Condition against infection events that produce coalescences not
-                // observed in tree.
-                conditionalLogP += infectEvent.multiplicity
-                        *Math.log(1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1));
-//                        + GammaFunction.lnGamma(infectEvent.multiplicity+1);
 
                 model.incrementState(particleState, infectEvent);
                 model.incrementState(particleState, recovEvent);
@@ -331,15 +324,13 @@ public class SMCTreeDensity extends TreeDistribution {
                 if (conditionalLogP == Double.NEGATIVE_INFINITY || !particleState.isValid())
                     return Double.NEGATIVE_INFINITY;
 
-                if (nextModelEventTime < finalTreeEvent.time && particleState.time + tau > nextModelEventTime) {
+                if (nextModelEventTime < finalTreeEvent.time && particleState.time + tau > nextModelEventTime)
                     particleState.time = nextModelEventTime;
-                    continue;
-                } else {
-                    if (particleState.time + tau > finalTreeEvent.time) {
+                else {
+                    if (particleState.time + tau > finalTreeEvent.time)
                         break;
-                    } else {
+                    else
                         particleState.time += tau;
-                    }
                 }
 
             }
