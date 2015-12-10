@@ -241,8 +241,11 @@ public class SMCTreeDensity extends TreeDistribution {
 
             // Do we leap?
 
-            if (particleTrajectory != null
-                    && (tau<=0 || (alpha>0 && model.isCritical(particleState, alpha, tau)))) {
+            boolean isLeap = particleTrajectory == null
+                    && nLeaps > 0
+                    && (alpha==0.0 || model.isCritical(particleState, alpha, tau));
+
+            if (!isLeap) {
 
                 // Determine size of time increment
                 double dt;
