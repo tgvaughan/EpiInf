@@ -55,8 +55,8 @@ public class SMCTreeDensity extends TreeDistribution {
     public Input<Integer> nLeapsInput = new Input<>(
             "nTauLeaps", "Maximum number of tau leaps to use. Zero means no tau-leaping.", 0);
 
-    public Input<Integer> alphaInput = new Input<>(
-            "alpha", "Reaction criticality parameter, with greater values giving more leaps. Zero means always leap.", 10);
+    public Input<Double> alphaInput = new Input<>(
+            "alpha", "Reaction criticality parameter, with greater values giving more leaps. Zero means always leap.", 10.0);
 
     EpidemicModel model;
     TreeEventList treeEventList;
