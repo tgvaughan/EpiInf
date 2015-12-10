@@ -156,7 +156,7 @@ public class SMCTreeDensityTest {
                 "model", model,
                 "nParticles", 100000,
                 "nTauLeaps", 10,
-                "alpha", 0);
+                "alpha", 0.0);
 
         double logP = density.calculateLogP();
         double logPtrue = -34.87;
