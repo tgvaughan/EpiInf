@@ -154,6 +154,7 @@ public abstract class EpidemicModel extends CalculationNode {
 
     /**
      * Use binary search to identify interval index corresponding to given time.
+     *
      * @param rateShiftTimeParam function identifying rate shift times
      * @param time time to place
      * @return index into corresponding interval
@@ -198,9 +199,24 @@ public abstract class EpidemicModel extends CalculationNode {
             EpidemicEvent event);
 
     /**
-     *
+     * Returns true if an invalid state are likely if tau leaping is used
+     * with the given step size. Increasing alpha causes the assessment to
+     * be more conservative (i.e. return true more often).
      */
     public abstract boolean isCritical(EpidemicState state, double alpha, double tau);
+
+    /**
+     * Uses algorithm outlined in Cao et al. (JCP, 2006) to select the next
+     * tau leaping step size.
+     *
+     * @param epsilon relative change in propensity to allow
+     * @param state epidemic state
+     * @param infectProp infection propensity to use
+     * @param recovProp recovery propensity to use
+     * @return selected tau
+     */
+    public abstract double getTau(double epsilon, EpidemicState state,
+                                  double infectProp, double recovProp);
 
     /**
      * Update model event list and reaction rate caches.

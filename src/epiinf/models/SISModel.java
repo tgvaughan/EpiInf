@@ -79,4 +79,30 @@ public class SISModel extends EpidemicModel {
 
         return nInfect > state.S || nRemove > state.I;
     }
+
+    @Override
+    public double getTau(double epsilon, EpidemicState state, double infectionProp, double recoveryProp) {
+        double muS = -infectionProp + recoveryProp;
+        double muI = infectionProp - recoveryProp;
+
+        double sigmaS2 = infectionProp + recoveryProp;
+        double sigmaI2 = infectionProp + recoveryProp;
+
+        double epsS = Math.max(1.0, epsilon*state.S);
+        double epsI = Math.max(1.0, epsilon*state.I);
+
+        double tau = muS != 0.0 ? epsS/Math.abs(muS)
+                : Double.POSITIVE_INFINITY;
+
+        if (sigmaS2>0)
+            tau = Math.min(tau, epsS*epsS/sigmaS2);
+
+        if (muI>0)
+            tau = Math.min(tau, epsI/Math.abs(muI));
+
+        if (sigmaI2>0)
+            tau = Math.min(tau, epsI*epsI/sigmaI2);
+
+        return tau;
+    }
 }

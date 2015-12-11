@@ -36,7 +36,7 @@
     </tree>
 
     <run spec="DensityMapper">
-        <distribution spec="SMCTreeDensity" id="density" tree="@tree" nParticles="1000" nTauLeaps="10" alpha="0">
+        <distribution spec="SMCTreeDensity" id="density" tree="@tree" nParticles="1000" useTauLeaping="true">
             <treeOrigin spec="OriginFromTrajectory" trajectory="@trajectory"/>
             <model spec="SISModel">
                 <S0 spec="IntegerParameter" value="100000"/>
@@ -46,8 +46,8 @@
             </model>
         </distribution>
 
-        <realParam spec="RealParameter" id="psi" value="0.001" lower="0.05" upper="0.15"/>
-        <steps spec="IntegerParameter" value="1"/>
+        <realParam spec="RealParameter" id="psi" value="0.001" lower="0.0005" upper="0.0015"/>
+        <steps spec="IntegerParameter" value="11"/>
 
         <logger spec="Logger" logEvery="1">
             <log idref="psi"/>

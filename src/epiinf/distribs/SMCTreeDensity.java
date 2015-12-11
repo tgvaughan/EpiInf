@@ -52,16 +52,22 @@ public class SMCTreeDensity extends TreeDistribution {
             "nParticles", "Number of particles to use in SMC calculation.",
             Validate.REQUIRED);
 
-    public Input<Integer> nLeapsInput = new Input<>(
-            "nTauLeaps", "Maximum number of tau leaps to use. Zero means no tau-leaping.", 0);
+//    public Input<Integer> nLeapsInput = new Input<>(
+//            "nTauLeaps", "Maximum number of tau leaps to use. Zero means no tau-leaping.", 0);
 
-    public Input<Double> alphaInput = new Input<>(
-            "alpha", "Reaction criticality parameter, with greater values giving more leaps. Zero means always leap.", 10.0);
+    public Input<Boolean> useTauLeapingInput = new Input<>(
+            "useTauLeaping", "Whether to use tau leaping approximation.",
+            false);
+
+    public Input<Double> epsilonInput = new Input<>(
+            "epsilon", "Relative fraction of propensity change to allow " +
+            "when seleting leap size.", 0.03);
 
     EpidemicModel model;
     TreeEventList treeEventList;
-    int nParticles, nLeaps;
-    double alpha;
+    int nParticles;
+    boolean useTauLeaping;
+    double epsilon;
 
     // Keep these around so we don't have to create these arrays/lists
     // for every density evaluation.
@@ -84,8 +90,8 @@ public class SMCTreeDensity extends TreeDistribution {
         model = modelInput.get();
         treeEventList = new TreeEventList(treeInput.get(), treeOriginInput.get());
         nParticles = nParticlesInput.get();
-        nLeaps = nLeapsInput.get();
-        alpha = alphaInput.get();
+        useTauLeaping = useTauLeapingInput.get();
+        epsilon = epsilonInput.get();
 
         particleWeights = new double[nParticles];
         particleStates = new EpidemicState[nParticles];
@@ -110,12 +116,6 @@ public class SMCTreeDensity extends TreeDistribution {
     public double calculateLogP(boolean recordTrajectory) {
 
         double thisLogP = 0.0;
-
-        double tau;
-        if (nLeaps>0)
-            tau = treeOriginInput.get().getArrayValue()/nLeaps;
-        else
-            tau = 0.0;
 
         if (recordTrajectory) {
             recordedOrigin = treeEventList.getOrigin();
@@ -145,8 +145,8 @@ public class SMCTreeDensity extends TreeDistribution {
             for (int p = 0; p < nParticles; p++) {
 
                 double newLogWeight = recordTrajectory ?
-                        updateParticle(particleStates[p], k, treeEvent, tau, particleTrajectories.get(p))
-                        : updateParticle(particleStates[p], k, treeEvent, tau, null);
+                        updateParticle(particleStates[p], k, treeEvent, particleTrajectories.get(p))
+                        : updateParticle(particleStates[p], k, treeEvent, null);
 
                 double newWeight = Math.exp(newLogWeight);
 
@@ -209,14 +209,12 @@ public class SMCTreeDensity extends TreeDistribution {
      * @param particleState State of particle
      * @param lineages number of tree lineages in interval
      * @param finalTreeEvent tree event which terminates interval
-     * @param tau if non-zero, maximum size of tau leaping interval
      * @param particleTrajectory if non-null, add particle states to this trajectory
      *
      * @return log conditional prob of tree interval under trajectory
      */
     private double updateParticle(EpidemicState particleState,
                                   int lineages, TreeEvent finalTreeEvent,
-                                  double tau,
                                   List<EpidemicState> particleTrajectory) {
         double conditionalLogP = 0;
 
@@ -242,8 +240,16 @@ public class SMCTreeDensity extends TreeDistribution {
             // Do we leap?
 
             boolean isLeap = particleTrajectory == null
-                    && nLeaps > 0
-                    && (alpha==0.0 || model.isCritical(particleState, alpha, tau));
+                    && useTauLeaping;
+
+            // Determine length of proposed leap and switch back to SSA
+            // if length isn't much greater than the expected SSA step size.
+            double tau = Double.POSITIVE_INFINITY;
+            if (isLeap) {
+                tau = model.getTau(epsilon, particleState, allowedInfectProp, allowedRecovProp);
+                if (tau < 10.0/allowedEventProp)
+                    isLeap = false;
+            }
 
             if (!isLeap) {
 
@@ -303,6 +309,8 @@ public class SMCTreeDensity extends TreeDistribution {
                 }
 
             } else {
+
+//                double tau = model.getTau(epsilon, particleState, allowedInfectProp, allowedRecovProp);
 
                 double nextModelEventTime = model.getNextModelEventTime(particleState);
                 double trueDt = Math.min(tau, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);

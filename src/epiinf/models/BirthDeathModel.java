@@ -72,4 +72,21 @@ public class BirthDeathModel extends EpidemicModel {
 
         return nRemove > state.I;
     }
+
+    @Override
+    public double getTau(double epsilon, EpidemicState state, double infectionProp, double recoveryProp) {
+        double muI = infectionProp - recoveryProp;
+
+        double sigmaI2 = infectionProp + recoveryProp;
+
+        double epsI = Math.max(1.0, epsilon*state.I);
+
+        double tau = muI != 0.0 ? epsI/Math.abs(muI)
+                : Double.POSITIVE_INFINITY;
+
+        if (sigmaI2>0.0)
+            tau = Math.min(tau, epsI*epsI/sigmaI2);
+
+        return tau;
+    }
 }
