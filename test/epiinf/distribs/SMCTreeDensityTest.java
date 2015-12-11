@@ -23,6 +23,7 @@ import beast.util.Randomizer;
 import beast.util.TreeParser;
 import epiinf.OriginFromTrajectory;
 import epiinf.models.EpidemicModel;
+import epiinf.models.SIRModel;
 import epiinf.models.SISModel;
 
 import static org.junit.Assert.assertTrue;
@@ -165,4 +166,148 @@ public class SMCTreeDensityTest {
 
         assertTrue(Math.abs(logP-logPtrue)<0.5);
     }
+
+
+    @org.junit.Test
+    public void testSIRTreeDensityContemp() throws Exception {
+
+        Randomizer.setSeed(42);
+
+        TreeParser tree = new TreeParser(
+                "((t2:2.6540971886279987,(t6:0.5985184632462022,t3:0.598518" +
+                        "4632462022):2.0555787253817965):1.3143407954121802" +
+                        ",((((t11:1.7507486451524459,t18:1.7507486451524459" +
+                        "):0.15463202333675685,(t7:0.005557722030708145,t19" +
+                        ":0.005557722030708145):1.8998229464584946):0.04538" +
+                        "965150569485,t17:1.9507703199948976):1.24654512383" +
+                        "0562,((t4:1.3402939924855457,t0:1.3402939924855457" +
+                        "):1.2267309476017108,(((t16:1.6297766592516973,(t8" +
+                        ":1.604699304207743,((t14:0.7386842437142844,t9:0.7" +
+                        "386842437142844):0.26795159631020393,t10:1.0066358" +
+                        "400244884):0.5980634641832547):0.02507735504395425" +
+                        "3):0.390258648420418,(t15:1.8472535458949886,(t20:" +
+                        "0.9138121992788801,t22:0.9138121992788801):0.93344" +
+                        "13466161084):0.17278176177712679):0.04086207977454" +
+                        "6256,((t21:1.3594190980750436,(t13:1.0358015066819" +
+                        "188,(t12:0.7248274453285872,t5:0.7248274453285872)" +
+                        ":0.3109740613533316):0.32361759139312474):0.406905" +
+                        "07105017915,t1:1.7663241691252227):0.2945732183214" +
+                        "389):0.5061275526405948):0.6302905037382032):0.771" +
+                        "1225402147193):0.03156201595982111;",
+                false, false, true, 0);
+
+        EpidemicModel model = new SIRModel();
+        model.initByName(
+                "S0", new IntegerParameter("199"),
+                "infectionRate", new RealParameter("0.01"),
+                "recoveryRate", new RealParameter("0.2"),
+                "psiSamplingRate", new RealParameter("0.0"),
+                "rhoSamplingProb", new RealParameter("0.3"),
+                "rhoSamplingTime", new RealParameter("4.0"));
+
+        SMCTreeDensity density = new SMCTreeDensity();
+        density.initByName(
+                "tree", tree,
+                "treeOrigin", new RealParameter("4.0"),
+                "model", model,
+                "nParticles", 100000);
+
+        double logP = density.calculateLogP();
+        double logPtrue = -17.95;
+
+        System.out.println("Truth: " + logPtrue);
+        System.out.println("Estimate: " + logP);
+
+        assertTrue(Math.abs(logP-logPtrue)<0.1);
+    }
+
+    @org.junit.Test
+    public void testSIRTreeDensitySerial() throws Exception {
+
+        Randomizer.setSeed(42);
+
+        TreeParser tree = new TreeParser(
+                "((t10:1.190994645607128,((t5:0.7907784749295401,t0:2.137323" +
+                        "582518187):1.4069968260134451,(((((t1:1.35747685412" +
+                        "18845,t2:1.1326815198385916):1.353533897088965,t9:0" +
+                        ".561536306309963):0.2839477233273353,t15:0.38749087" +
+                        "865769694):0.08355380761559106,(t4:1.96826481583497" +
+                        "83,t8:0.9918701157630321):0.18905207020723713):0.05" +
+                        "1536457989408646,t7:1.3799674904273243):0.095042916" +
+                        "80756127):0.13130794670059887):1.1041993932072272,(" +
+                        "t13:1.796340301846171,(t12:1.7408704970223141,(((t1" +
+                        "4:0.4222181780048908,t3:2.2744621113125665):0.36206" +
+                        "299564941613,t11:1.124843163313686):0.1561269293807" +
+                        "6744,t6:1.8854439746459617):0.4677724578417486):0.2" +
+                        "1513248992333622):0.25084875675842433):0.1193998384" +
+                        "1998814;" , false, false, true, 0);
+
+        EpidemicModel model = new SIRModel();
+        model.initByName(
+                "S0", new IntegerParameter("99"),
+                "infectionRate", new RealParameter("0.02"),
+                "recoveryRate", new RealParameter("0.1"),
+                "psiSamplingRate", new RealParameter("0.1"));
+
+        SMCTreeDensity density = new SMCTreeDensity();
+        density.initByName(
+                "tree", tree,
+                "treeOrigin", new RealParameter("4.89922758686"),
+                "model", model,
+                "nParticles", 100000);
+
+        double logP = density.calculateLogP();
+        double logPtrue = -28.20;
+
+        System.out.println("Truth: " + logPtrue);
+        System.out.println("Estimate: " + logP);
+
+        assertTrue(Math.abs(logP-logPtrue)<0.1);
+    }
+
+    @org.junit.Test
+    public void testSIRTreeDensitySerialLeap() throws Exception {
+
+        Randomizer.setSeed(42);
+
+        TreeParser tree = new TreeParser(
+                "((t10:1.190994645607128,((t5:0.7907784749295401,t0:2.137323" +
+                        "582518187):1.4069968260134451,(((((t1:1.35747685412" +
+                        "18845,t2:1.1326815198385916):1.353533897088965,t9:0" +
+                        ".561536306309963):0.2839477233273353,t15:0.38749087" +
+                        "865769694):0.08355380761559106,(t4:1.96826481583497" +
+                        "83,t8:0.9918701157630321):0.18905207020723713):0.05" +
+                        "1536457989408646,t7:1.3799674904273243):0.095042916" +
+                        "80756127):0.13130794670059887):1.1041993932072272,(" +
+                        "t13:1.796340301846171,(t12:1.7408704970223141,(((t1" +
+                        "4:0.4222181780048908,t3:2.2744621113125665):0.36206" +
+                        "299564941613,t11:1.124843163313686):0.1561269293807" +
+                        "6744,t6:1.8854439746459617):0.4677724578417486):0.2" +
+                        "1513248992333622):0.25084875675842433):0.1193998384" +
+                        "1998814;" , false, false, true, 0);
+
+        EpidemicModel model = new SIRModel();
+        model.initByName(
+                "S0", new IntegerParameter("99"),
+                "infectionRate", new RealParameter("0.02"),
+                "recoveryRate", new RealParameter("0.1"),
+                "psiSamplingRate", new RealParameter("0.1"));
+
+        SMCTreeDensity density = new SMCTreeDensity();
+        density.initByName(
+                "tree", tree,
+                "treeOrigin", new RealParameter("4.89922758686"),
+                "model", model,
+                "nParticles", 100000,
+                "useTauLeaping", true);
+
+        double logP = density.calculateLogP();
+        double logPtrue = -28.20;
+
+        System.out.println("Truth: " + logPtrue);
+        System.out.println("Estimate: " + logP);
+
+        assertTrue(Math.abs(logP-logPtrue)<0.1);
+    }
+
 }
