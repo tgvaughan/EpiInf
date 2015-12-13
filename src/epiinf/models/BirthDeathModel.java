@@ -65,15 +65,6 @@ public class BirthDeathModel extends EpidemicModel {
     }
 
     @Override
-    public boolean isCritical(EpidemicState state, double alpha, double tau) {
-        double nRemove = propensities[EpidemicEvent.RECOVERY]
-                + propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
-                + propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
-
-        return nRemove > state.I;
-    }
-
-    @Override
     public double getTau(double epsilon, EpidemicState state, double infectionProp, double recoveryProp) {
         double muI = infectionProp - recoveryProp;
 

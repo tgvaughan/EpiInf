@@ -199,13 +199,6 @@ public abstract class EpidemicModel extends CalculationNode {
             EpidemicEvent event);
 
     /**
-     * Returns true if an invalid state are likely if tau leaping is used
-     * with the given step size. Increasing alpha causes the assessment to
-     * be more conservative (i.e. return true more often).
-     */
-    public abstract boolean isCritical(EpidemicState state, double alpha, double tau);
-
-    /**
      * Uses algorithm outlined in Cao et al. (JCP, 2006) to select the next
      * tau leaping step size.
      *

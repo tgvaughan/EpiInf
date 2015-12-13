@@ -70,17 +70,6 @@ public class SIRModel extends EpidemicModel {
     }
 
     @Override
-    public boolean isCritical(EpidemicState state, double alpha, double tau) {
-        double nInfect = propensities[EpidemicEvent.INFECTION]*tau
-                + alpha*Math.sqrt(propensities[EpidemicEvent.INFECTION]*tau);
-        double nRemove = propensities[EpidemicEvent.RECOVERY]
-                + propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
-                + propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
-
-        return nInfect > state.S || nRemove > state.I;
-    }
-
-    @Override
     public double getTau(double epsilon, EpidemicState state, double infectionProp, double recoveryProp) {
         double muS = -infectionProp;
         double muI = infectionProp - recoveryProp;

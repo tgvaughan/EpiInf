@@ -52,16 +52,13 @@ public class SMCTreeDensity extends TreeDistribution {
             "nParticles", "Number of particles to use in SMC calculation.",
             Validate.REQUIRED);
 
-//    public Input<Integer> nLeapsInput = new Input<>(
-//            "nTauLeaps", "Maximum number of tau leaps to use. Zero means no tau-leaping.", 0);
-
     public Input<Boolean> useTauLeapingInput = new Input<>(
             "useTauLeaping", "Whether to use tau leaping approximation.",
             false);
 
     public Input<Double> epsilonInput = new Input<>(
-            "epsilon", "Relative fraction of propensity change to allow " +
-            "when seleting leap size.", 0.03);
+            "tauLeapingEpsilon", "Relative fraction of propensity change to allow " +
+            "when selecting leap size.", 0.03);
 
     EpidemicModel model;
     TreeEventList treeEventList;
@@ -81,7 +78,6 @@ public class SMCTreeDensity extends TreeDistribution {
 
 
     public SMCTreeDensity() {
-//        treeInput.setRule(Validate.FORBIDDEN);
         treeIntervalsInput.setRule(Validate.FORBIDDEN);
     }
 
@@ -310,8 +306,6 @@ public class SMCTreeDensity extends TreeDistribution {
 
             } else {
 
-//                double tau = model.getTau(epsilon, particleState, allowedInfectProp, allowedRecovProp);
-
                 double nextModelEventTime = model.getNextModelEventTime(particleState);
                 double trueDt = Math.min(tau, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);
                 conditionalLogP += -trueDt * (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
@@ -320,13 +314,11 @@ public class SMCTreeDensity extends TreeDistribution {
 
                 EpidemicEvent infectEvent = new EpidemicEvent();
                 infectEvent.type = EpidemicEvent.INFECTION;
-                infectEvent.multiplicity = (int)Math.round(
-                        Randomizer.nextPoisson(trueDt*allowedInfectProp));
+                infectEvent.multiplicity = Math.round(Randomizer.nextPoisson(trueDt*allowedInfectProp));
 
                 EpidemicEvent recovEvent = new EpidemicEvent();
                 recovEvent.type = EpidemicEvent.RECOVERY;
-                recovEvent.multiplicity = (int)Math.round(
-                        Randomizer.nextPoisson(trueDt*allowedRecovProp));
+                recovEvent.multiplicity = Math.round(Randomizer.nextPoisson(trueDt*allowedRecovProp));
 
                 model.incrementState(particleState, infectEvent);
                 model.incrementState(particleState, recovEvent);
