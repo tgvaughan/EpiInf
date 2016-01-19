@@ -314,11 +314,11 @@ public class SMCTreeDensity extends TreeDistribution {
 
                 EpidemicEvent infectEvent = new EpidemicEvent();
                 infectEvent.type = EpidemicEvent.INFECTION;
-                infectEvent.multiplicity = Math.round(Randomizer.nextPoisson(trueDt*allowedInfectProp));
+                infectEvent.multiplicity = (int)Randomizer.nextPoisson(trueDt*allowedInfectProp);
 
                 EpidemicEvent recovEvent = new EpidemicEvent();
                 recovEvent.type = EpidemicEvent.RECOVERY;
-                recovEvent.multiplicity = Math.round(Randomizer.nextPoisson(trueDt*allowedRecovProp));
+                recovEvent.multiplicity = (int)Math.round(Randomizer.nextPoisson(trueDt*allowedRecovProp));
 
                 model.incrementState(particleState, infectEvent);
                 model.incrementState(particleState, recovEvent);

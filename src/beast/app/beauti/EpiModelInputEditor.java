@@ -37,6 +37,9 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
 /**
+ * Input editor for EpidemicModels.  Special message to anyone (including
+ * my future self) who has to read this code: I am truly and deeply sorry.
+ *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class EpiModelInputEditor extends InputEditor.Base {
@@ -93,7 +96,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
         // Set up fields
         m_bAddButtons = bAddButtons;
         m_input = input;
-        m_beastObject = beastObject;
+        m_plugin = beastObject;
         this.itemNr = itemNr;
         epidemicModel = (EpidemicModel) input.get();
 
@@ -374,7 +377,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
         modelSaveInProgress = true;
 
-        PartitionContext partitionContext = doc.getContextFor(m_beastObject);
+        PartitionContext partitionContext = doc.getContextFor(m_plugin);
         String partitionID = ".t:" + partitionContext.tree;
 
         try {
@@ -448,7 +451,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
             epidemicModel.initAndValidate();
 
-            m_input.setValue(epidemicModel, m_beastObject);
+            m_input.setValue(epidemicModel, m_plugin);
             BEASTObjectPanel.addPluginToMap(epidemicModel, doc);
 
         } catch (Exception e) {
