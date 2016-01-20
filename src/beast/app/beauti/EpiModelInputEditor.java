@@ -40,6 +40,11 @@ import javax.swing.table.TableModel;
  * Input editor for EpidemicModels.  Special message to anyone (including
  * my future self) who has to read this code: I am truly and deeply sorry.
  *
+ * Notes:
+ * 1. Input editor only produces models with times specified as ages relative
+ * to most recent sample.  Default behaviour for EpidemicModels is for these
+ * to be specified as proper times which increase into the future.
+ *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class EpiModelInputEditor extends InputEditor.Base {
@@ -50,6 +55,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
     IntegerParameter S0;
     RealParameter infectionRate, recoveryRate, psiSamplingRate, rhoSamplingProb, rhoSamplingTime;
     RealParameter infectionRateChangeTimes, recoveryRateChangeTimes, psiSamplingRateChangeTimes;
+    RealParameter epiOrigin;
 
     ComboBoxModel<String> emSelectorModel;
     DefaultTableModel infectionRateModel, infectionRateChangeTimesModel;
@@ -308,6 +314,8 @@ public class EpiModelInputEditor extends InputEditor.Base {
             estimateRhoSamplingProb.setSelected(false);
         }
 
+        epiOrigin = (RealParameter)epidemicModel.treeOriginInput.get();
+
         if (epidemicModel instanceof SISModel) {
             SISModel sisModel = (SISModel)epidemicModel;
 
@@ -423,6 +431,8 @@ public class EpiModelInputEditor extends InputEditor.Base {
                 }
             }
 
+            epidemicModel.setInputValue("treeOrigin", epiOrigin);
+
             saveModelRateParameters("infectionRate",
                     infectionRate, infectionRateModel, estimateInfectionRate,
                     nInfectionRateShiftsModel,
@@ -448,6 +458,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
             rhoSamplingProb.initAndValidate();
 
             epidemicModel.setInputValue("rhoSamplingTime", rhoSamplingTime);
+            epidemicModel.setInputValue("rhoSamplingTimesBackwards", true);
 
             epidemicModel.initAndValidate();
 
@@ -538,6 +549,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
         if (rateChangeTimesModel.getColumnCount()>0) {
             epidemicModel.setInputValue(paramName + "ShiftTimes", rateChangeTimes);
             rateChangeTimes.initAndValidate();
+            epidemicModel.setInputValue(paramName + "ShiftTimesBackward", true);
         }
     }
 }

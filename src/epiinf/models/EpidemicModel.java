@@ -43,11 +43,24 @@ public abstract class EpidemicModel extends CalculationNode {
     public Input<Function> infectionRateShiftTimesInput = new Input<>(
             "infectionRateShiftTimes", "Infection rate shift times.");
 
+    public Input<Boolean> infectionRateShiftTimesBackwardInput = new Input<>(
+            "infectionRateShiftTimesBackward",
+            "If true, infection rate shift times are assumed to be expressed" +
+                    " as times before most recent sample.",
+            false);
+
     public Input<Function> recoveryRateInput = new Input<>(
             "recoveryRate", "Recovery rate.", Input.Validate.REQUIRED);
 
     public Input<Function> recoveryRateShiftTimesInput = new Input<>(
             "recoveryRateShiftTimes", "Recovery rate shift times.");
+
+    public Input<Boolean> recoveryRateShiftTimesBackwardInput = new Input<>(
+            "recoveryRateShiftTimesBackward",
+            "If true, recovery rate shift times are assumed to be expressed" +
+                    " as times before most recent sample.",
+            false);
+
 
     public Input<Function> psiSamplingRateInput = new Input<>(
             "psiSamplingRate",
@@ -57,6 +70,13 @@ public abstract class EpidemicModel extends CalculationNode {
             "psiSamplingRateShiftTimes",
             "Times at which psi-sampling rate changes.");
 
+    public Input<Boolean> psiSamplingRateShiftTimesBackwardInput = new Input<>(
+            "psiSamplingRateShiftTimesBackward",
+            "If true, psi sampling rate shift times are assumed to be expressed" +
+                    " as times before most recent sample.",
+            false);
+
+
     public Input<Function> removalProbInput = new Input<>(
             "removalProb",
             "Probability that sample individual is removed from population (Default 1).");
@@ -64,6 +84,13 @@ public abstract class EpidemicModel extends CalculationNode {
     public Input<Function> removalProbShiftTimesInput = new Input<>(
             "removalProbShiftTimes",
             "Times at which removal probability changes.");
+
+    public Input<Boolean> removalProbShiftTimesBackwardInput = new Input<>(
+            "removalProbShiftTimesBackward",
+            "If true, removal probability change times are assumed to be expressed" +
+                    " as times before most recent sample.",
+            false);
+
 
     public Input<Function> rhoSamplingProbInput = new Input<>(
             "rhoSamplingProb",
@@ -73,7 +100,19 @@ public abstract class EpidemicModel extends CalculationNode {
     public Input<Function> rhoSamplingTimeInput = new Input<>(
             "rhoSamplingTime",
             "Times at which rho sampling takes place");
-    
+
+    public Input<Boolean> rhoSamplingTimesBackwardInput = new Input<>(
+            "rhoSamplingTimesBackward",
+            "If true, rho sampling times are assumed to be expressed" +
+                    " as times before most recent sample.",
+            false);
+
+    public Input<Function> treeOriginInput = new Input<>(
+            "treeOrigin",
+            "Time before most recent sample that epidemic began. " +
+                    "Required only if backward times are used " +
+                    "for any of the rate shifts or sampling times.");
+
     public Input<Double> toleranceInput = new Input<>("tolerance",
             "Maximum absolute time difference between events on tree and "
                     + "events in epidemic trajectory for events to be"
@@ -114,6 +153,16 @@ public abstract class EpidemicModel extends CalculationNode {
                                 "don't match.");
         }
 
+        if ((infectionRateShiftTimesBackwardInput.get()
+                || recoveryRateShiftTimesBackwardInput.get()
+                || psiSamplingRateShiftTimesBackwardInput.get()
+                || rhoSamplingTimesBackwardInput.get()
+                || removalProbShiftTimesBackwardInput.get())
+            && treeOriginInput.get() == null) {
+            throw new IllegalArgumentException(
+                    "Must specify treeOrigin input if backward times are used.");
+        }
+
         ratesDirty = true;
     }
     
@@ -140,12 +189,43 @@ public abstract class EpidemicModel extends CalculationNode {
         propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE] = calculatePsiSamplingNoRemovePropensity(state);
     }
 
+    /**
+     * Convert time parameter element to forwards direction if originally
+     * expressed in backwards direction, also reversing the element order.
+     * This ensures that if elements are in order of increasing backwards
+     * time the return values of this function call will be in order of
+     * increasing forwards time.
+     *
+     * @param timeParam time parameter
+     * @param i index into parameter
+     * @param isReversed if true, original times are backwards
+     * @return forward time
+     */
+    protected double getForwardTime(Function timeParam, int i, boolean isReversed) {
+        if (isReversed) {
+            return treeOriginInput.get().getArrayValue()
+                    - timeParam.getArrayValue(timeParam.getDimension()-1-i);
+        } else {
+            return timeParam.getArrayValue(i);
+        }
+    }
+
+    /**
+     * Retrieve rate at given time.
+     *
+     * @param rateParam parameter defining rate
+     * @param rateShiftTimeParam parameter defining rate change times
+     * @param paramTimesBackwards if true, rate shift times are backwards
+     * @param time time at which to evaluate rate.
+     *
+     * @return rate effective at given time
+     */
     protected double getCurrentRate(Function rateParam, Function rateShiftTimeParam,
-                          double time) {
+                                    boolean paramTimesBackwards, double time) {
         if (rateParam != null) {
             if (rateShiftTimeParam != null) {
                 return rateParam.getArrayValue(
-                        binarySearch(rateShiftTimeParam, time));
+                        binarySearch(rateShiftTimeParam, paramTimesBackwards, time));
             } else
                 return rateParam.getArrayValue();
         } else
@@ -156,10 +236,12 @@ public abstract class EpidemicModel extends CalculationNode {
      * Use binary search to identify interval index corresponding to given time.
      *
      * @param rateShiftTimeParam function identifying rate shift times
+     * @param paramTimesBackwards if true, rate shift times are backwards
      * @param time time to place
      * @return index into corresponding interval
      */
-    protected static int binarySearch(Function rateShiftTimeParam, double time) {
+    protected int binarySearch(Function rateShiftTimeParam,
+                                      boolean paramTimesBackwards, double time) {
 
         int N = rateShiftTimeParam.getDimension()+1;
         int imin=0, imax=N-1;
@@ -167,8 +249,8 @@ public abstract class EpidemicModel extends CalculationNode {
         while (imax>imin) {
             int imid = imin + (imax-imin)/2;
 
-            if (imid==N-1 || rateShiftTimeParam.getArrayValue(imid)>time) {
-                if (imid==0 || rateShiftTimeParam.getArrayValue(imid-1)<=time)
+            if (imid==N-1 || getForwardTime(rateShiftTimeParam, imid, paramTimesBackwards)>time) {
+                if (imid==0 || getForwardTime(rateShiftTimeParam, imid-1, paramTimesBackwards)<=time)
                     return imid;
                 else
                     imax = imid;
@@ -229,21 +311,25 @@ public abstract class EpidemicModel extends CalculationNode {
             double t = i>0 ? modelEventList.get(i-1).time : 0.0;
 
             rateCache.get(i)[EpidemicEvent.INFECTION] = getCurrentRate(
-                    infectionRateInput.get(), infectionRateShiftTimesInput.get(), t);
+                    infectionRateInput.get(), infectionRateShiftTimesInput.get(),
+                    infectionRateShiftTimesBackwardInput.get(), t);
             rateCache.get(i)[EpidemicEvent.RECOVERY] = getCurrentRate(
-                    recoveryRateInput.get(), recoveryRateShiftTimesInput.get(), t);
+                    recoveryRateInput.get(), recoveryRateShiftTimesInput.get(),
+                    recoveryRateShiftTimesBackwardInput.get(), t);
 
             double psiSamplingRate, removalProb;
 
             if (psiSamplingRateInput.get() != null)
                 psiSamplingRate = getCurrentRate(
-                        psiSamplingRateInput.get(), psiSamplingRateShiftTimesInput.get(), t);
+                        psiSamplingRateInput.get(), psiSamplingRateShiftTimesInput.get(),
+                        psiSamplingRateShiftTimesBackwardInput.get(), t);
             else
                 psiSamplingRate = 0.0;
 
             if (removalProbInput.get() != null)
                 removalProb = getCurrentRate(
-                        removalProbInput.get(), removalProbShiftTimesInput.get(), t);
+                        removalProbInput.get(), removalProbShiftTimesInput.get(),
+                        removalProbShiftTimesBackwardInput.get(), t);
             else
                 removalProb = 1.0;
 
@@ -275,10 +361,10 @@ public abstract class EpidemicModel extends CalculationNode {
             }
         }
 
-        addRateShiftEvents(psiSamplingRateShiftTimesInput.get());
-        addRateShiftEvents(removalProbShiftTimesInput.get());
-        addRateShiftEvents(infectionRateShiftTimesInput.get());
-        addRateShiftEvents(recoveryRateShiftTimesInput.get());
+        addRateShiftEvents(psiSamplingRateShiftTimesInput.get(), psiSamplingRateShiftTimesBackwardInput.get());
+        addRateShiftEvents(removalProbShiftTimesInput.get(), removalProbShiftTimesBackwardInput.get());
+        addRateShiftEvents(infectionRateShiftTimesInput.get(), infectionRateShiftTimesBackwardInput.get());
+        addRateShiftEvents(recoveryRateShiftTimesInput.get(), recoveryRateShiftTimesBackwardInput.get());
 
         Collections.sort(modelEventList, (e1, e2) -> {
             if (e1.time < e2.time)
@@ -292,13 +378,13 @@ public abstract class EpidemicModel extends CalculationNode {
 
     }
 
-    public void addRateShiftEvents(Function rateShiftTimesParam) {
+    public void addRateShiftEvents(Function rateShiftTimesParam, boolean rateShiftTimesBackward) {
 
         if (rateShiftTimesParam != null) {
             for (int i=0; i<rateShiftTimesParam.getDimension(); i++) {
                 ModelEvent event = new ModelEvent();
                 event.type = ModelEvent.Type.RATE_CHANGE;
-                event.time = rateShiftTimesParam.getArrayValue(i);
+                event.time = getForwardTime(rateShiftTimesParam, i, rateShiftTimesBackward);
                 modelEventList.add(event);
             }
         }
