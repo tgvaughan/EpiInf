@@ -102,9 +102,7 @@
 
             <distribution id="S0Prior.t:$(n)" spec="beast.math.distributions.Prior">
                 <x idref="S0.t:$(n)"/>
-                <distr spec="beast.math.distributions.Poisson">
-                    <lambda spec="beast.core.parameter.RealParameter" value="100" estimate="false"/>
-                </distr>
+                <distr spec="beast.math.distributions.OneOnX"/>
             </distribution>
 
             <distribution id="rhoSamplingProbPrior.t:$(n)" spec="beast.math.distributions.Prior">
