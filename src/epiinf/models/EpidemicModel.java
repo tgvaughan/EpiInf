@@ -49,6 +49,7 @@ public abstract class EpidemicModel extends CalculationNode {
                     " as times before most recent sample.",
             false);
 
+
     public Input<Function> recoveryRateInput = new Input<>(
             "recoveryRate", "Recovery rate.", Input.Validate.REQUIRED);
 
@@ -62,17 +63,18 @@ public abstract class EpidemicModel extends CalculationNode {
             false);
 
 
-    public Input<Function> psiSamplingRateInput = new Input<>(
-            "psiSamplingRate",
-            "Rate at which (destructive) psi-sampling is performed.");
+    public Input<Function> psiSamplingProportionInput = new Input<>(
+            "psiSamplingProportion",
+            "Proportion of individuals that generate at least one psi-sample " +
+                    "while infectious.");
 
-    public Input<Function> psiSamplingRateShiftTimesInput = new Input<>(
-            "psiSamplingRateShiftTimes",
-            "Times at which psi-sampling rate changes.");
+    public Input<Function> psiSamplingProportionShiftTimesInput = new Input<>(
+            "psiSamplingProportionShiftTimes",
+            "Times at which psi-sampling proportion changes.");
 
-    public Input<Boolean> psiSamplingRateShiftTimesBackwardInput = new Input<>(
-            "psiSamplingRateShiftTimesBackward",
-            "If true, psi sampling rate shift times are assumed to be expressed" +
+    public Input<Boolean> psiSamplingProportionShiftTimesBackwardInput = new Input<>(
+            "psiSamplingProportionShiftTimesBackward",
+            "If true, psi sampling proportion shift times are assumed to be expressed" +
                     " as times before most recent sample.",
             false);
 
@@ -107,6 +109,7 @@ public abstract class EpidemicModel extends CalculationNode {
                     " as times before most recent sample.",
             false);
 
+
     public Input<Function> treeOriginInput = new Input<>(
             "treeOrigin",
             "Time before most recent sample that epidemic began. " +
@@ -135,12 +138,12 @@ public abstract class EpidemicModel extends CalculationNode {
     public void initAndValidate() {
         tolerance = toleranceInput.get();
 
-        if (psiSamplingRateShiftTimesInput.get() != null) {
-            if (psiSamplingRateInput.get() == null
-                    || psiSamplingRateInput.get().getDimension()
-                    != psiSamplingRateShiftTimesInput.get().getDimension() + 1)
+        if (psiSamplingProportionShiftTimesInput.get() != null) {
+            if (psiSamplingProportionInput.get() == null
+                    || psiSamplingProportionInput.get().getDimension()
+                    != psiSamplingProportionShiftTimesInput.get().getDimension() + 1)
                 throw new IllegalArgumentException(
-                        "Psi sampling rate and rate shift time dimensions " +
+                        "Psi sampling proportion and proportion shift time dimensions " +
                                 "don't match.");
         }
 
@@ -155,7 +158,7 @@ public abstract class EpidemicModel extends CalculationNode {
 
         if ((infectionRateShiftTimesBackwardInput.get()
                 || recoveryRateShiftTimesBackwardInput.get()
-                || psiSamplingRateShiftTimesBackwardInput.get()
+                || psiSamplingProportionShiftTimesBackwardInput.get()
                 || rhoSamplingTimesBackwardInput.get()
                 || removalProbShiftTimesBackwardInput.get())
             && treeOriginInput.get() == null) {
@@ -310,21 +313,30 @@ public abstract class EpidemicModel extends CalculationNode {
         for (int i=0; i< modelEventList.size()+1; i++) {
             double t = i>0 ? modelEventList.get(i-1).time : 0.0;
 
-            rateCache.get(i)[EpidemicEvent.INFECTION] = getCurrentRate(
+
+            double infectionRate = getCurrentRate(
                     infectionRateInput.get(), infectionRateShiftTimesInput.get(),
                     infectionRateShiftTimesBackwardInput.get(), t);
-            rateCache.get(i)[EpidemicEvent.RECOVERY] = getCurrentRate(
+            rateCache.get(i)[EpidemicEvent.INFECTION] = infectionRate;
+
+            double recoveryRate = getCurrentRate(
                     recoveryRateInput.get(), recoveryRateShiftTimesInput.get(),
                     recoveryRateShiftTimesBackwardInput.get(), t);
+            rateCache.get(i)[EpidemicEvent.RECOVERY] = recoveryRate;
 
-            double psiSamplingRate, removalProb;
+            double psiSamplingProportion, psiSamplingRate, removalProb;
 
-            if (psiSamplingRateInput.get() != null)
-                psiSamplingRate = getCurrentRate(
-                        psiSamplingRateInput.get(), psiSamplingRateShiftTimesInput.get(),
-                        psiSamplingRateShiftTimesBackwardInput.get(), t);
+            if (psiSamplingProportionInput.get() != null)
+                psiSamplingProportion = getCurrentRate(
+                        psiSamplingProportionInput.get(), psiSamplingProportionShiftTimesInput.get(),
+                        psiSamplingProportionShiftTimesBackwardInput.get(), t);
             else
-                psiSamplingRate = 0.0;
+                psiSamplingProportion = 0.0;
+
+            if (psiSamplingProportion>0)
+                psiSamplingRate = recoveryRate/(1.0/psiSamplingProportion - 1);
+            else
+                psiSamplingRate = 0;
 
             if (removalProbInput.get() != null)
                 removalProb = getCurrentRate(
@@ -361,7 +373,7 @@ public abstract class EpidemicModel extends CalculationNode {
             }
         }
 
-        addRateShiftEvents(psiSamplingRateShiftTimesInput.get(), psiSamplingRateShiftTimesBackwardInput.get());
+        addRateShiftEvents(psiSamplingProportionShiftTimesInput.get(), psiSamplingProportionShiftTimesBackwardInput.get());
         addRateShiftEvents(removalProbShiftTimesInput.get(), removalProbShiftTimesBackwardInput.get());
         addRateShiftEvents(infectionRateShiftTimesInput.get(), infectionRateShiftTimesBackwardInput.get());
         addRateShiftEvents(recoveryRateShiftTimesInput.get(), recoveryRateShiftTimesBackwardInput.get());
