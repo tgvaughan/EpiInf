@@ -86,7 +86,7 @@
             <distribution id="EpiTreePrior.t:$(n)" spec="epiinf.distribs.SMCTreeDensity" nParticles="100">
                 <tree idref="Tree.t:$(n)"/>
                 <treeOrigin id="epiOrigin.t:$(n)" spec="beast.core.parameter.RealParameter" value="10.0" estimate="true"/>
-                <model id="model.t:$(n)" spec="epiinf.models.SISModel" treeOrigin="@epiOrigin.t:$(n)" rhoSamplingTime="0.0" rhoSamplingTimesBackwards="true">
+                <model id="model.t:$(n)" spec="epiinf.models.SISModel" treeOrigin="@epiOrigin.t:$(n)" rhoSamplingTime="0.0" rhoSamplingTimesBackward="true">
                     <S0 id="S0.t:$(n)" spec="beast.core.parameter.IntegerParameter" value="199" lower="0" estimate="true"/>
                     <infectionRate id="infectionRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.01" estimate="true"/>
                     <recoveryRate id="recoveryRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.1" estimate="true"/>

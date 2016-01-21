@@ -458,7 +458,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
             rhoSamplingProb.initAndValidate();
 
             epidemicModel.setInputValue("rhoSamplingTime", rhoSamplingTime);
-            epidemicModel.setInputValue("rhoSamplingTimesBackwards", true);
+            epidemicModel.setInputValue("rhoSamplingTimesBackward", true);
 
             epidemicModel.initAndValidate();
 
