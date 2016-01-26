@@ -50,7 +50,7 @@ public class SMCTreeDensityTest {
                 "S0", new IntegerParameter("99"),
                 "infectionRate", new RealParameter("0.01"),
                 "recoveryRate", new RealParameter("0.2"),
-                "psiSamplingRate", new RealParameter("0.0"),
+                "psiSamplingVariable", new RealParameter("0.0"),
                 "rhoSamplingProb", new RealParameter("0.3"),
                 "rhoSamplingTime", new RealParameter("4.0"));
 
@@ -100,7 +100,7 @@ public class SMCTreeDensityTest {
                 "S0", new IntegerParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
-                "psiSamplingRate", new RealParameter("0.1"));
+                "psiSamplingVariable", new RealParameter("0.1"));
 
         SMCTreeDensity density = new SMCTreeDensity();
         density.initByName(
@@ -148,7 +148,7 @@ public class SMCTreeDensityTest {
                 "S0", new IntegerParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
-                "psiSamplingRate", new RealParameter("0.1"));
+                "psiSamplingVariable", new RealParameter("0.1"));
 
         SMCTreeDensity density = new SMCTreeDensity();
         density.initByName(
@@ -201,7 +201,7 @@ public class SMCTreeDensityTest {
                 "S0", new IntegerParameter("199"),
                 "infectionRate", new RealParameter("0.01"),
                 "recoveryRate", new RealParameter("0.2"),
-                "psiSamplingRate", new RealParameter("0.0"),
+                "psiSamplingVariable", new RealParameter("0.0"),
                 "rhoSamplingProb", new RealParameter("0.3"),
                 "rhoSamplingTime", new RealParameter("4.0"));
 
@@ -247,7 +247,7 @@ public class SMCTreeDensityTest {
                 "S0", new IntegerParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
-                "psiSamplingRate", new RealParameter("0.1"));
+                "psiSamplingVariable", new RealParameter("0.1"));
 
         SMCTreeDensity density = new SMCTreeDensity();
         density.initByName(
@@ -291,7 +291,7 @@ public class SMCTreeDensityTest {
                 "S0", new IntegerParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
-                "psiSamplingRate", new RealParameter("0.1"));
+                "psiSamplingVariable", new RealParameter("0.1"));
 
         SMCTreeDensity density = new SMCTreeDensity();
         density.initByName(

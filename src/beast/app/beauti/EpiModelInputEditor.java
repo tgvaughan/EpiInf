@@ -52,8 +52,8 @@ public class EpiModelInputEditor extends InputEditor.Base {
     String[] modelNames = {"Linear birth-death", "SIS", "SIR"};
 
     IntegerParameter S0;
-    RealParameter infectionRate, recoveryRate, psiSamplingProportion, rhoSamplingProb, rhoSamplingTime;
-    RealParameter infectionRateChangeTimes, recoveryRateChangeTimes, psiSamplingProportionChangeTimes;
+    RealParameter infectionRate, recoveryRate, psiSamplingVariable, rhoSamplingProb, rhoSamplingTime;
+    RealParameter infectionRateChangeTimes, recoveryRateChangeTimes, psiSamplingVariableChangeTimes;
     RealParameter epiOrigin;
 
     ComboBoxModel<String> emSelectorModel;
@@ -295,11 +295,11 @@ public class EpiModelInputEditor extends InputEditor.Base {
                 recoveryRateChangeTimes, recoveryRateChangeTimesLabel,
                 recoveryRateChangeTimesModel, estimateRecoveryRateShiftTimes);
 
-        psiSamplingProportion = (RealParameter)epidemicModel.psiSamplingProportionInput.get();
-        psiSamplingProportionChangeTimes = (RealParameter)epidemicModel.psiSamplingProportionInput.get();
-        loadModelRateParameters(psiSamplingProportion, psiSamplingProportionModel,
+        psiSamplingVariable = (RealParameter)epidemicModel.psiSamplingVariableInput.get();
+        psiSamplingVariableChangeTimes = (RealParameter)epidemicModel.psiSamplingVariableShiftTimesInput.get();
+        loadModelRateParameters(psiSamplingVariable, psiSamplingProportionModel,
                 estimatePsiSamplingProportion, nPsiSamplingProportionShiftsModel,
-                psiSamplingProportionChangeTimes, psiSamplingProportionChangeTimesLabel,
+                psiSamplingVariableChangeTimes, psiSamplingProportionChangeTimesLabel,
                 psiSamplingProportionChangeTimesModel, estimatePsiSamplingProportionShiftTimes);
 
         rhoSamplingProb = (RealParameter)epidemicModel.rhoSamplingProbInput.get();
@@ -445,9 +445,9 @@ public class EpiModelInputEditor extends InputEditor.Base {
                     epidemicModel, partitionID);
 
             saveModelRateParameters("psiSamplingProportion",
-                    psiSamplingProportion, psiSamplingProportionModel, estimatePsiSamplingProportion,
+                    psiSamplingVariable, psiSamplingProportionModel, estimatePsiSamplingProportion,
                     nPsiSamplingProportionShiftsModel,
-                    psiSamplingProportionChangeTimes, psiSamplingProportionChangeTimesModel, estimatePsiSamplingProportionShiftTimes,
+                    psiSamplingVariableChangeTimes, psiSamplingProportionChangeTimesModel, estimatePsiSamplingProportionShiftTimes,
                     epidemicModel, partitionID);
 
             rhoSamplingProb.valuesInput.setValue(rhoSamplingProbTextField.getText(), rhoSamplingProb);

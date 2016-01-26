@@ -377,7 +377,7 @@ public class SMCTreeDensity extends TreeDistribution {
                         EpidemicEvent.MultipleRhoSamples(finalTreeEvent.multiplicity));
 
             } else {
-                if (model.psiSamplingProportionInput.get() != null && finalTreeEvent.multiplicity == 1) {
+                if (model.psiSamplingVariableInput.get() != null && finalTreeEvent.multiplicity == 1) {
                     model.calculatePropensities(particleState);
                     if (finalTreeEvent.type == TreeEvent.Type.LEAF) {
                         sampleProb = Math.log(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]);

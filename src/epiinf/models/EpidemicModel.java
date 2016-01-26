@@ -63,20 +63,31 @@ public abstract class EpidemicModel extends CalculationNode {
             false);
 
 
-    public Input<Function> psiSamplingProportionInput = new Input<>(
-            "psiSamplingProportion",
-            "Proportion of individuals that generate at least one psi-sample " +
-                    "while infectious.");
+    public Input<Function> psiSamplingVariableInput = new Input<>(
+            "psiSamplingVariable",
+            "Represents either the rate of psi-sampling or the " +
+                    "proportion of individuals that generate at least " +
+                    "one psi-sample while infectious, depending on " +
+                    "the value of useSamplingProportion.",
+            Input.Validate.REQUIRED);
 
-    public Input<Function> psiSamplingProportionShiftTimesInput = new Input<>(
-            "psiSamplingProportionShiftTimes",
-            "Times at which psi-sampling proportion changes.");
+    public Input<Function> psiSamplingVariableShiftTimesInput = new Input<>(
+            "psiSamplingVariableShiftTimes",
+            "Times at which psi-sampling variable changes.");
 
-    public Input<Boolean> psiSamplingProportionShiftTimesBackwardInput = new Input<>(
-            "psiSamplingProportionShiftTimesBackward",
-            "If true, psi sampling proportion shift times are assumed to be expressed" +
+    public Input<Boolean> psiSamplingVariableShiftTimesBackwardInput = new Input<>(
+            "psiSamplingVariableShiftTimesBackward",
+            "If true, psi sampling variable shift times are assumed to be expressed" +
                     " as times before most recent sample.",
             false);
+
+    public Input<Boolean> usePsiSamplingProportionInput = new Input<>(
+            "usePsiSamplingProportion",
+            "If true, psi sampling variable represents proportion psi/(mu+psi)" +
+                    "of individuals that are sampled while infectious, " +
+                    "otherwise it represents the per-indidivual rate of " +
+                    "psi sampling",
+            true);
 
 
     public Input<Function> removalProbInput = new Input<>(
@@ -138,12 +149,12 @@ public abstract class EpidemicModel extends CalculationNode {
     public void initAndValidate() {
         tolerance = toleranceInput.get();
 
-        if (psiSamplingProportionShiftTimesInput.get() != null) {
-            if (psiSamplingProportionInput.get() == null
-                    || psiSamplingProportionInput.get().getDimension()
-                    != psiSamplingProportionShiftTimesInput.get().getDimension() + 1)
+        if (psiSamplingVariableShiftTimesInput.get() != null) {
+            if (psiSamplingVariableInput.get() == null
+                    || psiSamplingVariableInput.get().getDimension()
+                    != psiSamplingVariableShiftTimesInput.get().getDimension() + 1)
                 throw new IllegalArgumentException(
-                        "Psi sampling proportion and proportion shift time dimensions " +
+                        "Psi sampling variable and variable shift time dimensions " +
                                 "don't match.");
         }
 
@@ -158,7 +169,7 @@ public abstract class EpidemicModel extends CalculationNode {
 
         if ((infectionRateShiftTimesBackwardInput.get()
                 || recoveryRateShiftTimesBackwardInput.get()
-                || psiSamplingProportionShiftTimesBackwardInput.get()
+                || psiSamplingVariableShiftTimesBackwardInput.get()
                 || rhoSamplingTimesBackwardInput.get()
                 || removalProbShiftTimesBackwardInput.get())
             && treeOriginInput.get() == null) {
@@ -324,19 +335,23 @@ public abstract class EpidemicModel extends CalculationNode {
                     recoveryRateShiftTimesBackwardInput.get(), t);
             rateCache.get(i)[EpidemicEvent.RECOVERY] = recoveryRate;
 
-            double psiSamplingProportion, psiSamplingRate, removalProb;
+            double psiSamplingVariable, psiSamplingRate, removalProb;
 
-            if (psiSamplingProportionInput.get() != null)
-                psiSamplingProportion = getCurrentRate(
-                        psiSamplingProportionInput.get(), psiSamplingProportionShiftTimesInput.get(),
-                        psiSamplingProportionShiftTimesBackwardInput.get(), t);
+            if (psiSamplingVariableInput.get() != null)
+                psiSamplingVariable = getCurrentRate(
+                        psiSamplingVariableInput.get(), psiSamplingVariableShiftTimesInput.get(),
+                        psiSamplingVariableShiftTimesBackwardInput.get(), t);
             else
-                psiSamplingProportion = 0.0;
+                psiSamplingVariable = 0.0;
 
-            if (psiSamplingProportion>0)
-                psiSamplingRate = recoveryRate/(1.0/psiSamplingProportion - 1);
-            else
-                psiSamplingRate = 0;
+            if (usePsiSamplingProportionInput.get()) {
+                if (psiSamplingVariable > 0)
+                    psiSamplingRate = recoveryRate / (1.0 / psiSamplingVariable - 1);
+                else
+                    psiSamplingRate = 0;
+            } else {
+                psiSamplingRate = psiSamplingVariable;
+            }
 
             if (removalProbInput.get() != null)
                 removalProb = getCurrentRate(
@@ -373,7 +388,7 @@ public abstract class EpidemicModel extends CalculationNode {
             }
         }
 
-        addRateShiftEvents(psiSamplingProportionShiftTimesInput.get(), psiSamplingProportionShiftTimesBackwardInput.get());
+        addRateShiftEvents(psiSamplingVariableShiftTimesInput.get(), psiSamplingVariableShiftTimesBackwardInput.get());
         addRateShiftEvents(removalProbShiftTimesInput.get(), removalProbShiftTimesBackwardInput.get());
         addRateShiftEvents(infectionRateShiftTimesInput.get(), infectionRateShiftTimesBackwardInput.get());
         addRateShiftEvents(recoveryRateShiftTimesInput.get(), recoveryRateShiftTimesBackwardInput.get());
