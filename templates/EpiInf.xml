@@ -123,7 +123,7 @@
             <plate fragment="TreeOperators" var="m" range="EpiTreePrior"/>
             <plate fragment="EpiModelParameter" var="p" range="infectionRate"/>
             <plate fragment="EpiModelParameter" var="p" range="recoveryRate"/>
-            <plate fragment="EpiModelParameter" var="p" range="psiSamplingProportion"/>
+            <plate fragment="EpiModelParameter" var="p" range="psiSamplingVariable"/>
 
             <connect srcID="EpiTreePrior.t:$(n)" targetID="prior" inputName="distribution"
                      if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true">

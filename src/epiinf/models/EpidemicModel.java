@@ -87,7 +87,7 @@ public abstract class EpidemicModel extends CalculationNode {
                     "of individuals that are sampled while infectious, " +
                     "otherwise it represents the per-indidivual rate of " +
                     "psi sampling",
-            true);
+            false);
 
 
     public Input<Function> removalProbInput = new Input<>(
