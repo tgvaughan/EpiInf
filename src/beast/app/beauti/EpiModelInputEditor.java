@@ -65,22 +65,23 @@ public class EpiModelInputEditor extends InputEditor.Base {
     JTable recoveryRateTable, recoveryRateChangeTimesTable;
     JLabel recoveryRateChangeTimesLabel;
 
-    DefaultTableModel psiSamplingProportionModel, psiSamplingProportionChangeTimesModel;
-    JTable psiSamplingProportionTable, psiSamplingProportionChangeTimesTable;
-    JLabel psiSamplingProportionChangeTimesLabel;
+    DefaultTableModel psiSamplingVariableModel, psiSamplingVariableChangeTimesModel;
+    JTable psiSamplingVariableTable, psiSamplingVariableChangeTimesTable;
+    JLabel psiSamplingVariableChangeTimesLabel;
+    JCheckBox useSamplingProportionCheckBox;
 
     SpinnerNumberModel nInfectionRateShiftsModel,
             nRecoveryRateShiftsModel,
-            nPsiSamplingProportionShiftsModel;
+            nPsiSamplingVariableShiftsModel;
     JSpinner nInfectionRateShiftsSpinner,
             nRecoveryRateShiftsSpinner,
-            nPsiSamplingProportionShiftsSpinner;
+            nPsiSamplingVariableShiftsSpinner;
 
     JTextField S0TextField, rhoSamplingProbTextField;
 
     JCheckBox estimateS0, estimateInfectionRate, estimateRecoveryRate;
     JCheckBox estimateInfectionRateShiftTimes, estimateRecoveryRateShiftTimes;
-    JCheckBox estimatePsiSamplingProportion, estimatePsiSamplingProportionShiftTimes;
+    JCheckBox estimatePsiSamplingVariable, estimatePsiSamplingVariableShiftTimes;
     JCheckBox estimateRhoSamplingProb;
 
     boolean modelSaveInProgress = false;
@@ -196,31 +197,38 @@ public class EpiModelInputEditor extends InputEditor.Base {
         psiSamplingPanel.setBorder(new TitledBorder("Psi Sampling"));
 
         box = Box.createHorizontalBox();
-        box.add(new JLabel("Psi sampling proportion:"));
-        psiSamplingProportionModel = new DefaultTableModel(1,1);
-        psiSamplingProportionTable = new JTable(psiSamplingProportionModel);
-        psiSamplingProportionTable.setShowGrid(true);
-        psiSamplingProportionTable.setCellSelectionEnabled(false);
-        box.add(psiSamplingProportionTable);
-        estimatePsiSamplingProportion = new JCheckBox("estimate");
-        box.add(estimatePsiSamplingProportion);
+        box.add(new JLabel("Psi sampling:"));
+        psiSamplingVariableModel = new DefaultTableModel(1,1);
+        psiSamplingVariableTable = new JTable(psiSamplingVariableModel);
+        psiSamplingVariableTable.setShowGrid(true);
+        psiSamplingVariableTable.setCellSelectionEnabled(false);
+        box.add(psiSamplingVariableTable);
+        estimatePsiSamplingVariable = new JCheckBox("estimate");
+        box.add(estimatePsiSamplingVariable);
         psiSamplingPanel.add(box);
 
         box = Box.createHorizontalBox();
         box.add(new JLabel("Num. changes:"));
-        nPsiSamplingProportionShiftsModel = new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1);
-        nPsiSamplingProportionShiftsSpinner = new JSpinner(nPsiSamplingProportionShiftsModel);
-        box.add(nPsiSamplingProportionShiftsSpinner);
+        nPsiSamplingVariableShiftsModel = new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1);
+        nPsiSamplingVariableShiftsSpinner = new JSpinner(nPsiSamplingVariableShiftsModel);
+        box.add(nPsiSamplingVariableShiftsSpinner);
 
-        psiSamplingProportionChangeTimesLabel = new JLabel("Change times:");
-        box.add(psiSamplingProportionChangeTimesLabel);
-        psiSamplingProportionChangeTimesModel = new DefaultTableModel(1,1);
-        psiSamplingProportionChangeTimesTable = new JTable(psiSamplingProportionChangeTimesModel);
-        psiSamplingProportionChangeTimesTable.setShowGrid(true);
-        psiSamplingProportionChangeTimesTable.setCellSelectionEnabled(false);
-        box.add(psiSamplingProportionChangeTimesTable);
-        estimatePsiSamplingProportionShiftTimes = new JCheckBox("estimate");
-        box.add(estimatePsiSamplingProportionShiftTimes);
+        psiSamplingVariableChangeTimesLabel = new JLabel("Change times:");
+        box.add(psiSamplingVariableChangeTimesLabel);
+        psiSamplingVariableChangeTimesModel = new DefaultTableModel(1,1);
+        psiSamplingVariableChangeTimesTable = new JTable(psiSamplingVariableChangeTimesModel);
+        psiSamplingVariableChangeTimesTable.setShowGrid(true);
+        psiSamplingVariableChangeTimesTable.setCellSelectionEnabled(false);
+        box.add(psiSamplingVariableChangeTimesTable);
+        estimatePsiSamplingVariableShiftTimes = new JCheckBox("estimate");
+        box.add(estimatePsiSamplingVariableShiftTimes);
+        psiSamplingPanel.add(box);
+
+        box = Box.createHorizontalBox();
+        useSamplingProportionCheckBox = new JCheckBox(
+                "Use sampling proportion instead of sampling rate");
+        box.add(useSamplingProportionCheckBox);
+        box.add(Box.createHorizontalGlue());
         psiSamplingPanel.add(box);
 
         panel.add(psiSamplingPanel);
@@ -266,11 +274,12 @@ public class EpiModelInputEditor extends InputEditor.Base {
         estimateRecoveryRateShiftTimes.addItemListener(e -> saveToModel());
         nRecoveryRateShiftsModel.addChangeListener(e -> saveToModel());
 
-        psiSamplingProportionModel.addTableModelListener(tableListener);
-        estimatePsiSamplingProportion.addItemListener(e -> saveToModel());
-        psiSamplingProportionChangeTimesModel.addTableModelListener(tableListener);
-        estimatePsiSamplingProportionShiftTimes.addItemListener(e -> saveToModel());
-        nPsiSamplingProportionShiftsModel.addChangeListener(e -> saveToModel());
+        psiSamplingVariableModel.addTableModelListener(tableListener);
+        estimatePsiSamplingVariable.addItemListener(e -> saveToModel());
+        psiSamplingVariableChangeTimesModel.addTableModelListener(tableListener);
+        estimatePsiSamplingVariableShiftTimes.addItemListener(e -> saveToModel());
+        nPsiSamplingVariableShiftsModel.addChangeListener(e -> saveToModel());
+        useSamplingProportionCheckBox.addItemListener(e -> saveToModel());
 
         S0TextField.addActionListener(e -> saveToModel());
         estimateS0.addItemListener(e -> saveToModel());
@@ -297,10 +306,11 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
         psiSamplingVariable = (RealParameter)epidemicModel.psiSamplingVariableInput.get();
         psiSamplingVariableChangeTimes = (RealParameter)epidemicModel.psiSamplingVariableShiftTimesInput.get();
-        loadModelRateParameters(psiSamplingVariable, psiSamplingProportionModel,
-                estimatePsiSamplingProportion, nPsiSamplingProportionShiftsModel,
-                psiSamplingVariableChangeTimes, psiSamplingProportionChangeTimesLabel,
-                psiSamplingProportionChangeTimesModel, estimatePsiSamplingProportionShiftTimes);
+        loadModelRateParameters(psiSamplingVariable, psiSamplingVariableModel,
+                estimatePsiSamplingVariable, nPsiSamplingVariableShiftsModel,
+                psiSamplingVariableChangeTimes, psiSamplingVariableChangeTimesLabel,
+                psiSamplingVariableChangeTimesModel, estimatePsiSamplingVariableShiftTimes);
+        useSamplingProportionCheckBox.setSelected(epidemicModel.usePsiSamplingProportionInput.get());
 
         rhoSamplingProb = (RealParameter)epidemicModel.rhoSamplingProbInput.get();
         rhoSamplingProbTextField.setText(String.valueOf(rhoSamplingProb.getValue()));
@@ -444,11 +454,12 @@ public class EpiModelInputEditor extends InputEditor.Base {
                     recoveryRateChangeTimes, recoveryRateChangeTimesModel, estimateRecoveryRateShiftTimes,
                     epidemicModel, partitionID);
 
-            saveModelRateParameters("psiSamplingProportion",
-                    psiSamplingVariable, psiSamplingProportionModel, estimatePsiSamplingProportion,
-                    nPsiSamplingProportionShiftsModel,
-                    psiSamplingVariableChangeTimes, psiSamplingProportionChangeTimesModel, estimatePsiSamplingProportionShiftTimes,
+            saveModelRateParameters("psiSamplingVariable",
+                    psiSamplingVariable, psiSamplingVariableModel, estimatePsiSamplingVariable,
+                    nPsiSamplingVariableShiftsModel,
+                    psiSamplingVariableChangeTimes, psiSamplingVariableChangeTimesModel, estimatePsiSamplingVariableShiftTimes,
                     epidemicModel, partitionID);
+            epidemicModel.usePsiSamplingProportionInput.setValue(useSamplingProportionCheckBox.isSelected(), epidemicModel);
 
             rhoSamplingProb.valuesInput.setValue(rhoSamplingProbTextField.getText(), rhoSamplingProb);
             rhoSamplingProb.isEstimatedInput.setValue(estimateRhoSamplingProb.isSelected(), rhoSamplingProb);

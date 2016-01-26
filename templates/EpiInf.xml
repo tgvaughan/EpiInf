@@ -90,7 +90,7 @@
                     <S0 id="S0.t:$(n)" spec="beast.core.parameter.IntegerParameter" value="199" lower="0" estimate="true"/>
                     <infectionRate id="infectionRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.01" estimate="true"/>
                     <recoveryRate id="recoveryRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.1" estimate="true"/>
-                    <psiSamplingProportion id="psiSamplingProportion.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" upper="1.0" value="0.1" estimate="true"/>
+                    <psiSamplingVariable id="psiSamplingVariable.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.1" estimate="true"/>
                     <rhoSamplingProb id="rhoSamplingProb.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.0" estimate="false"/>
                 </model>
             </distribution>
