@@ -20,6 +20,8 @@ package epiinf.models;
 import beast.core.CalculationNode;
 import beast.core.Function;
 import beast.core.Input;
+import beast.core.parameter.IntegerParameter;
+import beast.core.parameter.RealParameter;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.ModelEvent;
@@ -262,7 +264,10 @@ public abstract class EpidemicModel extends CalculationNode {
 
             if (imid==N-1 || getForwardTime(rateShiftTimeParam, imid, paramTimesBackwards)>time) {
                 if (imid==0 || getForwardTime(rateShiftTimeParam, imid-1, paramTimesBackwards)<=time)
-                    return imid;
+                    if (paramTimesBackwards)
+                        return N-1 - imin;
+                    else
+                        return imid;
                 else
                     imax = imid;
             } else {
@@ -270,7 +275,10 @@ public abstract class EpidemicModel extends CalculationNode {
             }
         }
 
-        return imin;
+        if (paramTimesBackwards)
+            return N-1 - imin;
+        else
+            return imin;
     }
 
     protected double calculatePsiSamplingRemovePropensity(EpidemicState state) {
@@ -467,6 +475,33 @@ public abstract class EpidemicModel extends CalculationNode {
      */
     public boolean timesEqual(double timeA, double timeB) {
         return Math.abs(timeA - timeB) < tolerance;
+    }
+
+    /**
+     * Main method for debugging.
+     *
+     * @param args
+     */
+    public static void main(String[] args) throws Exception {
+       RealParameter shiftTimesParam = new RealParameter(new Double[] {5.0});
+        RealParameter rateParam = new RealParameter(new Double[] {1.0, 0.0});
+
+        SISModel model = new SISModel();
+        model.initByName(
+                "treeOrigin", new RealParameter("10.0"),
+                "S0", new IntegerParameter("200"),
+                "infectionRate", new RealParameter("0.01"),
+                "recoveryRate", new RealParameter("0.1"));
+
+        double T = 10.0;
+        int nSteps = 5;
+        double dt = T/(nSteps-1);
+        System.out.println("t\trate");
+        for (int i=0; i<nSteps; i++) {
+            double t = i*dt;
+            System.out.println(t +  "\t" + model.getCurrentRate(rateParam, shiftTimesParam, true, t));
+        }
+
     }
 
 }
