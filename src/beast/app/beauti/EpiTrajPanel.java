@@ -25,6 +25,7 @@ import org.knowm.xchart.*;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -90,6 +91,7 @@ public class EpiTrajPanel extends JPanel {
                 List<Number> thesePrevs = prevalences.get(i);
 
                 SimulatedTrajectory traj = new SimulatedTrajectory(epidemicModel, origin);
+
                 theseTimes.clear();
                 thesePrevs.clear();
                 for (EpidemicState state : traj.getStateList()) {

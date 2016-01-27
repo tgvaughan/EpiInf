@@ -29,6 +29,7 @@ import epiinf.models.SIRModel;
 import epiinf.models.SISModel;
 
 import javax.swing.*;
+import javax.swing.border.BevelBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.TableModelEvent;
@@ -270,6 +271,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
         // Prevalence trajectory plot
         epiTrajPanel = new EpiTrajPanel(epidemicModel, 5);
+        epiTrajPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
         panel.add(epiTrajPanel);
 
         add(panel);
