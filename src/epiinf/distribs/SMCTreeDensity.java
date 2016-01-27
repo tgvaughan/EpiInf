@@ -43,11 +43,6 @@ public class SMCTreeDensity extends TreeDistribution {
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
 
-    public Input<Function> treeOriginInput = new Input<>(
-            "treeOrigin",
-            "Time before most recent sample that epidemic began.",
-            Validate.REQUIRED);
-
     public Input<Integer> nParticlesInput = new Input<>(
             "nParticles", "Number of particles to use in SMC calculation.",
             Validate.REQUIRED);
@@ -84,7 +79,10 @@ public class SMCTreeDensity extends TreeDistribution {
     @Override
     public void initAndValidate() throws Exception {
         model = modelInput.get();
-        treeEventList = new TreeEventList(treeInput.get(), treeOriginInput.get());
+        if (model.treeOriginInput.get() == null)
+            throw new IllegalArgumentException("The treeOrigin input to " +
+                    "EpidemicModel must be set when the model is used for inference.");
+        treeEventList = new TreeEventList(treeInput.get(), model.treeOriginInput.get());
         nParticles = nParticlesInput.get();
         useTauLeaping = useTauLeapingInput.get();
         epsilon = epsilonInput.get();

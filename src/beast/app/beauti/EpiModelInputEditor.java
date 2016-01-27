@@ -78,12 +78,13 @@ public class EpiModelInputEditor extends InputEditor.Base {
             nRecoveryRateShiftsSpinner,
             nPsiSamplingVariableShiftsSpinner;
 
-    JTextField S0TextField, rhoSamplingProbTextField;
+    JTextField S0TextField, rhoSamplingProbTextField, originTextField;
 
     JCheckBox estimateS0, estimateInfectionRate, estimateRecoveryRate;
     JCheckBox estimateInfectionRateShiftTimes, estimateRecoveryRateShiftTimes;
     JCheckBox estimatePsiSamplingVariable, estimatePsiSamplingVariableShiftTimes;
     JCheckBox estimateRhoSamplingProb;
+    JCheckBox estimateOrigin;
 
     EpiTrajPanel epiTrajPanel;
 
@@ -259,6 +260,14 @@ public class EpiModelInputEditor extends InputEditor.Base {
         box.add(estimateS0);
         panel.add(box);
 
+        box = Box.createHorizontalBox();
+        box.add(new JLabel("Time before present of epidemic origin:"));
+        originTextField = new JTextField();
+        box.add(originTextField);
+        estimateOrigin = new JCheckBox("estimate");
+        box.add(estimateOrigin);
+        panel.add(box);
+
         // Prevalence trajectory plot
         epiTrajPanel = new EpiTrajPanel(epidemicModel, 5);
         panel.add(epiTrajPanel);
@@ -300,6 +309,9 @@ public class EpiModelInputEditor extends InputEditor.Base {
         rhoSamplingProbTextField.addActionListener(e -> saveToModel());
         estimateRhoSamplingProb.addItemListener(e -> saveToModel());
 
+        originTextField.addActionListener(e -> saveToModel());
+        estimateOrigin.addItemListener(e -> saveToModel());
+
     }
 
     public void loadFromModel() {
@@ -338,6 +350,8 @@ public class EpiModelInputEditor extends InputEditor.Base {
         }
 
         epiOrigin = (RealParameter)epidemicModel.treeOriginInput.get();
+        originTextField.setText(String.valueOf(epiOrigin.getArrayValue()));
+        estimateOrigin.setSelected(epiOrigin.isEstimatedInput.get());
 
         if (epidemicModel instanceof SISModel) {
             SISModel sisModel = (SISModel)epidemicModel;
@@ -456,8 +470,6 @@ public class EpiModelInputEditor extends InputEditor.Base {
                 }
             }
 
-            epidemicModel.setInputValue("treeOrigin", epiOrigin);
-
             saveModelRateParameters("infectionRate",
                     infectionRate, infectionRateModel, estimateInfectionRate,
                     nInfectionRateShiftsModel,
@@ -485,6 +497,11 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
             epidemicModel.setInputValue("rhoSamplingTime", rhoSamplingTime);
             epidemicModel.setInputValue("rhoSamplingTimesBackward", true);
+
+            epiOrigin.valuesInput.setValue(originTextField.getText(), epiOrigin);
+            epiOrigin.isEstimatedInput.setValue(estimateOrigin.isSelected(), epiOrigin);
+            epidemicModel.setInputValue("treeOrigin", epiOrigin);
+            epiOrigin.initAndValidate();
 
             epidemicModel.initAndValidate();
 

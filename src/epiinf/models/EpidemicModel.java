@@ -123,9 +123,7 @@ public abstract class EpidemicModel extends CalculationNode {
 
     public Input<Function> treeOriginInput = new Input<>(
             "treeOrigin",
-            "Time before most recent sample that epidemic began. " +
-                    "Required only if backward times are used " +
-                    "for any of the rate shifts or sampling times.");
+            "Time before most recent sample that epidemic began. ");
 
     public Input<Double> toleranceInput = new Input<>("tolerance",
             "Maximum absolute time difference between events on tree and "
@@ -141,7 +139,6 @@ public abstract class EpidemicModel extends CalculationNode {
     protected double tolerance;
 
     public double[] propensities = new double[EpidemicEvent.nTypes];
-
 
     EpidemicModel() { }
     
