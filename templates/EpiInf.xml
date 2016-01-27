@@ -90,6 +90,7 @@
                     <infectionRate id="infectionRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.01" estimate="true"/>
                     <recoveryRate id="recoveryRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.1" estimate="true"/>
                     <psiSamplingVariable id="psiSamplingVariable.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.1" estimate="true"/>
+                    <removalProb id="removalProb.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0.0" upper="1.0" value="1.0" estimate="true"/>
                     <rhoSamplingProb id="rhoSamplingProb.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.0" estimate="false"/>
                     <treeOrigin id="epiOrigin.t:$(n)" spec="beast.core.parameter.RealParameter" value="10.0" estimate="true"/>
                 </model>
@@ -124,6 +125,7 @@
             <plate fragment="EpiModelParameter" var="p" range="infectionRate"/>
             <plate fragment="EpiModelParameter" var="p" range="recoveryRate"/>
             <plate fragment="EpiModelParameter" var="p" range="psiSamplingVariable"/>
+            <plate fragment="EpiModelParameter" var="p" range="removalProb"/>
 
             <connect srcID="EpiTreePrior.t:$(n)" targetID="prior" inputName="distribution"
                      if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true">

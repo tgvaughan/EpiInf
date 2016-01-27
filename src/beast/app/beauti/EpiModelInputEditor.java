@@ -56,8 +56,10 @@ public class EpiModelInputEditor extends InputEditor.Base {
     String[] modelNames = {"Linear birth-death", "SIS", "SIR"};
 
     IntegerParameter S0;
-    RealParameter infectionRate, recoveryRate, psiSamplingVariable, rhoSamplingProb, rhoSamplingTime;
-    RealParameter infectionRateChangeTimes, recoveryRateChangeTimes, psiSamplingVariableChangeTimes;
+    RealParameter infectionRate, recoveryRate, psiSamplingVariable,
+            removalProb, rhoSamplingProb, rhoSamplingTime;
+    RealParameter infectionRateChangeTimes, recoveryRateChangeTimes,
+            psiSamplingVariableChangeTimes, removalProbChangeTimes;
     RealParameter epiOrigin;
 
     ComboBoxModel<String> emSelectorModel;
@@ -74,18 +76,23 @@ public class EpiModelInputEditor extends InputEditor.Base {
     JLabel psiSamplingVariableChangeTimesLabel;
     JCheckBox useSamplingProportionCheckBox;
 
+    DefaultTableModel removalProbModel, removalProbChangeTimesModel;
+    JTable removalProbTable, removalProbChangeTimesTable;
+    JLabel removalProbChangeTimesLabel;
+
     SpinnerNumberModel nInfectionRateShiftsModel,
             nRecoveryRateShiftsModel,
-            nPsiSamplingVariableShiftsModel;
+            nPsiSamplingVariableShiftsModel, nRemovalProbShiftsModel;
     JSpinner nInfectionRateShiftsSpinner,
             nRecoveryRateShiftsSpinner,
-            nPsiSamplingVariableShiftsSpinner;
+            nPsiSamplingVariableShiftsSpinner, nRemovalProbShiftsSpinner;
 
     JTextField S0TextField, rhoSamplingProbTextField, originTextField;
 
     JCheckBox estimateS0, estimateInfectionRate, estimateRecoveryRate;
     JCheckBox estimateInfectionRateShiftTimes, estimateRecoveryRateShiftTimes;
     JCheckBox estimatePsiSamplingVariable, estimatePsiSamplingVariableShiftTimes;
+    JCheckBox estimateRemovalProb, estimateRemovalProbShiftTimes;
     JCheckBox estimateRhoSamplingProb;
     JCheckBox estimateOrigin;
 
@@ -245,6 +252,38 @@ public class EpiModelInputEditor extends InputEditor.Base {
         box.add(Box.createHorizontalGlue());
         psiSamplingPanel.add(box);
 
+        box = Box.createHorizontalBox();
+        box.add(new JLabel("Removal proportion:"));
+        removalProbModel = new DefaultTableModel(1,1);
+        removalProbTable = new JTable(removalProbModel);
+        removalProbTable.setShowGrid(true);
+        removalProbTable.setCellSelectionEnabled(false);
+        box.add(removalProbTable);
+        estimateRemovalProb = new JCheckBox("estimate");
+        box.add(estimateRemovalProb);
+        psiSamplingPanel.add(box);
+
+        box = Box.createHorizontalBox();
+        box.add(new JLabel("Num. changes:"));
+        nRemovalProbShiftsModel = new SpinnerNumberModel(0, 0, 100, 1);
+        nRemovalProbShiftsSpinner = new JSpinner(nRemovalProbShiftsModel);
+        nRemovalProbShiftsSpinner.setMaximumSize(nRemovalProbShiftsSpinner.getPreferredSize());
+        box.add(nRemovalProbShiftsSpinner);
+
+        box.add(Box.createHorizontalGlue());
+
+        removalProbChangeTimesLabel = new JLabel("Change times:");
+        box.add(removalProbChangeTimesLabel);
+        removalProbChangeTimesModel = new DefaultTableModel(1,1);
+        removalProbChangeTimesTable = new JTable(removalProbChangeTimesModel);
+        removalProbChangeTimesTable.setShowGrid(true);
+        removalProbChangeTimesTable.setCellSelectionEnabled(false);
+        box.add(removalProbChangeTimesTable);
+        estimateRemovalProbShiftTimes = new JCheckBox("estimate");
+        box.add(estimateRemovalProbShiftTimes);
+
+        psiSamplingPanel.add(box);
+
         panel.add(psiSamplingPanel);
 
         box = Box.createHorizontalBox();
@@ -309,6 +348,12 @@ public class EpiModelInputEditor extends InputEditor.Base {
         nPsiSamplingVariableShiftsModel.addChangeListener(e -> saveToModel());
         useSamplingProportionCheckBox.addItemListener(e -> saveToModel());
 
+        removalProbModel.addTableModelListener(tableListener);
+        estimateRemovalProb.addItemListener(e -> saveToModel());
+        removalProbChangeTimesModel.addTableModelListener(tableListener);
+        estimateRemovalProbShiftTimes.addItemListener(e -> saveToModel());
+        nRemovalProbShiftsModel.addChangeListener(e -> saveToModel());
+
         S0TextField.addActionListener(e -> saveToModel());
         estimateS0.addItemListener(e -> saveToModel());
         rhoSamplingProbTextField.addActionListener(e -> saveToModel());
@@ -341,6 +386,14 @@ public class EpiModelInputEditor extends InputEditor.Base {
                 psiSamplingVariableChangeTimes, psiSamplingVariableChangeTimesLabel,
                 psiSamplingVariableChangeTimesModel, estimatePsiSamplingVariableShiftTimes);
         useSamplingProportionCheckBox.setSelected(epidemicModel.usePsiSamplingProportionInput.get());
+
+        removalProb = (RealParameter)epidemicModel.removalProbInput.get();
+        removalProbChangeTimes = (RealParameter)epidemicModel.removalProbShiftTimesInput.get();
+        loadModelRateParameters(removalProb, removalProbModel,
+                estimateRemovalProb, nRemovalProbShiftsModel,
+                removalProbChangeTimes, removalProbChangeTimesLabel,
+                removalProbChangeTimesModel, estimateRemovalProbShiftTimes);
+
 
         rhoSamplingProb = (RealParameter)epidemicModel.rhoSamplingProbInput.get();
         rhoSamplingProbTextField.setText(String.valueOf(rhoSamplingProb.getValue()));
@@ -492,6 +545,12 @@ public class EpiModelInputEditor extends InputEditor.Base {
                     psiSamplingVariableChangeTimes, psiSamplingVariableChangeTimesModel, estimatePsiSamplingVariableShiftTimes,
                     epidemicModel, partitionID);
             epidemicModel.usePsiSamplingProportionInput.setValue(useSamplingProportionCheckBox.isSelected(), epidemicModel);
+
+            saveModelRateParameters("removalProb",
+                    removalProb, removalProbModel, estimateRemovalProb,
+                    nRemovalProbShiftsModel,
+                    removalProbChangeTimes, removalProbChangeTimesModel, estimateRemovalProbShiftTimes,
+                    epidemicModel, partitionID);
 
             rhoSamplingProb.valuesInput.setValue(rhoSamplingProbTextField.getText(), rhoSamplingProb);
             rhoSamplingProb.isEstimatedInput.setValue(estimateRhoSamplingProb.isSelected(), rhoSamplingProb);

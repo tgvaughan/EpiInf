@@ -94,7 +94,8 @@ public abstract class EpidemicModel extends CalculationNode {
 
     public Input<Function> removalProbInput = new Input<>(
             "removalProb",
-            "Probability that sample individual is removed from population (Default 1).");
+            "Probability that sample individual is removed from population.",
+            Input.Validate.REQUIRED);
 
     public Input<Function> removalProbShiftTimesInput = new Input<>(
             "removalProbShiftTimes",
