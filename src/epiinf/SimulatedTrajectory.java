@@ -26,6 +26,7 @@ import epiinf.models.EpidemicModel;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -57,6 +58,16 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
     double duration;
     
     public SimulatedTrajectory() { }
+
+    public SimulatedTrajectory(EpidemicModel model, double duration) {
+        this.model = model;
+        this.duration = duration;
+
+        eventList = new ArrayList<>();
+        stateList = new ArrayList<>();
+
+        simulate();
+    }
     
     @Override
     public void initAndValidate() throws Exception {

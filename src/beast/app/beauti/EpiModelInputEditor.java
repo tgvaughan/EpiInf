@@ -34,6 +34,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
+import java.awt.Dimension;
 
 /**
  * Input editor for EpidemicModels.  Special message to anyone (including
@@ -84,6 +85,8 @@ public class EpiModelInputEditor extends InputEditor.Base {
     JCheckBox estimatePsiSamplingVariable, estimatePsiSamplingVariableShiftTimes;
     JCheckBox estimateRhoSamplingProb;
 
+    EpiTrajPanel epiTrajPanel;
+
     boolean modelSaveInProgress = false;
 
     public EpiModelInputEditor(BeautiDoc doc) {
@@ -109,9 +112,6 @@ public class EpiModelInputEditor extends InputEditor.Base {
         // Adds label to the left of input editor
         addInputLabel();
 
-        // Create component models and fill them with data from input
-        emSelectorModel = new DefaultComboBoxModel<>(modelNames);
-
         // Create and lay out GUI components
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
@@ -119,9 +119,10 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
         Box box = Box.createHorizontalBox();
         box.add(new JLabel("Epidemic model to use:"));
-
+        emSelectorModel = new DefaultComboBoxModel<>(modelNames);
         JComboBox<String> emSelector = new JComboBox<>(emSelectorModel);
         box.add(emSelector);
+        box.add(Box.createHorizontalGlue());
         panel.add(box);
 
         JPanel infectionPanel = new JPanel();
@@ -141,9 +142,12 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
         box = Box.createHorizontalBox();
         box.add(new JLabel("Num. changes:"));
-        nInfectionRateShiftsModel = new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1);
+        nInfectionRateShiftsModel = new SpinnerNumberModel(0, 0, 100, 1);
         nInfectionRateShiftsSpinner = new JSpinner(nInfectionRateShiftsModel);
+        nInfectionRateShiftsSpinner.setMaximumSize(nInfectionRateShiftsSpinner.getPreferredSize());
         box.add(nInfectionRateShiftsSpinner);
+
+        box.add(Box.createHorizontalGlue());
 
         infectionRateChangeTimesLabel = new JLabel("Change times:");
         box.add(infectionRateChangeTimesLabel);
@@ -175,9 +179,12 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
         box = Box.createHorizontalBox();
         box.add(new JLabel("Num. changes:"));
-        nRecoveryRateShiftsModel = new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1);
+        nRecoveryRateShiftsModel = new SpinnerNumberModel(0, 0, 100, 1);
         nRecoveryRateShiftsSpinner = new JSpinner(nRecoveryRateShiftsModel);
+        nRecoveryRateShiftsSpinner.setMaximumSize(nRecoveryRateShiftsSpinner.getPreferredSize());
         box.add(nRecoveryRateShiftsSpinner);
+
+        box.add(Box.createHorizontalGlue());
 
         recoveryRateChangeTimesLabel = new JLabel("Change times:");
         box.add(recoveryRateChangeTimesLabel);
@@ -209,9 +216,12 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
         box = Box.createHorizontalBox();
         box.add(new JLabel("Num. changes:"));
-        nPsiSamplingVariableShiftsModel = new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1);
+        nPsiSamplingVariableShiftsModel = new SpinnerNumberModel(0, 0, 100, 1);
         nPsiSamplingVariableShiftsSpinner = new JSpinner(nPsiSamplingVariableShiftsModel);
+        nPsiSamplingVariableShiftsSpinner.setMaximumSize(nPsiSamplingVariableShiftsSpinner.getPreferredSize());
         box.add(nPsiSamplingVariableShiftsSpinner);
+
+        box.add(Box.createHorizontalGlue());
 
         psiSamplingVariableChangeTimesLabel = new JLabel("Change times:");
         box.add(psiSamplingVariableChangeTimesLabel);
@@ -248,6 +258,10 @@ public class EpiModelInputEditor extends InputEditor.Base {
         estimateS0 = new JCheckBox("estimate");
         box.add(estimateS0);
         panel.add(box);
+
+        // Prevalence trajectory plot
+        epiTrajPanel = new EpiTrajPanel(epidemicModel, 5);
+        panel.add(epiTrajPanel);
 
         add(panel);
 
@@ -352,6 +366,8 @@ public class EpiModelInputEditor extends InputEditor.Base {
             estimateS0.setEnabled(false);
             estimateS0.setSelected(false);
         }
+
+        epiTrajPanel.updateChart();
     }
 
     protected void loadModelRateParameters(RealParameter rate,

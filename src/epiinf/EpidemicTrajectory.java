@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-@Description("StateNode representing a complete epidemic trajectory.")
+@Description("Object representing a complete epidemic trajectory.")
 public abstract class EpidemicTrajectory extends BEASTObject implements Loggable {
 
     protected List<EpidemicEvent> eventList;
