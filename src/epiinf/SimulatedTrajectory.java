@@ -21,8 +21,11 @@ import beast.core.Description;
 import beast.core.Function;
 import beast.core.Input;
 import beast.core.Input.Validate;
+import beast.core.parameter.IntegerParameter;
+import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
 import epiinf.models.EpidemicModel;
+import epiinf.models.SISModel;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -53,20 +56,38 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
     public Input<String> fileNameInput = new Input<>(
             "fileName",
             "Optional name of file to write simulated trajectory to.");
+
+    public Input<Integer> nStepsInput = new Input<>(
+            "nSteps",
+            "If nSteps > 0, tau leaping with this many steps will be used to" +
+                    " approximate the stochastic integral.", 0);
     
     EpidemicModel model;
     double duration;
+    int nSteps;
     
     public SimulatedTrajectory() { }
 
-    public SimulatedTrajectory(EpidemicModel model, double duration) {
+    public SimulatedTrajectory(EpidemicModel model, double duration, int nSteps) {
         this.model = model;
         this.duration = duration;
+        this.nSteps = nSteps;
 
         eventList = new ArrayList<>();
         stateList = new ArrayList<>();
 
-        simulate();
+        if (nSteps > 0)
+            simulateTL();
+        else
+            simulate();
+
+        if (fileNameInput.get() != null) {
+            try (PrintStream ps = new PrintStream(fileNameInput.get())) {
+                dumpTrajectory(ps);
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(SimulatedTrajectory.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
     
     @Override
@@ -75,9 +96,13 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
         
         model = modelInput.get();
         duration = durationInput.get();
+        nSteps = nStepsInput.get();
 
-        simulate();
-        
+        if (nSteps > 0)
+            simulateTL();
+        else
+            simulate();
+
         if (fileNameInput.get() != null) {
             try (PrintStream ps = new PrintStream(fileNameInput.get())) {
                     dumpTrajectory(ps);
@@ -176,7 +201,107 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
             stateList.add(thisState.copy());
         }
     }
-    
+
+    /**
+     * Simulate an epidemic using the provided model with tau leaping.
+     *
+     */
+    public void simulateTL() {
+
+        double endTime;
+        if (origin != null)
+            endTime = origin;
+        else
+            endTime = duration;
+
+        double dt = endTime/(nSteps-1);
+
+        eventList.clear();
+        stateList.clear();
+
+        EpidemicState thisState = model.getInitialState();
+        stateList.add(model.getInitialState());
+
+        thisState.time = 0;
+
+        for (int tidx = 1; tidx<nSteps; tidx++) {
+            model.calculatePropensities(thisState);
+//
+//            double totalPropensity = model.propensities[EpidemicEvent.INFECTION]
+//                    + model.propensities[EpidemicEvent.RECOVERY]
+//                    + model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+//                    + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE];
+
+            double nextModelEventTime = model.getNextModelEventTime(thisState);
+            double trueDt = Math.min(dt, nextModelEventTime - thisState.time);
+
+            EpidemicEvent infectEvent = new EpidemicEvent();
+            infectEvent.type = EpidemicEvent.INFECTION;
+            infectEvent.multiplicity = (int)Math.round(
+                    Randomizer.nextPoisson(trueDt*model.propensities[EpidemicEvent.INFECTION]));
+            model.incrementState(thisState, infectEvent);
+            infectEvent.time = thisState.time + trueDt;
+            eventList.add(infectEvent);
+
+            EpidemicEvent recovEvent = new EpidemicEvent();
+            recovEvent.type = EpidemicEvent.RECOVERY;
+            recovEvent.multiplicity = (int)Math.round(
+                    Randomizer.nextPoisson(trueDt*model.propensities[EpidemicEvent.RECOVERY]));
+            model.incrementState(thisState, recovEvent);
+            recovEvent.time = thisState.time + trueDt;
+            eventList.add(recovEvent);
+
+            EpidemicEvent psiSampRemoveEvent = new EpidemicEvent();
+            psiSampRemoveEvent.type = EpidemicEvent.PSI_SAMPLE_REMOVE;
+            psiSampRemoveEvent.multiplicity = (int)Math.round(
+                    Randomizer.nextPoisson(trueDt*model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]));
+            model.incrementState(thisState, psiSampRemoveEvent);
+            psiSampRemoveEvent.time = thisState.time + trueDt;
+            eventList.add(psiSampRemoveEvent);
+
+            EpidemicEvent psiSampNoRemoveEvent = new EpidemicEvent();
+            psiSampNoRemoveEvent.type = EpidemicEvent.PSI_SAMPLE_NOREMOVE;
+            psiSampNoRemoveEvent.multiplicity = (int)Math.round(
+                    Randomizer.nextPoisson(trueDt*model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]));
+            psiSampNoRemoveEvent.time = thisState.time + trueDt;
+            eventList.add(psiSampNoRemoveEvent);
+
+
+            if (trueDt < dt) {
+                ModelEvent event = model.getNextModelEvent(thisState);
+
+                if (event.type == ModelEvent.Type.RHO_SAMPLING) {
+
+                    EpidemicEvent rhoSampEvent = new EpidemicEvent();
+                    rhoSampEvent.type = EpidemicEvent.RHO_SAMPLE;
+                    rhoSampEvent.time = event.time;
+
+                    // Got to be a better way of sampling from a binomial distribution
+                    rhoSampEvent.multiplicity = 0;
+                    for (int i = 0; i < thisState.I; i++) {
+                        if (Randomizer.nextDouble() < event.rho)
+                            rhoSampEvent.multiplicity += 1;
+                    }
+
+                    model.incrementState(thisState, rhoSampEvent);
+                }
+
+                thisState.intervalIdx += 1;
+            }
+
+            // Rough error correction - doesn't conserve number.
+            if (!thisState.isValid()) {
+                thisState.I = Math.max(0, thisState.I);
+                thisState.S = Math.max(0, thisState.S);
+                thisState.R = Math.max(0, thisState.R);
+            }
+
+            thisState.time += trueDt;
+
+            stateList.add(thisState.copy());
+        }
+    }
+
     @Override
     public void log(int nSample, PrintStream out) {
         if (originInput.get() != null)
@@ -185,5 +310,24 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
         simulate();
 
         super.log(nSample, out);
+    }
+
+    /**
+     * Main method for debugging.
+     *
+     * @param args
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        SISModel model = new SISModel();
+        model.initByName(
+                "infectionRate", new RealParameter("0.01"),
+                "recoveryRate", new RealParameter("0.1"),
+                "S0", new IntegerParameter("199"));
+        SimulatedTrajectory traj = new SimulatedTrajectory(model, 10, 1000);
+
+        System.out.println(traj);
+
+
     }
 }

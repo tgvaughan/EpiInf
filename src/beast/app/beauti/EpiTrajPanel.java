@@ -22,10 +22,7 @@ import epiinf.SimulatedTrajectory;
 import epiinf.models.EpidemicModel;
 import org.knowm.xchart.*;
 
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
-import javax.swing.Timer;
+import javax.swing.*;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -49,25 +46,28 @@ public class EpiTrajPanel extends JPanel {
         this.epidemicModel = epidemicModel;
         this.nTraj = nTraj;
 
-        setLayout(new BorderLayout());
+        // Set up chart
 
         ChartBuilder builder = new ChartBuilder();
-        builder.title("Example prevalence trajectories");
+        builder.title("Example prevalence trajectories (tau leaping approx.)");
         builder.xAxisTitle("Time before most recent sample");
         builder.yAxisTitle("Prevalence");
         builder.height(getFontMetrics(getFont()).getHeight()*20);
+        builder.width(getFontMetrics(getFont()).getHeight()*40);
 
         Chart chart = builder.build();
         for (int i=0; i<nTraj; i++) {
-            Series series = chart.addSeries("traj" + i, new double[] {0, 1}, new double[] {0, 1});
+            Series series = chart.addSeries("traj" + i, new double[] {0, 1}, new double[] {0, 0});
             series.setMarker(SeriesMarker.NONE);
         }
         StyleManager styleManager = chart.getStyleManager();
         styleManager.setChartBackgroundColor(getBackground());
         styleManager.setLegendVisible(false);
         chartPanel = new XChartPanel(chart);
-        add(chartPanel, BorderLayout.CENTER);
 
+        add(chartPanel);
+
+        // Initialise arrays used in simulation.
         times = new ArrayList<>();
         prevalences = new ArrayList<>();
         for (int i=0; i<nTraj; i++) {
@@ -86,20 +86,22 @@ public class EpiTrajPanel extends JPanel {
         protected Void doInBackground() throws Exception {
             double origin = epidemicModel.treeOriginInput.get().getArrayValue();
 
+            final int nSamples = 1000;
+
             for (int i=0; i<nTraj; i++) {
                 List<Number> theseTimes = times.get(i);
                 List<Number> thesePrevs = prevalences.get(i);
 
-                SimulatedTrajectory traj = new SimulatedTrajectory(epidemicModel, origin);
+                SimulatedTrajectory traj = new SimulatedTrajectory(epidemicModel, origin, nSamples);
 
                 theseTimes.clear();
                 thesePrevs.clear();
+
+                int sIdx = 0;
                 for (EpidemicState state : traj.getStateList()) {
                     theseTimes.add(origin - state.time);
                     thesePrevs.add(state.I);
                 }
-                theseTimes.add(0);
-                thesePrevs.add(thesePrevs.get(thesePrevs.size() - 1));
             }
 
             return null;

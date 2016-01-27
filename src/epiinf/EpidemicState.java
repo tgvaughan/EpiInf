@@ -36,7 +36,7 @@ public class EpidemicState {
         this.time = 0;
         this.intervalIdx = 0;
     }
-    
+
     /**
      * Test whether state is valid or not.
      * 
