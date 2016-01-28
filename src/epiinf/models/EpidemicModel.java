@@ -441,6 +441,15 @@ public abstract class EpidemicModel extends CalculationNode {
             return null;
     }
 
+    /**
+     * @return list of model events
+     */
+    public List<ModelEvent> getModelEventList() {
+        update();
+
+        return modelEventList;
+    }
+
     
     /**
      * @return last simulated event list

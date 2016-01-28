@@ -18,6 +18,7 @@
 package beast.app.beauti;
 
 import epiinf.EpidemicState;
+import epiinf.ModelEvent;
 import epiinf.SimulatedTrajectory;
 import epiinf.models.EpidemicModel;
 import org.knowm.xchart.*;
@@ -26,10 +27,7 @@ import org.knowm.xchart.internal.style.Styler;
 import org.knowm.xchart.internal.style.markers.SeriesMarkers;
 
 import javax.swing.*;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,11 +77,15 @@ public class EpiTrajPanel extends JPanel {
 
     class TrajWorker extends SwingWorker<Void, Void> {
 
+        double maxPrev;
+
         @Override
         protected Void doInBackground() throws Exception {
             double origin = epidemicModel.treeOriginInput.get().getArrayValue();
 
             final int nSamples = 1000;
+
+            maxPrev = 0.0;
 
             for (int i=0; i<nTraj; i++) {
                 List<Number> theseTimes = times.get(i);
@@ -98,6 +100,7 @@ public class EpiTrajPanel extends JPanel {
                 for (EpidemicState state : traj.getStateList()) {
                     theseTimes.add(origin - state.time);
                     thesePrevs.add(state.I);
+                    maxPrev = Math.max(state.I, maxPrev);
                 }
             }
 
@@ -106,10 +109,22 @@ public class EpiTrajPanel extends JPanel {
 
         @Override
         protected void done() {
+            double origin = epidemicModel.treeOriginInput.get().getArrayValue();
+
             for (int i=0; i<nTraj; i++) {
                 Series_XY series = chart.addSeries("traj" + i,
                         times.get(i), prevalences.get(i));
                 series.setMarker(SeriesMarkers.NONE);
+            }
+
+            for (int i=0; i<epidemicModel.getModelEventList().size(); i++) {
+                ModelEvent event = epidemicModel.getModelEventList().get(i);
+                Series_XY series = chart.addSeries("modelEvent" + i,
+                        new double[] {origin - event.time, origin - event.time},
+                        new double[] {0, maxPrev});
+                series.setMarker(SeriesMarkers.NONE);
+                series.setLineColor(Color.GRAY);
+                series.setLineStyle(new BasicStroke(1));
             }
 
             repaint();
