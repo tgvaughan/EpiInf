@@ -21,6 +21,7 @@ import epiinf.EpidemicState;
 import epiinf.SimulatedTrajectory;
 import epiinf.models.EpidemicModel;
 import org.knowm.xchart.*;
+import org.knowm.xchart.internal.chartpart.Chart;
 import org.knowm.xchart.internal.style.Styler;
 import org.knowm.xchart.internal.style.markers.SeriesMarkers;
 
@@ -39,7 +40,7 @@ public class EpiTrajPanel extends JPanel {
 
     EpidemicModel epidemicModel;
 
-    XChartPanel chartPanel;
+    Chart_XY chart;
 
     List<List<Number>> times, prevalences;
     int nTraj;
@@ -57,17 +58,11 @@ public class EpiTrajPanel extends JPanel {
         builder.height(getFontMetrics(getFont()).getHeight()*20);
         builder.width(getFontMetrics(getFont()).getHeight()*40);
 
-        Chart_XY chart = builder.build();
-        for (int i=0; i<nTraj; i++) {
-            Series_XY series = chart.addSeries("traj" + i, new double[] {0, 1}, new double[] {0, 0});
-            series.setMarker(SeriesMarkers.NONE);
-        }
+        chart = builder.build();
+
         Styler styler = chart.getStyler();
         styler.setChartBackgroundColor(getBackground());
         styler.setLegendVisible(false);
-        chartPanel = new XChartPanel(chart);
-
-        add(chartPanel);
 
         // Initialise arrays used in simulation.
         times = new ArrayList<>();
@@ -111,10 +106,23 @@ public class EpiTrajPanel extends JPanel {
 
         @Override
         protected void done() {
-            for (int i=0; i<nTraj; i++)
-                chartPanel.updateSeries("traj" + i,
-                        times.get(i),
-                        prevalences.get(i), null);
+            for (int i=0; i<nTraj; i++) {
+                Series_XY series = chart.addSeries("traj" + i,
+                        times.get(i), prevalences.get(i));
+                series.setMarker(SeriesMarkers.NONE);
+            }
+
+            repaint();
         }
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        chart.paint((Graphics2D)g);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(chart.getWidth(), chart.getHeight());
     }
 }
