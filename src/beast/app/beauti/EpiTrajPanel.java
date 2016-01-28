@@ -21,6 +21,8 @@ import epiinf.EpidemicState;
 import epiinf.SimulatedTrajectory;
 import epiinf.models.EpidemicModel;
 import org.knowm.xchart.*;
+import org.knowm.xchart.internal.style.Styler;
+import org.knowm.xchart.internal.style.markers.SeriesMarkers;
 
 import javax.swing.*;
 import java.awt.BorderLayout;
@@ -48,21 +50,21 @@ public class EpiTrajPanel extends JPanel {
 
         // Set up chart
 
-        ChartBuilder builder = new ChartBuilder();
+        ChartBuilder_XY builder = new ChartBuilder_XY();
         builder.title("Example prevalence trajectories (tau leaping approx.)");
         builder.xAxisTitle("Time before most recent sample");
         builder.yAxisTitle("Prevalence");
         builder.height(getFontMetrics(getFont()).getHeight()*20);
         builder.width(getFontMetrics(getFont()).getHeight()*40);
 
-        Chart chart = builder.build();
+        Chart_XY chart = builder.build();
         for (int i=0; i<nTraj; i++) {
-            Series series = chart.addSeries("traj" + i, new double[] {0, 1}, new double[] {0, 0});
-            series.setMarker(SeriesMarker.NONE);
+            Series_XY series = chart.addSeries("traj" + i, new double[] {0, 1}, new double[] {0, 0});
+            series.setMarker(SeriesMarkers.NONE);
         }
-        StyleManager styleManager = chart.getStyleManager();
-        styleManager.setChartBackgroundColor(getBackground());
-        styleManager.setLegendVisible(false);
+        Styler styler = chart.getStyler();
+        styler.setChartBackgroundColor(getBackground());
+        styler.setLegendVisible(false);
         chartPanel = new XChartPanel(chart);
 
         add(chartPanel);
