@@ -204,6 +204,18 @@ public abstract class EpidemicModel extends CalculationNode {
     }
 
     /**
+     * @return age of epidemic start relative to last tree event
+     */
+    public double getOrigin() {
+        if (treeOriginInput.get() == null)
+            throw new UnsupportedOperationException(
+                    "Origin requested from EpidemicModel not initialized " +
+                    "with an origin parameter.");
+
+        return treeOriginInput.get().getArrayValue();
+    }
+
+    /**
      * Convert time parameter element to forwards direction if originally
      * expressed in backwards direction, also reversing the element order.
      * This ensures that if elements are in order of increasing backwards
