@@ -98,6 +98,9 @@ public class SMCTreeDensity extends TreeDistribution {
         for (int p=0; p<nParticles; p++) {
             particleTrajectories.add(new ArrayList<>());
             particleTrajectoriesNew.add(new ArrayList<>());
+
+            particleStates[p] = new EpidemicState();
+            particleStatesNew[p] = new EpidemicState();
         }
     }
 
@@ -123,7 +126,7 @@ public class SMCTreeDensity extends TreeDistribution {
 
         // Initialize particles and trajectory storage
         for (int p = 0; p < nParticles; p++) {
-            particleStates[p] = model.getInitialState();
+            particleStates[p].assignFrom(model.getInitialState());
 
             if (recordTrajectory) {
                 particleTrajectories.get(p).clear();
@@ -163,7 +166,7 @@ public class SMCTreeDensity extends TreeDistribution {
             ReplacementSampler replacementSampler = new ReplacementSampler(particleWeights);
             for (int p=0; p<nParticles; p++) {
                 int srcIdx = replacementSampler.next();
-                particleStatesNew[p] = particleStates[srcIdx].copy();
+                particleStatesNew[p].assignFrom(particleStates[srcIdx]);
 
                 if (recordTrajectory) {
                     particleTrajectoriesNew.get(p).clear();

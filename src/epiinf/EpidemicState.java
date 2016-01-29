@@ -56,7 +56,15 @@ public class EpidemicState {
 
         return stateCopy;
     }
-    
+
+    public void assignFrom(EpidemicState otherState) {
+        S = otherState.S;
+        I = otherState.I;
+        R = otherState.R;
+        time = otherState.time;
+        intervalIdx = otherState.intervalIdx;
+    }
+
     @Override
     public String toString() {
         return "S: " + S + ", I: " + I + ", R: " + R;
