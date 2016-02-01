@@ -18,15 +18,15 @@
 package epiinf;
 
 /**
- * A state of an SIR epidemic trajectory.
+ * A state of an epidemic trajectory.
  * 
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class EpidemicState {
     public double S, I, R;
     public double time;
-    public int intervalIdx;
-    
+    public int modelIntervalIdx, treeIntervalIdx;
+
     public EpidemicState() { }
     
     public EpidemicState(double S, double I, double R) {
@@ -34,7 +34,8 @@ public class EpidemicState {
         this.I = I;
         this.R = R;
         this.time = 0;
-        this.intervalIdx = 0;
+        this.modelIntervalIdx = 0;
+        this.treeIntervalIdx = 0;
     }
 
     /**
@@ -52,7 +53,8 @@ public class EpidemicState {
         stateCopy.I = I;
         stateCopy.R = R;
         stateCopy.time = time;
-        stateCopy.intervalIdx = intervalIdx;
+        stateCopy.modelIntervalIdx = modelIntervalIdx;
+        stateCopy.treeIntervalIdx = treeIntervalIdx;
 
         return stateCopy;
     }
@@ -62,7 +64,8 @@ public class EpidemicState {
         I = otherState.I;
         R = otherState.R;
         time = otherState.time;
-        intervalIdx = otherState.intervalIdx;
+        modelIntervalIdx = otherState.modelIntervalIdx;
+        treeIntervalIdx = otherState.treeIntervalIdx;
     }
 
     @Override

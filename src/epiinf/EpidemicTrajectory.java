@@ -43,7 +43,7 @@ public abstract class EpidemicTrajectory extends BEASTObject implements Loggable
         eventList = new ArrayList<>();
         stateList = new ArrayList<>();
     }
-    
+
     /**
      * Retrieve list of states corresponding to complete epidemic trajectory.
      * 

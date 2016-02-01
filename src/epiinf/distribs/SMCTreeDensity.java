@@ -282,7 +282,7 @@ public class SMCTreeDensity extends TreeDistribution {
                         return Double.NEGATIVE_INFINITY;
                     else {
                         particleState.time = nextModelEventTime;
-                        particleState.intervalIdx += 1;
+                        particleState.modelIntervalIdx += 1;
                         continue;
                     }
                 }
@@ -336,7 +336,7 @@ public class SMCTreeDensity extends TreeDistribution {
 
                 if (nextModelEventTime < finalTreeEvent.time && particleState.time + tau > nextModelEventTime) {
                     particleState.time = nextModelEventTime;
-                    particleState.intervalIdx += 1;
+                    particleState.modelIntervalIdx += 1;
                 } else {
                     if (particleState.time + tau > finalTreeEvent.time)
                         break;

@@ -17,10 +17,6 @@
 
 package epiinf.models;
 
-import beast.core.Function;
-import beast.core.Input;
-import beast.core.Input.Validate;
-import beast.core.parameter.RealParameter;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 
@@ -39,12 +35,12 @@ public class BirthDeathModel extends EpidemicModel {
 
     @Override
     protected double calculateInfectionPropensity(EpidemicState state) {
-        return rateCache.get(state.intervalIdx)[EpidemicEvent.INFECTION]*state.I;
+        return rateCache.get(state.modelIntervalIdx)[EpidemicEvent.INFECTION]*state.I;
     }
 
     @Override
     protected double calculateRecoveryPropensity(EpidemicState state) {
-        return rateCache.get(state.intervalIdx)[EpidemicEvent.RECOVERY]*state.I;
+        return rateCache.get(state.modelIntervalIdx)[EpidemicEvent.RECOVERY]*state.I;
     }
 
     @Override

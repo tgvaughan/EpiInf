@@ -23,8 +23,6 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
 import beast.evolution.tree.TreeDistribution;
-import beast.math.Binomial;
-import beast.math.GammaFunction;
 import beast.util.Randomizer;
 import epiinf.*;
 import epiinf.models.EpidemicModel;
@@ -198,14 +196,12 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
      * Updates weight and state of particle.
      *
      * @param particleState State of particle
-     * @param prevTreeEventIdx index of previous tree event
      * @param dtResamp length of interval
      * @param particleTrajectory if non-null, add particle states to this trajectory
      *
      * @return log conditional prob of tree interval under trajectory
      */
-    private double updateParticle(EpidemicState particleState,
-                                  int prevTreeEventIdx, double dtResamp,
+    private double updateParticle(EpidemicState particleState, double dtResamp,
                                   List<EpidemicState> particleTrajectory) {
         double conditionalLogP = 0;
 
@@ -214,6 +210,10 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             model.calculatePropensities(particleState);
 
             double infectionProp = model.propensities[EpidemicEvent.INFECTION];
+            double removeProp = model.propensities[EpidemicEvent.RECOVERY]
+                    + model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
+            double tau = model.getTau(epsilon, particleState, infectionProp, removeProp);
+
             double allowedInfectProp = infectionProp
                     *(1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1));
             double forbiddenInfectProp = infectionProp - allowedInfectProp;
@@ -256,7 +256,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
 
             if (nextModelEventTime < finalTreeEvent.time && particleState.time + tau > nextModelEventTime) {
                 particleState.time = nextModelEventTime;
-                particleState.intervalIdx += 1;
+                particleState.modelIntervalIdx += 1;
             } else {
                 if (particleState.time + tau > finalTreeEvent.time)
                     break;

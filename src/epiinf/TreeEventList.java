@@ -35,6 +35,7 @@ public class TreeEventList {
     private TreeInterface tree;
     private Function treeOrigin;
     private List<TreeEvent> eventList;
+    private List<Integer> lineageCounts;
 
     /**
      * Tolerance for deviation between tree node ages and trajectory events.
@@ -51,6 +52,7 @@ public class TreeEventList {
         this.treeOrigin = treeOrigin;
 
         eventList = new ArrayList<>();
+        lineageCounts = new ArrayList<>();
 
         dirty = true;
     }

@@ -295,10 +295,10 @@ public abstract class EpidemicModel extends CalculationNode {
     }
 
     protected double calculatePsiSamplingRemovePropensity(EpidemicState state) {
-        return state.I * rateCache.get(state.intervalIdx)[EpidemicEvent.PSI_SAMPLE_REMOVE];
+        return state.I * rateCache.get(state.modelIntervalIdx)[EpidemicEvent.PSI_SAMPLE_REMOVE];
     }
     protected double calculatePsiSamplingNoRemovePropensity(EpidemicState state) {
-        return state.I * rateCache.get(state.intervalIdx)[EpidemicEvent.PSI_SAMPLE_NOREMOVE];
+        return state.I * rateCache.get(state.modelIntervalIdx)[EpidemicEvent.PSI_SAMPLE_NOREMOVE];
     }
     protected abstract double calculateRecoveryPropensity(EpidemicState state);
     protected abstract double calculateInfectionPropensity(EpidemicState state);
@@ -438,8 +438,8 @@ public abstract class EpidemicModel extends CalculationNode {
     public double getNextModelEventTime(EpidemicState state) {
         update();
 
-        if (state.intervalIdx<modelEventList.size())
-            return modelEventList.get(state.intervalIdx).time;
+        if (state.modelIntervalIdx <modelEventList.size())
+            return modelEventList.get(state.modelIntervalIdx).time;
         else
             return Double.POSITIVE_INFINITY;
     }
@@ -447,8 +447,8 @@ public abstract class EpidemicModel extends CalculationNode {
     public ModelEvent getNextModelEvent(EpidemicState state) {
         update();
 
-        if (state.intervalIdx < modelEventList.size())
-            return modelEventList.get(state.intervalIdx);
+        if (state.modelIntervalIdx < modelEventList.size())
+            return modelEventList.get(state.modelIntervalIdx);
         else
             return null;
     }

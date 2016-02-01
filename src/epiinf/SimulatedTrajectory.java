@@ -174,7 +174,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
                     stateList.add(thisState.copy());
                 }
 
-                thisState.intervalIdx += 1;
+                thisState.modelIntervalIdx += 1;
 
                 continue;
             }
@@ -286,7 +286,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
                     model.incrementState(thisState, rhoSampEvent);
                 }
 
-                thisState.intervalIdx += 1;
+                thisState.modelIntervalIdx += 1;
             }
 
             // Rough error correction - doesn't conserve number.
