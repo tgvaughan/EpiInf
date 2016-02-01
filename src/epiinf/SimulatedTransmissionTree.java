@@ -24,8 +24,9 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
-import com.google.common.collect.Lists;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -73,9 +74,13 @@ public class SimulatedTransmissionTree extends Tree {
         int nextLeafNr = 0;
         int nextInternalID = nSamples;
         
-        List<Node> activeNodes = Lists.newArrayList();
-        List<EpidemicEvent> revEventList = Lists.reverse(traj.getEventList());
-        List<EpidemicState> revStateList = Lists.reverse(traj.getStateList());
+        List<Node> activeNodes = new ArrayList<>();
+
+        List<EpidemicEvent> revEventList = traj.getEventList();
+        Collections.reverse(revEventList);
+
+        List<EpidemicState> revStateList = traj.getStateList();
+        Collections.reverse(revStateList);
         
         int samplesSeen = 0;
         for (int eidx=0; eidx<revEventList.size(); eidx++) {

@@ -18,8 +18,9 @@ package epiinf.util;
 
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
-import com.google.common.collect.Lists;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -38,7 +39,7 @@ public class EpiInfUtilityMethods {
      */
     public static void writeExpoTreeFile(Tree tree, double origin, PrintStream ps) {
 
-        List<Node> nodeList = Lists.newArrayList(tree.getNodesAsArray());
+        List<Node> nodeList = new ArrayList<>(Arrays.asList(tree.getNodesAsArray()));
         nodeList.sort((Node o1, Node o2) -> {
             if (o1.getHeight()<o2.getHeight())
                 return -1;

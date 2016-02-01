@@ -19,12 +19,10 @@ package epiinf;
 
 import beast.core.BEASTObject;
 import beast.core.Description;
-import beast.core.Input;
 import beast.core.Loggable;
-import beast.core.parameter.RealParameter;
-import com.google.common.collect.Lists;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -42,8 +40,8 @@ public abstract class EpidemicTrajectory extends BEASTObject implements Loggable
     
     @Override
     public void initAndValidate() throws Exception {
-        eventList = Lists.newArrayList();
-        stateList = Lists.newArrayList();
+        eventList = new ArrayList<>();
+        stateList = new ArrayList<>();
     }
     
     /**

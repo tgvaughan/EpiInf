@@ -21,8 +21,8 @@ import beast.core.Description;
 import beast.core.Function;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
-import com.google.common.collect.Lists;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -50,7 +50,7 @@ public class TreeEventList {
         this.tree = tree;
         this.treeOrigin = treeOrigin;
 
-        eventList = Lists.newArrayList();
+        eventList = new ArrayList<>();
 
         dirty = true;
     }
