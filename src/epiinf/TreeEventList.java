@@ -113,6 +113,23 @@ public class TreeEventList {
             }
         }
 
+        // Compute lineage counts
+        lineageCounts.clear();
+        int k = 0;
+        for (TreeEvent event : eventList) {
+            switch (event.type) {
+                case COALESCENCE:
+                    k += event.multiplicity;
+                    break;
+                case LEAF:
+                    k -= event.multiplicity;
+                    break;
+                default:
+            }
+
+            lineageCounts.add(k);
+        }
+
         dirty = false;
     }
     
@@ -141,6 +158,14 @@ public class TreeEventList {
     public List<TreeEvent> getEventList() {
         updateEventList();
         return eventList;
+    }
+
+    /**
+     * @return list of lineage counts following each tree event
+     */
+    public List<Integer> getLineageCounts() {
+        updateEventList();
+        return lineageCounts;
     }
 
     /**

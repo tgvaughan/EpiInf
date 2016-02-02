@@ -18,6 +18,9 @@ package epiinf.util;
 
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
+import beast.math.GammaFunction;
+import beast.math.distributions.Gamma;
+
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,6 +61,18 @@ public class EpiInfUtilityMethods {
         }
 
         ps.println(origin + " 99");
+    }
+
+    /**
+     * Compute log probability of n occurrences given a mean of lambda
+     * under a Poissonian distribution.
+     *
+     * @param lambda mean number of occurrences
+     * @param n number of occurrences
+     * @return log probability
+     */
+    public static double getLogPoissonProb(double lambda, int n) {
+        return -lambda + n*Math.log(lambda) - GammaFunction.lnGamma(n+1);
     }
     
 }
