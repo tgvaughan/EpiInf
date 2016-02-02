@@ -72,7 +72,13 @@ public class EpiInfUtilityMethods {
      * @return log probability
      */
     public static double getLogPoissonProb(double lambda, int n) {
-        return -lambda + n*Math.log(lambda) - GammaFunction.lnGamma(n+1);
+        if (n>0) {
+            if (lambda > 0.0)
+                return -lambda + n * Math.log(lambda) - GammaFunction.lnGamma(n + 1);
+            else
+                return Double.NEGATIVE_INFINITY;
+        } else
+            return -lambda;
     }
     
 }
