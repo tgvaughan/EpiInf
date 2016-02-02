@@ -361,24 +361,13 @@ public class SMCTreeDensity extends TreeDistribution {
             if (model.timesEqual(finalTreeEvent.time, model.getNextModelEventTime(particleState))
                     && model.getNextModelEvent(particleState).type == ModelEvent.Type.RHO_SAMPLING) {
 
-                sampleProb = Double.NEGATIVE_INFINITY;
+                ModelEvent nextModelEvent = model.getNextModelEvent(particleState);
 
-                // If model contains a rho sampling event at this time, calculate the probability
-                // of sampling the number of samples in finalTreeEvent given the current
-                // state.
-                for (int i = 0; i < model.rhoSamplingProbInput.get().getDimension(); i++) {
-                    double rhoProb = model.rhoSamplingProbInput.get().getArrayValue(i);
-                    double rhoTime = model.rhoSamplingTimeInput.get().getArrayValue(i);
-
-                    if (Math.abs(rhoTime - finalTreeEvent.time) < model.getTolerance()) {
-                        int I = (int) Math.round(particleState.I);
-                        int k = finalTreeEvent.multiplicity;
-                        sampleProb = Binomial.logChoose(I, k)
-                                + k*Math.log(rhoProb) + (I-k)*Math.log(1.0 - rhoProb);
-
-                        break;
-                    }
-                }
+                int I = (int) Math.round(particleState.I);
+                int k = finalTreeEvent.multiplicity;
+                sampleProb = Binomial.logChoose(I, k)
+                        + k*Math.log(nextModelEvent.rho)
+                        + (I-k)*Math.log(1.0 - nextModelEvent.rho);
 
                 model.incrementState(particleState,
                         EpidemicEvent.MultipleRhoSamples(finalTreeEvent.multiplicity));
