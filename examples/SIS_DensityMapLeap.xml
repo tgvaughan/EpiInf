@@ -1,3 +1,20 @@
+<!--
+  ~ Copyright (C) 2016 Tim Vaughan <tgvaughan@gmail.com>
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
 <beast version="2.0" namespace="beast.core
     :beast.core.parameter
     :epiinf
@@ -14,7 +31,8 @@
                 <S0 spec="IntegerParameter" value="99"/>
                 <infectionRate spec="RealParameter" value="0.01"/>
                 <recoveryRate spec="RealParameter" value="0.2"/>
-                <psiSamplingRate spec="RealParameter" value="0.0"/>
+                <psiSamplingVariable spec="RealParameter" value="0.0"/>
+                <removalProb spec="RealParameter" value="1.0"/>
                 <rhoSamplingProb spec="RealParameter" value="0.3"/>
                 <rhoSamplingTime spec="RealParameter" value="4.0"/>
             </model>
@@ -25,7 +43,8 @@
           IsLabelledNewick="true" adjustTipHeights="false"/>
 
     <run spec="feast.mapping.DensityMapper">
-        <distribution spec="SMCTreeDensity" id="density" tree="@tree" nParticles="10000">
+        <distribution spec="LeapingSMCTreeDensity" id="density" tree="@tree"
+                      nParticles="10000" nResamples="20">
             <model spec="SISModel" treeOrigin="@origin">
                 <S0 spec="IntegerParameter" value="99"/>
                 <infectionRate idref="beta"/>

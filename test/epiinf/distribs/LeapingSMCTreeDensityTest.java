@@ -72,7 +72,7 @@ public class LeapingSMCTreeDensityTest {
     @org.junit.Test
     public void testSISTreeDensitySerial() throws Exception {
 
-        Randomizer.setSeed(42);
+//        Randomizer.setSeed(42);
 
         TreeParser tree = new TreeParser(
                 "(t19:0.5728982259951056,(t1:4.682548468426976,((((t13:0.1" +
@@ -106,7 +106,7 @@ public class LeapingSMCTreeDensityTest {
         density.initByName(
                 "tree", tree,
                 "model", model,
-                "nParticles", 100000,
+                "nParticles", 1000,
                 "nResamples", 100);
 
         double logP = density.calculateLogP();

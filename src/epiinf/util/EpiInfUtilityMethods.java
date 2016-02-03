@@ -80,5 +80,15 @@ public class EpiInfUtilityMethods {
         } else
             return -lambda;
     }
+
+    public static double getLogOrientedPoissonProb(double lambda, int n) {
+        if (n>0) {
+            if (lambda > 0.0)
+                return -lambda + n * Math.log(lambda);
+            else
+                return Double.NEGATIVE_INFINITY;
+        } else
+            return -lambda;
+    }
     
 }

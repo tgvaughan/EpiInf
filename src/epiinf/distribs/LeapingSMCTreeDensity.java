@@ -24,17 +24,17 @@ import beast.core.Input.Validate;
 import beast.core.State;
 import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
-import beast.math.distributions.Poisson;
+import beast.math.GammaFunction;
 import beast.util.Randomizer;
 import epiinf.*;
 import epiinf.models.EpidemicModel;
-import epiinf.util.EpiInfUtilityMethods;
 import epiinf.util.ReplacementSampler;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import static epiinf.util.EpiInfUtilityMethods.getLogOrientedPoissonProb;
 import static epiinf.util.EpiInfUtilityMethods.getLogPoissonProb;
 
 /**
@@ -211,8 +211,6 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                                   List<EpidemicState> particleTrajectory) {
         double conditionalLogP = 0;
 
-        int lineages = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
-
         while (true) {
 
             model.calculatePropensities(particleState);
@@ -222,34 +220,12 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             double removeProp = model.propensities[EpidemicEvent.RECOVERY]
                     + model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
             double tau = model.getTau(epsilon, particleState, infectionProp, removeProp);
+//            double tau = Double.POSITIVE_INFINITY;
 
             double nextModelEventTime = model.getNextModelEventTime(particleState);
             double trueDt = Math.min(tau, Math.min(nextModelEventTime, nextResampTime) - particleState.time);
 
-            double observedInfectProp = lineages*(lineages-1)
-                    /particleState.I/(particleState.I + 1.0);
-            double unobservedInfectProp = infectionProp - observedInfectProp;
-
-            double allowedRecovProp, forbiddenRecovProp;
-            if (particleState.I > lineages) {
-                allowedRecovProp = model.propensities[EpidemicEvent.RECOVERY];
-                forbiddenRecovProp = 0.0;
-            } else {
-                allowedRecovProp = 0.0;
-                forbiddenRecovProp = model.propensities[EpidemicEvent.RECOVERY];
-            }
-
-            EpidemicEvent infectEvent = new EpidemicEvent();
-            infectEvent.type = EpidemicEvent.INFECTION;
-            infectEvent.multiplicity = (int)Randomizer.nextPoisson(trueDt*unobservedInfectProp);
-
-            EpidemicEvent recovEvent = new EpidemicEvent();
-            recovEvent.type = EpidemicEvent.RECOVERY;
-            recovEvent.multiplicity = (int)Math.round(Randomizer.nextPoisson(trueDt*allowedRecovProp));
-
-            model.incrementState(particleState, infectEvent);
-            model.incrementState(particleState, recovEvent);
-
+            // Count tree events contained within leap
             int nInfections = 0;
             int nPsiSampleRemoves = 0;
             int nPsiSampleNoRemoves = 0;
@@ -261,10 +237,12 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                 switch(nextTreeEvent.type) {
                     case COALESCENCE:
                         nInfections += 1;
+                        model.incrementState(particleState, EpidemicEvent.Infection);
                         break;
 
                     case LEAF:
                         nPsiSampleRemoves += 1;
+                        model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
                         break;
 
                     case SAMPLED_ANCESTOR:
@@ -276,10 +254,33 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                         .get(particleState.treeIntervalIdx);
             }
 
-            conditionalLogP += getLogPoissonProb(observedInfectProp*trueDt, nInfections)
-                    + getLogPoissonProb(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]*trueDt, nPsiSampleRemoves)
-                    + getLogPoissonProb(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]*trueDt, nPsiSampleNoRemoves)
-                    - forbiddenRecovProp;
+            EpidemicEvent infectEvent = new EpidemicEvent();
+            infectEvent.type = EpidemicEvent.INFECTION;
+            infectEvent.multiplicity = (int)Randomizer.nextPoisson(
+                    trueDt*model.propensities[EpidemicEvent.INFECTION]);
+
+            EpidemicEvent recovEvent = new EpidemicEvent();
+            recovEvent.type = EpidemicEvent.RECOVERY;
+            recovEvent.multiplicity = (int)Math.round(Randomizer.nextPoisson(
+                    trueDt*model.propensities[EpidemicEvent.RECOVERY]));
+
+            model.incrementState(particleState, infectEvent);
+            model.incrementState(particleState, recovEvent);
+
+            double lineages = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
+            double observationProb = lineages*(lineages-1)/particleState.I/(particleState.I-1);
+            if (observationProb>0.0)
+                conditionalLogP += nInfections*Math.log(observationProb);
+//                        - GammaFunction.lnGamma(nInfections+1);
+
+            if (observationProb<1.0)
+                conditionalLogP += (infectEvent.multiplicity-nInfections)*Math.log(1.0 - observationProb);
+//                        - GammaFunction.lnGamma(infectEvent.multiplicity-nInfections+1);
+
+            conditionalLogP += Binomial.logChoose(infectEvent.multiplicity, nInfections);
+
+            conditionalLogP += getLogPoissonProb(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]*trueDt, nPsiSampleRemoves)
+                    + getLogPoissonProb(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]*trueDt, nPsiSampleNoRemoves);
 
             if (conditionalLogP == Double.NEGATIVE_INFINITY
                     || !particleState.isValid() || particleState.I < lineages)
