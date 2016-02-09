@@ -219,8 +219,8 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             double infectionProp = model.propensities[EpidemicEvent.INFECTION];
             double removeProp = model.propensities[EpidemicEvent.RECOVERY]
                     + model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
-            double tau = model.getTau(epsilon, particleState, infectionProp, removeProp);
-//            double tau = Double.POSITIVE_INFINITY;
+//            double tau = model.getTau(epsilon, particleState, infectionProp, removeProp);
+            double tau = Double.POSITIVE_INFINITY;
 
             double nextModelEventTime = model.getNextModelEventTime(particleState);
             double trueDt = Math.min(tau, Math.min(nextModelEventTime, nextResampTime) - particleState.time);
