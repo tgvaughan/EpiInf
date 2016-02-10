@@ -44,7 +44,7 @@
 
     <run spec="feast.mapping.DensityMapper">
         <distribution spec="LeapingSMCTreeDensity" id="density" tree="@tree"
-                      nParticles="10000" nResamples="100">
+                      nParticles="10000" nResamples="11">
             <model spec="SISModel" treeOrigin="@origin">
                 <S0 spec="IntegerParameter" value="99"/>
                 <infectionRate idref="beta"/>

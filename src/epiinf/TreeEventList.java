@@ -102,21 +102,24 @@ public class TreeEventList {
             
             return 0;
         });
-        
+
         // Collate concurrent events
-        for (int i=1; i<eventList.size(); i++) {
+        int i=1;
+        while (i<eventList.size()) {
             if (Math.abs(eventList.get(i).time-eventList.get(i-1).time)<tolerance
                     && eventList.get(i).type == eventList.get(i-1).type) {
                 eventList.get(i-1).multiplicity += 1;
                 eventList.remove(i);
-                i -= 1;
-            }
+            } else
+                i += 1;
         }
 
         // Compute lineage counts
         lineageCounts.clear();
-        int k = 0;
+        int k = 1;
         for (TreeEvent event : eventList) {
+            lineageCounts.add(k);
+
             switch (event.type) {
                 case COALESCENCE:
                     k += event.multiplicity;
@@ -126,9 +129,8 @@ public class TreeEventList {
                     break;
                 default:
             }
-
-            lineageCounts.add(k);
         }
+        lineageCounts.add(k);
 
         dirty = false;
     }
@@ -161,7 +163,13 @@ public class TreeEventList {
     }
 
     /**
-     * @return list of lineage counts following each tree event
+     * Obtain the list of lineage counts within each tree interval.
+     * Note that the time before the first tree event and the time
+     * following the last tree event are counted as intervals in their
+     * own right, so there is one more lineage count than there are
+     * tree events.
+     *
+     * @return list of lineage counts within each tree interval
      */
     public List<Integer> getLineageCounts() {
         updateEventList();

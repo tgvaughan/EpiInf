@@ -22,13 +22,17 @@ import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
+import beast.core.parameter.IntegerParameter;
+import beast.core.parameter.RealParameter;
 import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
 import beast.util.Randomizer;
 import epiinf.*;
 import epiinf.models.EpidemicModel;
+import epiinf.models.SISModel;
 import epiinf.util.ReplacementSampler;
+import feast.fileio.TreeFromNewickFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -237,7 +241,6 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                 switch(nextTreeEvent.type) {
                     case COALESCENCE:
                         nInfections += 1;
-                        model.incrementState(particleState, EpidemicEvent.Infection);
                         break;
 
                     case LEAF:
@@ -256,8 +259,11 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
 
             EpidemicEvent infectEvent = new EpidemicEvent();
             infectEvent.type = EpidemicEvent.INFECTION;
-            infectEvent.multiplicity = (int)Randomizer.nextPoisson(
-                    trueDt*model.propensities[EpidemicEvent.INFECTION]);
+
+            do {
+                infectEvent.multiplicity = (int) Randomizer.nextPoisson(
+                        trueDt * model.propensities[EpidemicEvent.INFECTION]);
+            } while (infectEvent.multiplicity < nInfections);
 
             EpidemicEvent recovEvent = new EpidemicEvent();
             recovEvent.type = EpidemicEvent.RECOVERY;
@@ -268,16 +274,18 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             model.incrementState(particleState, recovEvent);
 
             double lineages = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
-            double observationProb = lineages*(lineages-1)/particleState.I/(particleState.I-1);
-            if (observationProb>0.0)
-                conditionalLogP += nInfections*Math.log(observationProb);
-//                        - GammaFunction.lnGamma(nInfections+1);
 
-            if (observationProb<1.0)
-                conditionalLogP += (infectEvent.multiplicity-nInfections)*Math.log(1.0 - observationProb);
-//                        - GammaFunction.lnGamma(infectEvent.multiplicity-nInfections+1);
+            if (particleState.I>1) {
+                double observationProb = lineages * (lineages - 1) / particleState.I / (particleState.I - 1);
+                if (observationProb > 0.0)
+                    conditionalLogP += nInfections * Math.log(observationProb);
 
-            conditionalLogP += Binomial.logChoose(infectEvent.multiplicity, nInfections);
+                if (observationProb < 1.0)
+                    conditionalLogP += (infectEvent.multiplicity - nInfections) * Math.log(1.0 - observationProb);
+
+                conditionalLogP += Binomial.logChoose(infectEvent.multiplicity, nInfections);
+            }
+
 
             conditionalLogP += getLogPoissonProb(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]*trueDt, nPsiSampleRemoves)
                     + getLogPoissonProb(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]*trueDt, nPsiSampleNoRemoves);
@@ -310,11 +318,17 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             } else {
                 // Check for end of particle resampling interval
 
-                if (particleState.time + tau > nextResampTime)
+                if (particleState.time + tau > nextResampTime) {
+                    particleState.time = nextResampTime;
                     break;
-                else
+                } else {
                     particleState.time += tau;
+                }
             }
+
+            if (particleTrajectory != null)
+                particleTrajectory.add(particleState.copy());
+
         }
 
         if (particleTrajectory != null)
@@ -363,6 +377,38 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
     @Override
     public boolean isStochastic() {
         return true;
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        TreeFromNewickFile tree = new TreeFromNewickFile();
+        tree.initByName("fileName", "examples/SIS_DensityMapLeap.tree.newick",
+                "IsLabelledNewick", true,
+                "adjustTipHeights", false);
+
+        SISModel model = new SISModel();
+        model.initByName("treeOrigin", new RealParameter("4.0"),
+                "S0", new IntegerParameter("99"),
+                "infectionRate", new RealParameter("0.01"),
+                "recoveryRate", new RealParameter("0.2"),
+                "psiSamplingVariable", new RealParameter("0.0"),
+                "removalProb", new RealParameter("1.0"),
+                "rhoSamplingProb", new RealParameter("0.3"),
+                "rhoSamplingTime", new RealParameter("4.0"));
+
+        LeapingSMCTreeDensity density = new LeapingSMCTreeDensity();
+        density.initByName(
+                "tree", tree,
+                "model", model,
+                "nParticles", 100,
+                "nResamples", 11);
+
+        System.out.println(density.calculateLogP(true));
+
+        System.out.println("t I S");
+        for (EpidemicState state : density.recordedTrajectory) {
+            System.out.println(state.time + " " + state.I + " " + state.S);
+        }
     }
 
 }
