@@ -28,6 +28,7 @@ import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
 import beast.util.Randomizer;
+import beast.util.TreeParser;
 import epiinf.*;
 import epiinf.models.EpidemicModel;
 import epiinf.models.SISModel;
@@ -245,7 +246,6 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
 
                     case LEAF:
                         nPsiSampleRemoves += 1;
-                        model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
                         break;
 
                     case SAMPLED_ANCESTOR:
@@ -257,23 +257,20 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                         .get(particleState.treeIntervalIdx);
             }
 
-            EpidemicEvent infectEvent = new EpidemicEvent();
-            infectEvent.type = EpidemicEvent.INFECTION;
+            double lineages = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
+            double observedInfectProp = infectionProp*lineages*(lineages-1)/particleState.I/(particleState.I + 1);
+            double unobservedInfectProp = infectionProp - observedInfectProp;
 
-            do {
-                infectEvent.multiplicity = (int) Randomizer.nextPoisson(
-                        trueDt * model.propensities[EpidemicEvent.INFECTION]);
-            } while (infectEvent.multiplicity < nInfections);
+            EpidemicEvent infectEvent = EpidemicEvent.MultipleInfections(
+                    (int) Math.round(Randomizer.nextPoisson(trueDt*unobservedInfectProp)));
 
-            EpidemicEvent recovEvent = new EpidemicEvent();
-            recovEvent.type = EpidemicEvent.RECOVERY;
-            recovEvent.multiplicity = (int)Math.round(Randomizer.nextPoisson(
-                    trueDt*model.propensities[EpidemicEvent.RECOVERY]));
+            EpidemicEvent recovEvent = EpidemicEvent.MultipleRecoveries(
+                     (int)Math.round(Randomizer.nextPoisson(
+                             trueDt*model.propensities[EpidemicEvent.RECOVERY])));
 
             model.incrementState(particleState, infectEvent);
             model.incrementState(particleState, recovEvent);
 
-            double lineages = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
 
             if (particleState.I>1) {
                 double observationProb = lineages * (lineages - 1) / particleState.I / (particleState.I - 1);
@@ -381,29 +378,37 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
 
     public static void main(String[] args) throws Exception {
 
-        TreeFromNewickFile tree = new TreeFromNewickFile();
-        tree.initByName("fileName", "examples/SIS_DensityMapLeap.tree.newick",
-                "IsLabelledNewick", true,
-                "adjustTipHeights", false);
+//        TreeFromNewickFile tree = new TreeFromNewickFile();
+//        tree.initByName("fileName", "examples/SIS_DensityMapLeap.tree.newick",
+//                "IsLabelledNewick", true,
+//                "adjustTipHeights", false);
+        TreeParser tree = new TreeParser("(A:2,B:2):2;", false, false, true, 1);
 
         SISModel model = new SISModel();
         model.initByName("treeOrigin", new RealParameter("4.0"),
                 "S0", new IntegerParameter("99"),
                 "infectionRate", new RealParameter("0.01"),
-                "recoveryRate", new RealParameter("0.2"),
+                "recoveryRate", new RealParameter("0.1"),
                 "psiSamplingVariable", new RealParameter("0.0"),
                 "removalProb", new RealParameter("1.0"),
-                "rhoSamplingProb", new RealParameter("0.3"),
+                "rhoSamplingProb", new RealParameter("0.1"),
                 "rhoSamplingTime", new RealParameter("4.0"));
 
         LeapingSMCTreeDensity density = new LeapingSMCTreeDensity();
         density.initByName(
                 "tree", tree,
                 "model", model,
-                "nParticles", 100,
-                "nResamples", 11);
+                "nParticles", 1000,
+                "nResamples", 1001);
+
+        SMCTreeDensity densityTrue = new SMCTreeDensity();
+        densityTrue.initByName(
+                "tree", tree,
+                "model", model,
+                "nParticles", 1000);
 
         System.out.println(density.calculateLogP(true));
+        System.out.println(densityTrue.calculateLogP(true));
 
         System.out.println("t I S");
         for (EpidemicState state : density.recordedTrajectory) {

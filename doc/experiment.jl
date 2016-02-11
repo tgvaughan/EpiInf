@@ -2,15 +2,15 @@ module Phylodyn
 
 using Distributions
 
-function simSIS(S0, I0, beta, gamma, T)
+function simSIS(S0, I0, β, γ, T)
 
     t = [0.0]
     S = [S0]
     I = [I0]
 
     while true
-        aInfect = beta*S[end]*I[end]
-        aRemove = gamma*I[end]
+        aInfect = β*S[end]*I[end]
+        aRemove = γ*I[end]
         a0 = aInfect + aRemove
 
         if a0 > 0
@@ -116,18 +116,19 @@ function mainB(;N=10, k=10, T=1)
 end
 
 
-function mainSIS(;N=10, k=10, T=1)
-    iter = 10000
+function mainSIS(;S0=150, I0=50, β=0.05, γ=0.1, k=20, T=0.2)
+    iter = 1000
 
     r = zeros(iter)
     rp = zeros(iter)
+    rpp = zeros(iter)
     n = zeros(iter)
     for i in 1:iter
 
         t = []
         I = []
         while true
-            t, I = simB(N, 1, T)
+            t, I = simSIS(S0, I0, β, γ, T)
 
             if I[end]>=k
                 break
@@ -137,12 +138,17 @@ function mainSIS(;N=10, k=10, T=1)
         n[i] = sum(map(x->x==1, diff(I)))
         r[i] = drawCoalCount(I, k)
 
-        M = N + n[i]
+        M = I0 + n[i]
         p = k*(k-1)/M/(M-1)
-        rp[i] = rand(Binomial(n[i], p))
+        if (p>0 && p<1)
+            rp[i] = rand(Binomial(n[i], p))
+        end
+
+        #p = k*(k-1)/(I0+1)/I0
+        #rpp[i] = rand(Binomial(n[i], p))
     end
 
-    return n, r, rp
+    return n, r, rp, rpp
 end
 
 

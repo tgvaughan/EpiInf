@@ -17,6 +17,8 @@
 
 package epiinf;
 
+import com.sun.org.apache.regexp.internal.RE;
+
 /**
  * Class representing events during an epidemic.
  *
@@ -88,6 +90,15 @@ public class EpidemicEvent extends Event {
     public static final EpidemicEvent PsiSampleRemove = new EpidemicEvent(-1, PSI_SAMPLE_REMOVE, 1);
     public static final EpidemicEvent PsiSampleNoRemove = new EpidemicEvent(-1, PSI_SAMPLE_NOREMOVE, 1);
     public static final EpidemicEvent OtherSample = new EpidemicEvent(-1, PSI_SAMPLE_REMOVE, 1);
+
+    public static EpidemicEvent MultipleInfections(int multiplicity) {
+        return new EpidemicEvent(-1, INFECTION, multiplicity);
+    }
+
+    public static EpidemicEvent MultipleRecoveries(int multiplicity) {
+        return new EpidemicEvent(-1, RECOVERY, multiplicity);
+    }
+
 
     public static EpidemicEvent MultipleRhoSamples(int multiplicity) {
         return new EpidemicEvent(-1, RHO_SAMPLE, multiplicity);
