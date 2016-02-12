@@ -26,14 +26,12 @@ import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
-import beast.math.GammaFunction;
 import beast.util.Randomizer;
 import beast.util.TreeParser;
 import epiinf.*;
 import epiinf.models.EpidemicModel;
 import epiinf.models.SISModel;
 import epiinf.util.ReplacementSampler;
-import feast.fileio.TreeFromNewickFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -147,29 +145,37 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             double nextResampTime = ridx*dtResamp;
 
             // Update particles
-            double sumOfWeights = 0.0;
+            double maxLogWeight = 0.0;
             for (int p = 0; p < nParticles; p++) {
 
                 double newLogWeight = recordTrajectory ?
                         updateParticle(particleStates[p], nextResampTime, particleTrajectories.get(p))
                         : updateParticle(particleStates[p], nextResampTime, null);
 
-                double newWeight = Math.exp(newLogWeight);
-
-                particleWeights[p] = newWeight;
-                sumOfWeights += newWeight;
+                particleWeights[p] = newLogWeight;
+                maxLogWeight = Math.max(newLogWeight, maxLogWeight);
             }
 
-            if (!(sumOfWeights > 0.0)) {
+            // Compute mean of weights scaled relative to max log weight
+            double sumOfScaledWeights = 0;
+            for (int p=0; p<nParticles; p++) {
+                particleWeights[p] = Math.exp(particleWeights[p] - maxLogWeight);
+                sumOfScaledWeights += particleWeights[p];
+            }
+
+            // Update marginal likelihood estimate
+            thisLogP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
+
+            if (!(sumOfScaledWeights > 0.0)) {
                 return Double.NEGATIVE_INFINITY;
             }
 
             // Update marginal likelihood estimate
-            thisLogP += Math.log(sumOfWeights / nParticles);
+            thisLogP += Math.log(sumOfScaledWeights / nParticles);
 
             // Normalize weights
             for (int i=0; i<nParticles; i++)
-                particleWeights[i] = particleWeights[i]/sumOfWeights;
+                particleWeights[i] = particleWeights[i]/sumOfScaledWeights;
 
             // Sample particle with replacement
             ReplacementSampler replacementSampler = new ReplacementSampler(particleWeights);
@@ -224,8 +230,8 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             double infectionProp = model.propensities[EpidemicEvent.INFECTION];
             double removeProp = model.propensities[EpidemicEvent.RECOVERY]
                     + model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
-//            double tau = model.getTau(epsilon, particleState, infectionProp, removeProp);
-            double tau = Double.POSITIVE_INFINITY;
+            double tau = model.getTau(epsilon, particleState, infectionProp, removeProp);
+//            double tau = Double.POSITIVE_INFINITY;
 
             double nextModelEventTime = model.getNextModelEventTime(particleState);
             double trueDt = Math.min(tau, Math.min(nextModelEventTime, nextResampTime) - particleState.time);

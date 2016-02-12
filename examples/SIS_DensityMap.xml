@@ -9,36 +9,39 @@
 
 
     <!--tree spec="SimulatedTransmissionTree" id="tree" fileName="$(filebase).tree.newick">
-        <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="5.0">
+        <epidemicTrajectory spec="SimulatedTrajectory" id="traj" maxDuration="6.0">
             <model spec="SISModel">
-                <S0 spec="IntegerParameter" value="99"/>
-                <infectionRate spec="RealParameter" value="0.01"/>
-                <recoveryRate spec="RealParameter" value="0.2"/>
-                <psiSamplingRate spec="RealParameter" value="0.0"/>
-                <rhoSamplingProb spec="RealParameter" value="0.3"/>
-                <rhoSamplingTime spec="RealParameter" value="4.0"/>
+                <S0 spec="IntegerParameter" value="5000"/>
+                <infectionRate spec="RealParameter" value="0.001"/>
+                <recoveryRate spec="RealParameter" value="0.05"/>
+                <psiSamplingVariable spec="RealParameter" value="0.0"/>
+                <removalProb spec="RealParameter" value="1.0"/>
+                <rhoSamplingProb spec="RealParameter" value="0.1"/>
+                <rhoSamplingTime spec="RealParameter" value="5.0"/>
             </model>
         </epidemicTrajectory>
     </tree-->
 
-    <tree spec="TreeFromNewickFile" id="tree" fileName="SIS_DensityMapLeap.tree.newick"
+    <tree spec="TreeFromNewickFile" id="tree" fileName="SIS_DensityMap.tree.newick"
           IsLabelledNewick="true" adjustTipHeights="false"/>
 
     <run spec="feast.mapping.DensityMapper">
-        <distribution spec="SMCTreeDensity" id="density" tree="@tree" nParticles="10000">
-            <model spec="SISModel" treeOrigin="@origin">
-                <S0 spec="IntegerParameter" value="199"/>
+        <distribution spec="SMCTreeDensity" id="density" tree="@tree" nParticles="1000" useTauLeaping="false">
+            <model spec="SISModel">
+                <!--treeOrigin spec="OriginFromTrajectory" trajectory="@traj"/-->
+                <treeOrigin spec="RealParameter" value="5.0"/>
+                <S0 spec="IntegerParameter" value="5000"/>
                 <infectionRate idref="beta"/>
-                <recoveryRate spec="RealParameter" value="0.1"/>
+                <recoveryRate spec="RealParameter" value="0.05"/>
                 <psiSamplingVariable spec="RealParameter" value="0.0"/>
                 <removalProb spec="RealParameter" value="1.0"/>
-                <rhoSamplingProb spec="RealParameter" value="0.3"/>
-                <rhoSamplingTime id="origin" spec="RealParameter" value="4.0"/>
+                <rhoSamplingProb spec="RealParameter" value="0.1"/>
+                <rhoSamplingTime id="origin" spec="RealParameter" value="5.0"/>
             </model>
         </distribution>
 
-        <realParam spec="RealParameter" id="beta" value="0.01" lower="0.005" upper="0.015"/>
-        <steps spec="IntegerParameter" value="21"/>
+        <realParam spec="RealParameter" id="beta" value="0.001" lower="0.0005" upper="0.0015"/>
+        <steps spec="IntegerParameter" value="11"/>
 
         <logger spec="Logger" logEvery="1">
             <log idref="beta"/>
