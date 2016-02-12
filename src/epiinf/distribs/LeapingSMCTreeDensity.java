@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static epiinf.util.EpiInfUtilityMethods.getLogOrientedPoissonProb;
+import static epiinf.util.EpiInfUtilityMethods.getLogOrientedPoissonDensity;
 import static epiinf.util.EpiInfUtilityMethods.getLogPoissonProb;
 
 /**
@@ -160,12 +160,12 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                 sumOfWeights += newWeight;
             }
 
-            // Update marginal likelihood estimate
-            thisLogP += Math.log(sumOfWeights / nParticles);
-
             if (!(sumOfWeights > 0.0)) {
                 return Double.NEGATIVE_INFINITY;
             }
+
+            // Update marginal likelihood estimate
+            thisLogP += Math.log(sumOfWeights / nParticles);
 
             // Normalize weights
             for (int i=0; i<nParticles; i++)
@@ -274,10 +274,9 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             model.incrementState(particleState,
                     EpidemicEvent.MultiplePsiSampleRemove(nPsiSampleRemoves));
 
-            conditionalLogP += getLogOrientedPoissonProb(observedInfectProp*trueDt, nInfections)
-                    - nInfections*Math.log(trueDt)
-                    + getLogPoissonProb(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]*trueDt, nPsiSampleRemoves)
-                    + getLogPoissonProb(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]*trueDt, nPsiSampleNoRemoves);
+            conditionalLogP += getLogOrientedPoissonDensity(observedInfectProp*trueDt, nInfections, trueDt)
+                    + getLogOrientedPoissonDensity(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]*trueDt, nPsiSampleRemoves, trueDt)
+                    + getLogOrientedPoissonDensity(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]*trueDt, nPsiSampleNoRemoves, trueDt);
 
             if (conditionalLogP == Double.NEGATIVE_INFINITY
                     || !particleState.isValid() || particleState.I < k)

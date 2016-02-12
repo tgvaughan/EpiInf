@@ -81,10 +81,10 @@ public class EpiInfUtilityMethods {
             return -lambda;
     }
 
-    public static double getLogOrientedPoissonProb(double lambda, int n) {
+    public static double getLogOrientedPoissonDensity(double lambda, int n, double dt) {
         if (n>0) {
             if (lambda > 0.0)
-                return -lambda + n * Math.log(lambda);
+                return -lambda + n * (Math.log(lambda) - Math.log(dt));
             else
                 return Double.NEGATIVE_INFINITY;
         } else

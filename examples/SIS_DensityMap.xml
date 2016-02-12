@@ -27,9 +27,9 @@
     <run spec="feast.mapping.DensityMapper">
         <distribution spec="SMCTreeDensity" id="density" tree="@tree" nParticles="10000">
             <model spec="SISModel" treeOrigin="@origin">
-                <S0 spec="IntegerParameter" value="99"/>
+                <S0 spec="IntegerParameter" value="199"/>
                 <infectionRate idref="beta"/>
-                <recoveryRate spec="RealParameter" value="0.2"/>
+                <recoveryRate spec="RealParameter" value="0.1"/>
                 <psiSamplingVariable spec="RealParameter" value="0.0"/>
                 <removalProb spec="RealParameter" value="1.0"/>
                 <rhoSamplingProb spec="RealParameter" value="0.3"/>
