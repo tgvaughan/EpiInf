@@ -2,15 +2,15 @@ module Phylodyn
 
 using Distributions
 
-function simSIS(S0, I0, β, γ, T)
+function simSIS(S0::Int, I0::Int, beta, gamma, T)
 
     t = [0.0]
     S = [S0]
     I = [I0]
 
     while true
-        aInfect = β*S[end]*I[end]
-        aRemove = γ*I[end]
+        aInfect = beta*S[end]*I[end]
+        aRemove = gamma*I[end]
         a0 = aInfect + aRemove
 
         if a0 > 0
@@ -36,15 +36,15 @@ function simSIS(S0, I0, β, γ, T)
         end
     end
 
-    return t, S, I
+    return t, I, S
 end
 
-function simB(I0, lambda, T)
+function simB(I0, λ, T)
     t = [0.0]
     I = [I0]
 
     while true
-        a0 = lambda*I[end]
+        a0 = λ*I[end]
 
         if a0 > 0
             t = [t; t[end] + randexp()/a0]
@@ -86,69 +86,98 @@ function drawCoalCount(Itraj, k)
     return r
 end
 
-function mainB(;N=10, k=10, T=1)
+function mainB(;N=10, λ=1, k=10, T=1)
     iter = 10000
 
-    r = zeros(iter)
-    rp = zeros(iter)
-    n = zeros(iter)
+    r = zeros(Int, iter)
+    rp = zeros(Int, iter)
+    rpp = zeros(Int, iter)
+    n = zeros(Int, iter)
+    npp = zeros(Int, iter)
     for i in 1:iter
 
         t = []
         I = []
         while true
-            t, I = simB(N, 1, T)
+            t, I = simB(N, λ, T)
 
-            if I[end]>=k
+#            if I[end]>=k
                 break
-            end
+#            end
         end
 
         n[i] = sum(map(x->x==1, diff(I)))
         r[i] = drawCoalCount(I, k)
 
         M = N + n[i]
-        p = k*(k-1)/M/(M-1)
-        rp[i] = rand(Binomial(n[i], p))
+        p = binomial(k,2)/binomial(M,2)
+        if p>0
+            if p<1
+                rp[i] = rand(Binomial(n[i], p))
+            else
+                rp[i] = n[i]
+            end
+        end
+
+        p = binomial(k,2)/binomial(N+1,2)
+        x = p*λ*N*T
+        y = (1-p)*λ*N*T
+        rpp[i] = rand(Poisson(x))
+        npp[i] = rand(Poisson(y)) + rpp[i]
     end
 
-    return n, r, rp
+    return n, r, rp, rpp, npp
 end
 
 
-function mainSIS(;S0=150, I0=50, β=0.05, γ=0.1, k=20, T=0.2)
-    iter = 1000
+function mainSIS(;S0=150, I0=50, beta=0.05, gamma=0.1, k=20, T=0.2)
+    iter = 2000
 
-    r = zeros(iter)
-    rp = zeros(iter)
-    rpp = zeros(iter)
-    n = zeros(iter)
+    r = zeros(Int, iter)
+    rp = zeros(Int, iter)
+    rpp = zeros(Int, iter)
+    npp = zeros(Int, iter)
+    n = zeros(Int, iter)
     for i in 1:iter
 
         t = []
         I = []
         while true
-            t, I = simSIS(S0, I0, β, γ, T)
+            t, I, S = simSIS(S0, I0, beta, gamma, T)
 
-            if I[end]>=k
+#            if I[end]>=k
                 break
-            end
+#            end
         end
 
         n[i] = sum(map(x->x==1, diff(I)))
         r[i] = drawCoalCount(I, k)
 
         M = I0 + n[i]
-        p = k*(k-1)/M/(M-1)
-        if (p>0 && p<1)
-            rp[i] = rand(Binomial(n[i], p))
+        p = binomial(k,2)/binomial(M,2)
+        if (p>0) 
+            if (p<1)
+                rp[i] = rand(Binomial(n[i], p))
+            else
+                rp[i] = n[i]
+            end
         end
 
-        #p = k*(k-1)/(I0+1)/I0
-        #rpp[i] = rand(Binomial(n[i], p))
+#        Iend = (beta*S0 + gamma)*I0*T
+#        if Iend>2
+#            p = k*(k-1)/Iend/(Iend - 1)
+#        else
+#            p = 1
+#        end
+        p = binomial(k,2)/binomial(I0+1,2)
+        x = p*beta*S0*I0*T
+        y = (1-p)*beta*S0*I0*T
+        z = gamma*I0*T
+        rpp[i] = rand(Poisson(x))
+        npp[i] = rand(Poisson(y)) - rand(Poisson(z)) + rpp[i]
     end
 
-    return n, r, rp, rpp
+    return n, r, rp, rpp, npp
 end
 
 

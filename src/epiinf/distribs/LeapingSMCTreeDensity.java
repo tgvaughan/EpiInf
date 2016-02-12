@@ -230,7 +230,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             double nextModelEventTime = model.getNextModelEventTime(particleState);
             double trueDt = Math.min(tau, Math.min(nextModelEventTime, nextResampTime) - particleState.time);
 
-            // Count tree events contained within leap
+            // Count tree events contained within leap interval
             int nInfections = 0;
             int nPsiSampleRemoves = 0;
             int nPsiSampleNoRemoves = 0;
@@ -257,41 +257,33 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                         .get(particleState.treeIntervalIdx);
             }
 
-            double lineages = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
-            double observedInfectProp = infectionProp*lineages*(lineages-1)/particleState.I/(particleState.I + 1);
+            int k = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
+            double observedInfectProp = infectionProp*k*(k-1)/particleState.I/(particleState.I + 1);
             double unobservedInfectProp = infectionProp - observedInfectProp;
 
-            EpidemicEvent infectEvent = EpidemicEvent.MultipleInfections(
-                    (int) Math.round(Randomizer.nextPoisson(trueDt*unobservedInfectProp)));
+            model.incrementState(particleState,
+                    EpidemicEvent.MultipleInfections(
+                    (int) Math.round(Randomizer.nextPoisson(trueDt*unobservedInfectProp))
+                            + nInfections));
 
-            EpidemicEvent recovEvent = EpidemicEvent.MultipleRecoveries(
+            model.incrementState(particleState,
+                    EpidemicEvent.MultipleRecoveries(
                      (int)Math.round(Randomizer.nextPoisson(
-                             trueDt*model.propensities[EpidemicEvent.RECOVERY])));
+                             trueDt*model.propensities[EpidemicEvent.RECOVERY]))));
 
-            model.incrementState(particleState, infectEvent);
-            model.incrementState(particleState, recovEvent);
+            model.incrementState(particleState,
+                    EpidemicEvent.MultiplePsiSampleRemove(nPsiSampleRemoves));
 
-
-            if (particleState.I>1) {
-                double observationProb = lineages * (lineages - 1) / particleState.I / (particleState.I - 1);
-                if (observationProb > 0.0)
-                    conditionalLogP += nInfections * Math.log(observationProb);
-
-                if (observationProb < 1.0)
-                    conditionalLogP += (infectEvent.multiplicity - nInfections) * Math.log(1.0 - observationProb);
-
-                conditionalLogP += Binomial.logChoose(infectEvent.multiplicity, nInfections);
-            }
-
-
-            conditionalLogP += getLogPoissonProb(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]*trueDt, nPsiSampleRemoves)
+            conditionalLogP += getLogOrientedPoissonProb(observedInfectProp*trueDt, nInfections)
+                    - nInfections*Math.log(trueDt)
+                    + getLogPoissonProb(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]*trueDt, nPsiSampleRemoves)
                     + getLogPoissonProb(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]*trueDt, nPsiSampleNoRemoves);
 
             if (conditionalLogP == Double.NEGATIVE_INFINITY
-                    || !particleState.isValid() || particleState.I < lineages)
+                    || !particleState.isValid() || particleState.I < k)
                 return Double.NEGATIVE_INFINITY;
 
-            if (nextModelEventTime < nextResampTime && particleState.time + tau > nextModelEventTime) {
+            if (nextModelEventTime <= nextResampTime && particleState.time + tau > nextModelEventTime) {
                 // Handle model events
 
                 ModelEvent nextModelEvent = model.getNextModelEvent(particleState);
@@ -302,16 +294,21 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                         return Double.NEGATIVE_INFINITY;
 
                     int I = (int) Math.round(particleState.I);
-                    int k = nextTreeEvent.multiplicity;
-                    conditionalLogP += Binomial.logChoose(I, k)
-                            + k*Math.log(nextModelEvent.rho)
-                            + (I-k)*Math.log(1.0 - nextModelEvent.rho);
+                    int nSamples = nextTreeEvent.multiplicity;
+                    conditionalLogP += Binomial.logChoose(I, nSamples)
+                            + nSamples*Math.log(nextModelEvent.rho)
+                            + (I-nSamples)*Math.log(1.0 - nextModelEvent.rho);
 
                     particleState.treeIntervalIdx += 1;
                 }
 
                 particleState.time = nextModelEventTime;
                 particleState.modelIntervalIdx += 1;
+
+                if (model.timesEqual(nextModelEventTime, nextResampTime)) {
+                    break;
+                }
+
             } else {
                 // Check for end of particle resampling interval
 

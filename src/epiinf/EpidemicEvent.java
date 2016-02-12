@@ -99,6 +99,10 @@ public class EpidemicEvent extends Event {
         return new EpidemicEvent(-1, RECOVERY, multiplicity);
     }
 
+    public static EpidemicEvent MultiplePsiSampleRemove(int multiplicity) {
+        return new EpidemicEvent(-1, RECOVERY, multiplicity);
+    }
+
 
     public static EpidemicEvent MultipleRhoSamples(int multiplicity) {
         return new EpidemicEvent(-1, RHO_SAMPLE, multiplicity);
