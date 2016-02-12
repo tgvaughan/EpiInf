@@ -137,30 +137,36 @@ public class SMCTreeDensity extends TreeDistribution {
         int k = 1;
         for (TreeEvent treeEvent : treeEventList.getEventList()) {
 
-            // Update particles
-            double sumOfWeights = 0.0;
+            // Update particles and record max log weight
+            double maxLogWeight = Double.NEGATIVE_INFINITY;
             for (int p = 0; p < nParticles; p++) {
 
                 double newLogWeight = recordTrajectory ?
                         updateParticle(particleStates[p], k, treeEvent, particleTrajectories.get(p))
                         : updateParticle(particleStates[p], k, treeEvent, null);
 
-                double newWeight = Math.exp(newLogWeight);
+                maxLogWeight = Math.max(newLogWeight, maxLogWeight);
 
-                particleWeights[p] = newWeight;
-                sumOfWeights += newWeight;
+                particleWeights[p] = newLogWeight;
+            }
+
+            // Compute mean of weights scaled relative to max log weight
+            double sumOfScaledWeights = 0;
+            for (int p=0; p<nParticles; p++) {
+                particleWeights[p] = Math.exp(particleWeights[p] - maxLogWeight);
+                sumOfScaledWeights += particleWeights[p];
             }
 
             // Update marginal likelihood estimate
-            thisLogP += Math.log(sumOfWeights / nParticles);
+            thisLogP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
 
-            if (!(sumOfWeights > 0.0)) {
+            if (!(sumOfScaledWeights > 0.0)) {
                 return Double.NEGATIVE_INFINITY;
             }
 
             // Normalize weights
             for (int i=0; i<nParticles; i++)
-                particleWeights[i] = particleWeights[i]/sumOfWeights;
+                particleWeights[i] = particleWeights[i]/sumOfScaledWeights;
 
             // Sample particle with replacement
             ReplacementSampler replacementSampler = new ReplacementSampler(particleWeights);
