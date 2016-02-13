@@ -27,15 +27,15 @@
 
     <run spec="feast.mapping.DensityMapper">
         <distribution spec="LeapingSMCTreeDensity" id="density" tree="@tree"
-                      nParticles="1000" nResamples="11" tauLeapingEpsilon="0.03">
+                      nParticles="1000" nResamples="101" tauLeapingEpsilon="0.03">
             <model spec="SISModel">
-                <treeOrigin spec="RealParameter" value="5.0"/>
-                <S0 spec="IntegerParameter" value="8000"/>
+                <treeOrigin idref="origin"/>
+                <S0 spec="IntegerParameter" value="5000"/>
                 <infectionRate idref="beta"/>
                 <recoveryRate spec="RealParameter" value="0.05"/>
                 <psiSamplingVariable spec="RealParameter" value="0.0"/>
                 <removalProb spec="RealParameter" value="1.0"/>
-                <rhoSamplingProb spec="RealParameter" value="0.0"/>
+                <rhoSamplingProb spec="RealParameter" value="0.1"/>
                 <rhoSamplingTime id="origin" spec="RealParameter" value="5.0"/>
             </model>
         </distribution>

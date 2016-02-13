@@ -26,10 +26,10 @@
           IsLabelledNewick="true" adjustTipHeights="false"/>
 
     <run spec="feast.mapping.DensityMapper">
-        <distribution spec="SMCTreeDensity" id="density" tree="@tree" nParticles="1000" useTauLeaping="false">
+        <distribution spec="SMCTreeDensity" id="density" tree="@tree"
+                      nParticles="2000" useTauLeaping="false">
             <model spec="SISModel">
-                <!--treeOrigin spec="OriginFromTrajectory" trajectory="@traj"/-->
-                <treeOrigin spec="RealParameter" value="5.0"/>
+                <treeOrigin idref="origin"/>
                 <S0 spec="IntegerParameter" value="5000"/>
                 <infectionRate idref="beta"/>
                 <recoveryRate spec="RealParameter" value="0.05"/>
