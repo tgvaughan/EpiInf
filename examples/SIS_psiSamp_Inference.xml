@@ -11,13 +11,14 @@
     :feast.mapping">
 
 
-    <tree spec="SimulatedTransmissionTree" id="simulated_tree" fileName="$(filebase)_truth.tree">
+    <!--tree spec="SimulatedTransmissionTree" id="simulated_tree" fileName="$(filebase)_truth.tree">
         <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="5.0" fileName="$(filebase)_truth.traj">
             <model spec="SISModel">
                 <S0 spec="IntegerParameter" value="199"/>
                 <infectionRate spec="RealParameter" value="0.02"/>
                 <recoveryRate spec="RealParameter" value="0.1"/>
-                <psiSamplingRate spec="RealParameter" value="0.1"/>
+                <psiSamplingVariable spec="RealParameter" value="0.1"/>
+                <removalProb spec="RealParameter" value="1.0"/>
             </model>
         </epidemicTrajectory>
     </tree>
@@ -28,7 +29,11 @@
             <substModel spec="beast.evolution.substitutionmodel.JukesCantor"/>
             <mutationRate spec="RealParameter" value="0.005"/>
         </siteModel>
-    </alignment>
+    </alignment-->
+
+    <tree id="simulated_tree" spec='feast.fileio.TreeFromNewickFile' fileName="$(filebase)_truth.tree"
+        IsLabelledNewick="true" adjustTipHeights="false"/>
+    <alignment id="alignment" spec='feast.fileio.AlignmentFromNexus' fileName="$(filebase)_alignment.nexus"/>
 
     <run spec="MCMC" id="mcmc" chainLength="1000000">
         <state>
@@ -38,33 +43,32 @@
                 </trait>
             </stateNode>
             <stateNode id="beta" spec="RealParameter" value="0.01"/>
-            <stateNode id="removalRate" spec="RealParameter" value="0.1" />
+            <stateNode id="recoveryRate" spec="RealParameter" value="0.1" />
             <stateNode id="samplingProp" spec="RealParameter" value="0.5" lower="0.0" upper="1.0"/>
             <stateNode id="origin" spec="RealParameter" value="6.0"/>
-            <stateNode id="S0" spec="IntegerParameter" value="300" lower="1"/>
+            <stateNode id="S0" spec="IntegerParameter" value="300" lower="1" upper="400"/>
         </state>
 
         <distribution id="posterior" spec="CompoundDistribution">
 
-            <distribution spec="TreeLikelihood" id="treeLikelihood" siteModel="@siteModel">
+            <distribution spec="TreeLikelihood" id="treeLikelihood">
                 <data idref="alignment"/>
                 <tree idref="tree"/>
+                <siteModel id="siteModel" spec="beast.evolution.sitemodel.SiteModel">
+                    <substModel spec="beast.evolution.substitutionmodel.JukesCantor"/>
+                    <mutationRate spec="RealParameter" value="0.005"/>
+                </siteModel>
             </distribution>
 
-            <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100" tree="@tree" treeOrigin="@origin">
-                <model spec="SISModel" id="model">
+            <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100" tree="@tree"
+                useTauLeaping="true">
+                <model spec="SISModel" id="model" usePsiSamplingProportion="true">
+                    <treeOrigin idref="origin"/>
                     <S0 idref="S0"/>
                     <infectionRate idref="beta"/>
-
-                    <recoveryRate id="recoveryRate" spec="ExpCalculator" expression="removalRate*(1-samplingProp)">
-                        <parameter idref="removalRate"/>
-                        <parameter idref="samplingProp"/>
-                    </recoveryRate>
-
-                    <psiSamplingRate id="psiSamplingRate" spec="ExpCalculator" expression="removalRate*samplingProp">
-                        <parameter idref="removalRate"/>
-                        <parameter idref="samplingProp"/>
-                    </psiSamplingRate>
+                    <recoveryRate idref="recoveryRate"/>
+                    <psiSamplingVariable idref="samplingProp"/>
+                    <removalProb spec="RealParameter" value="1.0"/>
                 </model>
             </distribution>
 
@@ -75,12 +79,12 @@
                 <distribution spec="beast.math.distributions.Prior" x="@beta">
                     <distr spec="beast.math.distributions.OneOnX"/>
                 </distribution>
-                <distribution spec="beast.math.distributions.Prior" x="@removalRate">
+                <distribution spec="beast.math.distributions.Prior" x="@recoveryRate">
                     <distr spec="beast.math.distributions.OneOnX"/>
                 </distribution>
-                <distribution spec="beast.math.distributions.Prior" x="@S0">
-                    <distr spec="beast.math.distributions.Poisson" lambda="300"/>
-                </distribution>
+                <!--distribution spec="beast.math.distributions.Prior" x="@S0">
+                    <distr spec="beast.math.distributions.OneOnX"/>
+                </distribution-->
             </distribution>
         </distribution>
 
@@ -88,22 +92,22 @@
             <parameter idref="beta"/>
         </operator>
 
-        <operator id='removalRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
-            <parameter idref="removalRate"/>
+        <operator id='recoveryRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="recoveryRate"/>
         </operator>
 
-        <operator id='samplingPropScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+        <!--operator id='samplingPropScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
             <parameter idref="samplingProp"/>
-        </operator>
+        </operator-->
 
         <operator id="S0walker" spec="IntRandomWalkOperator" windowSize="10" weight="1">
             <parameter idref="S0"/>
         </operator>
 
-        <operator id="removalSampPropUpDown" spec="UpDownOperator" scaleFactor="0.8" weight="1">
-            <up idref="removalRate"/>
+        <!--operator id="removalSampPropUpDown" spec="UpDownOperator" scaleFactor="0.8" weight="1">
+            <up idref="recoveryRate"/>
             <down idref="samplingProp"/>
-        </operator>
+        </operator-->
 
         <operator id='originScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
             <parameter idref="origin"/>
@@ -117,7 +121,7 @@
             <up idref="tree"/>
             <up idref="origin"/>
             <down idref="beta"/>
-            <down idref="removalRate"/>
+            <down idref="recoveryRate"/>
         </operator>
 
         <operator spec='Uniform' weight="10">
@@ -142,10 +146,10 @@
             <log idref="treeLikelihood"/>
             <log idref="treePrior"/>
             <log idref="beta"/>
-            <log idref="removalRate"/>
+            <log idref="recoveryRate"/>
             <log idref="samplingProp"/>
             <log idref="recoveryRate"/>
-            <log idref="psiSamplingRate"/>
+            <log idref="samplingProp"/>
             <log idref="S0"/>
             <log idref="origin"/>
         </logger>
@@ -164,10 +168,10 @@
             <log idref="treeLikelihood"/>
             <log idref="treePrior"/>
             <log idref="beta"/>
-            <log idref="removalRate"/>
+            <log idref="recoveryRate"/>
             <log idref="samplingProp"/>
             <log idref="recoveryRate"/>
-            <log idref="psiSamplingRate"/>
+            <log idref="samplingProp"/>
             <log idref="S0"/>
             <log idref="origin"/>
         </logger>

@@ -386,13 +386,16 @@ public class SMCTreeDensity extends TreeDistribution {
             } else {
                 if (model.psiSamplingVariableInput.get() != null && finalTreeEvent.multiplicity == 1) {
                     model.calculatePropensities(particleState);
-                    if (finalTreeEvent.type == TreeEvent.Type.LEAF) {
-                        sampleProb = Math.log(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]);
-                        model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
-                    } else {
+                    if (finalTreeEvent.type == TreeEvent.Type.SAMPLED_ANCESTOR) {
                         // Sampled ancestor
                         sampleProb = Math.log(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
 //                        model.incrementState(particleState, EpidemicEvent.PsiSampleNoRemove);
+                    } else {
+                        // Just a leaf
+                        // This is not the right thing to do in general!
+                        sampleProb = Math.log(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                                + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
+                        model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
                     }
                 } else {
                     // No explicit sampling process
