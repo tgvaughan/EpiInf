@@ -17,8 +17,6 @@
 
 package epiinf;
 
-import com.sun.org.apache.regexp.internal.RE;
-
 /**
  * Class representing events during an epidemic.
  *

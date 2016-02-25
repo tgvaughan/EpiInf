@@ -30,7 +30,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class LeapingSMCTreeDensityTest {
+public class LeapingSMCTreeDensityTestDONTRUN {
 
     @org.junit.Test
     public void testSISTreeDensityContemp() throws Exception {
