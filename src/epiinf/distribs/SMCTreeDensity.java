@@ -374,18 +374,29 @@ public class SMCTreeDensity extends TreeDistribution {
 
             } else {
                 if (model.psiSamplingVariableInput.get() != null && finalTreeEvent.multiplicity == 1) {
+
                     model.calculatePropensities(particleState);
-                    if (finalTreeEvent.type == TreeEvent.Type.SAMPLED_ANCESTOR) {
-                        // Sampled ancestor
-                        sampleProb = Math.log(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
-//                        model.incrementState(particleState, EpidemicEvent.PsiSampleNoRemove);
+                    double psiSamplingProp = (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                            + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
+
+                    sampleProb = Math.log(psiSamplingProp);
+
+                    boolean isRemoval = Randomizer.nextDouble()*psiSamplingProp
+                            < model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
+
+                    if (isRemoval) {
+                        if (finalTreeEvent.type != TreeEvent.Type.LEAF)
+                            return Double.NEGATIVE_INFINITY;
+                        else
+                            model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
                     } else {
-                        // Just a leaf
-                        // This is not the right thing to do in general!
-                        sampleProb = Math.log(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
-                                + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
-                        model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
+                        if (finalTreeEvent.type == TreeEvent.Type.LEAF)
+                            sampleProb += -Math.log(particleState.I);
+                        else
+                            sampleProb += Math.log(1.0 - lineages/particleState.I);
+//                        model.incrementState(particleState, EpidemicEvent.PsiSampleNoRemove);
                     }
+
                 } else {
                     // No explicit sampling process
                     sampleProb = 0;
