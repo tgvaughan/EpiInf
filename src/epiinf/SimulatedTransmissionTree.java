@@ -50,8 +50,6 @@ public class SimulatedTransmissionTree extends Tree {
             "truncateTrajectory",
             "Truncate trajectory at most recent sample. (Default true.)", true);
 
-    public Input<TraitSet> heightsTrait = new Input<>("tipHeights", "Trait set to initialize with tip heights.");
-    
     public SimulatedTransmissionTree() { }
     
     @Override

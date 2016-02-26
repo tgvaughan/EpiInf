@@ -361,7 +361,6 @@ public class SMCTreeDensity extends TreeDistribution {
 
         } else {
 
-            double sampleProb;
             if (model.timesEqual(finalTreeEvent.time, model.getNextModelEventTime(particleState))
                     && model.getNextModelEvent(particleState).type == ModelEvent.Type.RHO_SAMPLING) {
 
@@ -369,7 +368,7 @@ public class SMCTreeDensity extends TreeDistribution {
 
                 int I = (int) Math.round(particleState.I);
                 int k = finalTreeEvent.multiplicity;
-                sampleProb = Binomial.logChoose(I, k)
+                conditionalLogP += Binomial.logChoose(I, k)
                         + k*Math.log(nextModelEvent.rho)
                         + (I-k)*Math.log(1.0 - nextModelEvent.rho);
 
@@ -380,36 +379,33 @@ public class SMCTreeDensity extends TreeDistribution {
                 if (model.psiSamplingVariableInput.get() != null && finalTreeEvent.multiplicity == 1) {
 
                     model.calculatePropensities(particleState);
-                    double psiSamplingProp = (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
-                            + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
 
-                    sampleProb = Math.log(psiSamplingProp);
-
-                    boolean isRemoval = Randomizer.nextDouble()*psiSamplingProp
-                            < model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
-
-                    if (isRemoval) {
-                        if (finalTreeEvent.type == TreeEvent.Type.SAMPLED_ANCESTOR)
-                            return Double.NEGATIVE_INFINITY;
-                        else
-                            model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
+                    if (finalTreeEvent.type == TreeEvent.Type.SAMPLED_ANCESTOR) {
+                        conditionalLogP += Math.log(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]/particleState.I);
                     } else {
-                        if (finalTreeEvent.type == TreeEvent.Type.SAMPLED_ANCESTOR)
-                            sampleProb += -Math.log(particleState.I);
-                        else
-                            sampleProb += Math.log(1.0 - (lineages-1)/particleState.I);
-//                        model.incrementState(particleState, EpidemicEvent.PsiSampleNoRemove);
+                        double psiSamplingProp = (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                                + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
+
+                        conditionalLogP += Math.log(psiSamplingProp);
+
+                        boolean isRemoval = Randomizer.nextDouble()*psiSamplingProp
+                                < model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
+
+                        if (isRemoval) {
+                            model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
+                        } else {
+                            conditionalLogP += Math.log(1.0 - (lineages-1)/particleState.I);
+                        }
                     }
 
                 } else {
                     // No explicit sampling process
-                    sampleProb = 0;
                     model.incrementState(particleState,
                             EpidemicEvent.MultipleOtherSamples(finalTreeEvent.multiplicity));
                 }
             }
 
-            conditionalLogP += sampleProb + GammaFunction.lnGamma(1 + finalTreeEvent.multiplicity);
+            conditionalLogP += GammaFunction.lnGamma(1 + finalTreeEvent.multiplicity);
         }
 
         if (particleTrajectory != null)
