@@ -87,45 +87,76 @@ public class SimulatedTransmissionTree extends Tree {
             
             EpidemicEvent epidemicEvent = revEventList.get(eidx);
             EpidemicState epidemicState = revStateList.get(eidx);
-            
-            if (epidemicEvent.isSample()) {
-                for (int i=0; i<epidemicEvent.multiplicity; i++) {
-                    Node leaf = new Node();
-                    leaf.setHeight(youngestSamp-epidemicEvent.time);
-                    leaf.setNr(nextLeafNr);
-                    leaf.setID("t" + nextLeafNr);
-                    nextLeafNr += 1;
-                    activeNodes.add(leaf);
-                }
-                
-                samplesSeen += epidemicEvent.multiplicity;
-            } else {
-                
-                if (epidemicEvent.type == EpidemicEvent.INFECTION) {
-                    int k = activeNodes.size();
-                    double N = epidemicState.I;
-                    
-                    double pCoalesce = k*(k-1)/(N*(N-1));
-                    
-                    if (Randomizer.nextDouble()<pCoalesce) {
-                        int childIdx = Randomizer.nextInt(k);
-                        Node child1 = activeNodes.get(childIdx);
-                        activeNodes.remove(childIdx);
-                        
-                        childIdx = Randomizer.nextInt(k-1);
-                        Node child2 = activeNodes.get(childIdx);
-                        activeNodes.remove(childIdx);
-                        
-                        Node parent = new Node();
-                        parent.addChild(child1);
-                        parent.addChild(child2);
-                        parent.setHeight(youngestSamp-epidemicEvent.time);
-                        parent.setNr(nextInternalID++);
-                        activeNodes.add(parent);
-                    }
+
+            int k = activeNodes.size();
+            double N = epidemicState.I;
+
+            for (int i=0; i<epidemicEvent.multiplicity; i++) {
+
+                Node leaf, parent;
+
+                switch (epidemicEvent.type) {
+                    case EpidemicEvent.INFECTION:
+                        double pCoalesce = k * (k - 1) / (N * (N - 1));
+
+                        if (Randomizer.nextDouble() < pCoalesce) {
+                            int childIdx = Randomizer.nextInt(k);
+                            Node child1 = activeNodes.get(childIdx);
+                            activeNodes.remove(childIdx);
+
+                            childIdx = Randomizer.nextInt(k - 1);
+                            Node child2 = activeNodes.get(childIdx);
+                            activeNodes.remove(childIdx);
+
+                            parent = new Node();
+                            parent.addChild(child1);
+                            parent.addChild(child2);
+                            parent.setHeight(youngestSamp - epidemicEvent.time);
+                            parent.setNr(nextInternalID++);
+                            activeNodes.add(parent);
+                        }
+                        break;
+
+                    case EpidemicEvent.RHO_SAMPLE:
+                    case EpidemicEvent.PSI_SAMPLE_REMOVE:
+                        leaf = new Node();
+                        leaf.setHeight(youngestSamp - epidemicEvent.time);
+                        leaf.setNr(nextLeafNr);
+                        leaf.setID("t" + nextLeafNr);
+                        nextLeafNr += 1;
+                        activeNodes.add(leaf);
+                        samplesSeen += 1;
+                        break;
+
+                    case EpidemicEvent.PSI_SAMPLE_NOREMOVE:
+                        leaf = new Node();
+                        leaf.setHeight(youngestSamp - epidemicEvent.time);
+                        leaf.setNr(nextLeafNr);
+                        leaf.setID("t" + nextLeafNr);
+                        nextLeafNr += 1;
+
+                        double u = Randomizer.nextDouble()*N;
+                        if (u < k) {
+                            Node sibling = activeNodes.get((int)u);
+                            activeNodes.remove(sibling);
+                            parent = new Node();
+                            parent.addChild(sibling);
+                            parent.addChild(leaf);
+                            parent.setHeight(youngestSamp - epidemicEvent.time);
+                            parent.setNr(nextInternalID++);
+                            activeNodes.add(parent);
+                        } else {
+                            activeNodes.add(leaf);
+                        }
+
+                        samplesSeen += 1;
+
+                        break;
+
+                    default:
                 }
             }
-            
+
             // Stop when we reach the MRCA of all sampled events.
             if (samplesSeen==nSamples && activeNodes.size()<2)
                 break;
@@ -145,7 +176,6 @@ public class SimulatedTransmissionTree extends Tree {
         // Write tree to disk if requested:
         if (fileNameInput.get() != null) {
             try (PrintStream ps = new PrintStream(fileNameInput.get())) {
-//                String newick = toString().concat(";");
                 String newick = root.toNewick().concat(";");
                 ps.println(newick.replace(":0.0;", ":" + (youngestSamp-root.getHeight()) + ";"));
             }

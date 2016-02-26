@@ -390,7 +390,7 @@ public class SMCTreeDensity extends TreeDistribution {
                         else
                             model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
                     } else {
-                        if (finalTreeEvent.type == TreeEvent.Type.LEAF)
+                        if (finalTreeEvent.type != TreeEvent.Type.LEAF)
                             sampleProb += -Math.log(particleState.I);
                         else
                             sampleProb += Math.log(1.0 - lineages/particleState.I);

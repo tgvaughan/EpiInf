@@ -69,12 +69,8 @@ public class TreeEventList {
         // Assemble event list
         for (Node node : tree.getNodesAsArray()) {
 
-            if (node.isDirectAncestor()
-                || (!node.isLeaf() &&
-                    (node.getLeft().isDirectAncestor()
-                    || node.getRight().isDirectAncestor())))
+            if (node.isFake())
                 continue;
-
 
             TreeEvent event = new TreeEvent();
             if (node.isLeaf()) {
@@ -83,8 +79,7 @@ public class TreeEventList {
                 else
                     event.type = TreeEvent.Type.LEAF;
             } else {
-                if (!node.isFake())
-                    event.type = TreeEvent.Type.COALESCENCE;
+                event.type = TreeEvent.Type.COALESCENCE;
             }
        
             event.time = getTimeFromHeight(node.getHeight());
