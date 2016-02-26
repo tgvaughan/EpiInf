@@ -385,15 +385,15 @@ public class SMCTreeDensity extends TreeDistribution {
                             < model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
 
                     if (isRemoval) {
-                        if (finalTreeEvent.type != TreeEvent.Type.LEAF)
+                        if (finalTreeEvent.type == TreeEvent.Type.SAMPLED_ANCESTOR)
                             return Double.NEGATIVE_INFINITY;
                         else
                             model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
                     } else {
-                        if (finalTreeEvent.type != TreeEvent.Type.LEAF)
+                        if (finalTreeEvent.type == TreeEvent.Type.SAMPLED_ANCESTOR)
                             sampleProb += -Math.log(particleState.I);
                         else
-                            sampleProb += Math.log(1.0 - lineages/particleState.I);
+                            sampleProb += Math.log(1.0 - (lineages-1)/particleState.I);
 //                        model.incrementState(particleState, EpidemicEvent.PsiSampleNoRemove);
                     }
 
