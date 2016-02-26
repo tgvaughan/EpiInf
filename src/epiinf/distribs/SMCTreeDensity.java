@@ -193,10 +193,14 @@ public class SMCTreeDensity extends TreeDistribution {
             }
 
             // Update lineage counter
-            if (treeEvent.type == TreeEvent.Type.COALESCENCE)
-                k += 1;
-            else
-                k -= treeEvent.multiplicity;
+            switch (treeEvent.type) {
+                case COALESCENCE:
+                    k += 1;
+                    break;
+                case LEAF:
+                    k -= treeEvent.multiplicity;
+                    break;
+            }
         }
 
         // Choose arbitrary trajectory to log.
