@@ -130,20 +130,19 @@ function mainB(;N=10, λ=1, k=10, T=1)
 end
 
 
-function mainSIS(;S0=150, I0=50, beta=0.05, gamma=0.1, k=20, T=0.2)
+function mainSIS(;S0=150, I0=50, β=0.05, γ=0.1, k=20, T=0.2)
     iter = 2000
 
     r = zeros(Int, iter)
     rp = zeros(Int, iter)
-    rpp = zeros(Int, iter)
-    npp = zeros(Int, iter)
     n = zeros(Int, iter)
+    np = zeros(Int, iter)
     for i in 1:iter
 
         t = []
         I = []
         while true
-            t, I, S = simSIS(S0, I0, beta, gamma, T)
+            t, I, S = simSIS(S0, I0, β, γ, T)
 
 #            if I[end]>=k
                 break
@@ -163,21 +162,15 @@ function mainSIS(;S0=150, I0=50, beta=0.05, gamma=0.1, k=20, T=0.2)
             end
         end
 
-#        Iend = (beta*S0 + gamma)*I0*T
-#        if Iend>2
-#            p = k*(k-1)/Iend/(Iend - 1)
-#        else
-#            p = 1
-#        end
         p = binomial(k,2)/binomial(I0+1,2)
-        x = p*beta*S0*I0*T
-        y = (1-p)*beta*S0*I0*T
-        z = gamma*I0*T
-        rpp[i] = rand(Poisson(x))
-        npp[i] = rand(Poisson(y)) - rand(Poisson(z)) + rpp[i]
+        x = p*β*S0*I0*T
+        y = (1-p)*β*S0*I0*T
+        z = γ*I0*T
+        rp[i] = rand(Poisson(x))
+        np[i] = rand(Poisson(y)) + rp[i]
     end
 
-    return n, r, rp, rpp, npp
+    return n, r, np, rp
 end
 
 

@@ -232,8 +232,8 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             double removeProp = model.propensities[EpidemicEvent.RECOVERY]
                     + model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
 //            double tau = model.getTau(epsilon, particleState, infectionProp, removeProp);
-            double tau = Double.POSITIVE_INFINITY;
-//            double tau = model.getOrigin()/(nResamples-1)/1000;
+//            double tau = Double.POSITIVE_INFINITY;
+            double tau = model.getOrigin()/(nResamples-1)/100;
 
             double nextModelEventTime = model.getNextModelEventTime(particleState);
             double trueDt = Math.min(tau, Math.min(nextModelEventTime, nextResampTime) - particleState.time);
@@ -242,6 +242,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             int nObservedInfections = 0;
             int nPsiSampleRemoves = 0;
             int nPsiSampleNoRemoves = 0;
+            int k0 = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
             TreeEvent nextTreeEvent = treeEventList.getEventList()
                     .get(particleState.treeIntervalIdx);
             while (nextTreeEvent.time < particleState.time + trueDt
@@ -257,8 +258,8 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                         break;
 
                     case SAMPLED_ANCESTOR:
-                        nPsiSampleNoRemoves += 1;
-                        break;
+                        throw new UnsupportedOperationException(
+                                "Sampled ancestors not yet supported.");
                 }
                 particleState.treeIntervalIdx += 1;
                 nextTreeEvent = treeEventList.getEventList()
@@ -266,13 +267,12 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             }
 
             int k = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
-            double unobservedInfectProp = infectionProp*(1.0 - k*(k-1)/(particleState.I+1)/particleState.I);
-            double observedInfectProp = infectionProp - unobservedInfectProp;
+            double unobservedInfectProp = infectionProp*(1.0 - k0*(k0-1)/(particleState.I+1)/particleState.I);
 
+            int nUnobservedInfections = (int)Math.round(Randomizer.nextPoisson(trueDt*unobservedInfectProp));
+            int nInfections = nUnobservedInfections + nObservedInfections;
             model.incrementState(particleState,
-                    EpidemicEvent.MultipleInfections(
-                            (int) Math.round(Randomizer.nextPoisson(trueDt*unobservedInfectProp))
-                                    + nObservedInfections));
+                    EpidemicEvent.MultipleInfections(nInfections));
 
             model.incrementState(particleState,
                     EpidemicEvent.MultipleRecoveries(
@@ -281,19 +281,24 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
 
             model.incrementState(particleState,
                     EpidemicEvent.MultiplePsiSampleRemove(nPsiSampleRemoves));
+//
+//            if (nObservedInfections>0) {
+//                if (particleState.I>=k) {
+//                    double p = k * (k - 1) / (particleState.I * (particleState.I - 1));
+//
+//                    conditionalLogP += nObservedInfections * Math.log(p);
+//
+//                    if (nUnobservedInfections>0)
+//                            conditionalLogP += nUnobservedInfections * Math.log(1.0 - p);
+//
+//                    conditionalLogP += Binomial.logChoose(nInfections, nObservedInfections);
+//                } else
+//                    return Double.NEGATIVE_INFINITY;
+//            }
 
-            if (nObservedInfections>0) {
-                if (observedInfectProp > 0)
-                    conditionalLogP += -observedInfectProp * trueDt
-                            + nObservedInfections * Math.log(observedInfectProp)
-                            - nObservedInfections*Binomial.logChoose(k, 2);
-                else
-                    return Double.NEGATIVE_INFINITY;
-            }
-
-            conditionalLogP += getLogOrientedPoissonDensity(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]*trueDt, nPsiSampleRemoves, trueDt)
-                    + getLogOrientedPoissonDensity(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]*trueDt, nPsiSampleNoRemoves, trueDt);
-
+            conditionalLogP += getLogOrientedPoissonDensity(
+                    model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]*trueDt,
+                    nPsiSampleRemoves, trueDt);
 
             if (conditionalLogP == Double.NEGATIVE_INFINITY
                     || !particleState.isValid() || particleState.I < k)
