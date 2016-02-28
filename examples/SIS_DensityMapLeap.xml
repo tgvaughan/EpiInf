@@ -11,12 +11,12 @@
     <tree spec="SimulatedTransmissionTree" id="tree" fileName="$(filebase).tree.newick">
         <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="10.0">
             <model spec="SISModel">
-                <S0 spec="IntegerParameter" value="199"/>
-                <infectionRate spec="RealParameter" value="0.01"/>
+                <S0 spec="IntegerParameter" value="499"/>
+                <infectionRate spec="RealParameter" value="0.005"/>
                 <recoveryRate spec="RealParameter" value="0.1"/>
                 <psiSamplingVariable spec="RealParameter" value="0.0"/>
                 <removalProb spec="RealParameter" value="1.0"/>
-                <rhoSamplingProb spec="RealParameter" value="0.3"/>
+                <rhoSamplingProb spec="RealParameter" value="0.5"/>
                 <rhoSamplingTime spec="RealParameter" value="4.0"/>
             </model>
         </epidemicTrajectory>
@@ -27,29 +27,29 @@
 
     <run spec="feast.mapping.DensityMapper">
         <distribution spec="LeapingSMCTreeDensity" id="density" tree="@tree"
-                      nParticles="10000" nResamples="11" tauLeapingEpsilon="0.03">
+                      nParticles="10000" nResamples="11" tauLeapingEpsilon="0.02">
             <model spec="SISModel" id="model">
                 <treeOrigin idref="origin"/>
-                <S0 spec="IntegerParameter" value="199"/>
+                <S0 spec="IntegerParameter" value="499"/>
                 <infectionRate idref="beta"/>
                 <recoveryRate spec="RealParameter" value="0.1"/>
                 <psiSamplingVariable spec="RealParameter" value="0.0"/>
                 <removalProb spec="RealParameter" value="1.0"/>
-                <rhoSamplingProb spec="RealParameter" value="0.3"/>
+                <rhoSamplingProb spec="RealParameter" value="0.5"/>
                 <rhoSamplingTime id="origin" spec="RealParameter" value="4.0"/>
             </model>
         </distribution>
 
-        <distribution spec="SMCTreeDensity" id="densityTrue" nParticles="1000"
+        <distribution spec="SMCTreeDensity" id="densityTrue" nParticles="10000"
                       tree="@tree" model="@model"/>
 
-        <realParam spec="RealParameter" id="beta" value="0.001" lower="0.005" upper="0.015"/>
-        <steps spec="IntegerParameter" value="11"/>
+        <realParam spec="RealParameter" id="beta" value="0.001" lower="0.001" upper="0.009"/>
+        <steps spec="IntegerParameter" value="9"/>
 
         <logger spec="Logger" logEvery="1">
             <log idref="beta"/>
             <log idref="density"/>
-            <log idref="densityTrue"/>
+            <!--log idref="densityTrue"/-->
         </logger>
 
         <logger spec="Logger" logEvery="1" fileName="$(filebase).log">
