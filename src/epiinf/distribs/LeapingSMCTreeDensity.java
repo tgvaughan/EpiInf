@@ -39,8 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static epiinf.util.EpiInfUtilityMethods.getLogOrientedPoissonDensity;
-
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
@@ -248,8 +246,8 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
 
             // Count tree events contained within leap interval
             int nObservedInfections = 0;
-            int nPsiSampleRemoves = 0;
-            int nPsiSampleNoRemoves = 0;
+            int nLeaves = 0;
+            int nSampledAncestors = 0;
             TreeEvent nextTreeEvent = treeEventList.getEventList()
                     .get(particleState.treeIntervalIdx);
             while (nextTreeEvent.time < particleState.time + trueDt
@@ -261,18 +259,17 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                         break;
 
                     case LEAF:
-                        nPsiSampleRemoves += 1;
+                        nLeaves += 1;
                         break;
 
                     case SAMPLED_ANCESTOR:
-                        throw new UnsupportedOperationException(
-                                "Sampled ancestors not yet supported.");
+                        nSampledAncestors += 1;
+                        break;
                 }
                 particleState.treeIntervalIdx += 1;
                 nextTreeEvent = treeEventList.getEventList()
                         .get(particleState.treeIntervalIdx);
             }
-
 
             // Perform state increments
 
@@ -287,7 +284,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                              trueDt*model.propensities[EpidemicEvent.RECOVERY]))));
 
             model.incrementState(particleState,
-                    EpidemicEvent.MultiplePsiSampleRemove(nPsiSampleRemoves));
+                    EpidemicEvent.MultiplePsiSampleRemove(nLeaves));
 
             // Compute weight contributions of tree events:
 
@@ -299,8 +296,8 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                         *model.propensities[EpidemicEvent.INFECTION]);
             }
 
-            if (nPsiSampleRemoves>0) {
-                conditionalLogP += nPsiSampleRemoves*Math.log(
+            if (nLeaves>0) {
+                conditionalLogP += nLeaves*Math.log(
                         model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]);
             }
 

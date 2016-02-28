@@ -18,9 +18,12 @@ package epiinf.util;
 
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
+import beast.math.Binomial;
 import beast.math.GammaFunction;
 import beast.math.distributions.Gamma;
+import beast.util.Randomizer;
 
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,31 +67,58 @@ public class EpiInfUtilityMethods {
     }
 
     /**
-     * Compute log probability of n occurrences given a mean of lambda
-     * under a Poissonian distribution.
+     * Basic inverse CDF sampler for binomial distribution.
      *
-     * @param lambda mean number of occurrences
-     * @param n number of occurrences
-     * @return log probability
+     * @param p success probability
+     * @param n number of trials
+     * @return number of successes
      */
-    public static double getLogPoissonProb(double lambda, int n) {
-        if (n>0) {
-            if (lambda > 0.0)
-                return -lambda + n * Math.log(lambda) - GammaFunction.lnGamma(n + 1);
-            else
-                return Double.NEGATIVE_INFINITY;
-        } else
-            return -lambda;
+    private static int nextBinomialICDF(double p, int n) {
+
+        double u = Randomizer.nextDouble();
+
+        int m = 0;
+        double acc = 0;
+        do {
+            acc += Binomial.choose(n, m)*Math.pow(p, m)*Math.pow(1.0-p, n-m);
+        } while (u > acc && ++m < n);
+
+        return m;
     }
 
-    public static double getLogOrientedPoissonDensity(double lambda, int n, double dt) {
-        if (n>0) {
-            if (lambda > 0.0)
-                return -lambda + n * (Math.log(lambda) - Math.log(dt));
-            else
-                return Double.NEGATIVE_INFINITY;
-        } else
-            return -lambda;
+    /**
+     * Sampler for binomial distribution that uses a normal approximation.
+     * Need a reject step in here to make this exact - currently only approximate!
+     *
+     * @param p success probability
+     * @param n number of trials
+     * @return number of successes
+     */
+    private static int nextBinomialNormal(double p, int n) {
+        return (int)Math.round(n*p + Randomizer.nextGaussian()*Math.sqrt(n*p*(1-p)));
     }
-    
+
+    /**
+     * Sampler for binomial distribution.
+     *
+     * @param p success probability
+     * @param n number of trials
+     * @return number of successes
+     */
+    public static int nextBinomial(double p, int n) {
+        if (n*p > 10.0 && n*(1.0 - p) > 10.0)
+            return nextBinomialNormal(p, n);
+        else
+            return nextBinomialICDF(p, n);
+    }
+
+    public static void main(String[] args) throws FileNotFoundException {
+
+        PrintStream outf = new PrintStream("out.txt");
+        for (int i=0; i<10000; i++) {
+            outf.println(nextBinomial(0.9, 1000));
+        }
+        outf.close();
+    }
+
 }
