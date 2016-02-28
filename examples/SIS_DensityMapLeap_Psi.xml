@@ -9,15 +9,15 @@
 
 
     <tree spec="SimulatedTransmissionTree" id="tree" fileName="$(filebase).tree.newick">
-        <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="10.0">
+        <epidemicTrajectory spec="SimulatedTrajectory" id="trajectory" maxDuration="10.0">
             <model spec="SISModel">
                 <S0 spec="IntegerParameter" value="499"/>
                 <infectionRate spec="RealParameter" value="0.005"/>
-                <recoveryRate spec="RealParameter" value="0.1"/>
-                <psiSamplingVariable spec="RealParameter" value="0.0"/>
+                <recoveryRate spec="RealParameter" value="0.05"/>
+                <psiSamplingVariable spec="RealParameter" value="0.05"/>
                 <removalProb spec="RealParameter" value="1.0"/>
-                <rhoSamplingProb spec="RealParameter" value="0.5"/>
-                <rhoSamplingTime spec="RealParameter" value="4.0"/>
+                <!--rhoSamplingProb spec="RealParameter" value="0.5"/>
+                <rhoSamplingTime spec="RealParameter" value="4.0"/-->
             </model>
         </epidemicTrajectory>
     </tree>
@@ -29,14 +29,14 @@
         <distribution spec="LeapingSMCTreeDensity" id="density" tree="@tree"
                       nParticles="100" nResamples="11" tauLeapingEpsilon="0.03">
             <model spec="SISModel" id="model">
-                <treeOrigin idref="origin"/>
+                <treeOrigin spec="OriginFromTrajectory" trajectory="@trajectory"/>
                 <S0 spec="IntegerParameter" value="499"/>
                 <infectionRate idref="beta"/>
-                <recoveryRate spec="RealParameter" value="0.1"/>
-                <psiSamplingVariable spec="RealParameter" value="0.0"/>
+                <recoveryRate spec="RealParameter" value="0.05"/>
+                <psiSamplingVariable spec="RealParameter" value="0.05"/>
                 <removalProb spec="RealParameter" value="1.0"/>
-                <rhoSamplingProb spec="RealParameter" value="0.5"/>
-                <rhoSamplingTime id="origin" spec="RealParameter" value="4.0"/>
+                <!--rhoSamplingProb spec="RealParameter" value="0.5"/>
+                <rhoSamplingTime id="origin" spec="RealParameter" value="4.0"/-->
             </model>
         </distribution>
 
