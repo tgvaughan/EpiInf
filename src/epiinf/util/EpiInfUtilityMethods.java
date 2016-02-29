@@ -106,10 +106,13 @@ public class EpiInfUtilityMethods {
      * @return number of successes
      */
     public static int nextBinomial(double p, int n) {
+        if (p == 0 || n == 0)
+            return 0;
+
         if (n*p > 10.0 && n*(1.0 - p) > 10.0)
             return nextBinomialNormal(p, n);
-        else
-            return nextBinomialICDF(p, n);
+
+        return nextBinomialICDF(p, n);
     }
 
     public static void main(String[] args) throws FileNotFoundException {

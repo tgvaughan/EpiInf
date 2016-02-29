@@ -32,6 +32,7 @@ import beast.util.TreeParser;
 import epiinf.*;
 import epiinf.models.EpidemicModel;
 import epiinf.models.SISModel;
+import epiinf.util.EpiInfUtilityMethods;
 import epiinf.util.ReplacementSampler;
 
 import java.io.PrintStream;
