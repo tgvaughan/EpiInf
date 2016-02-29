@@ -49,7 +49,7 @@
         <logger spec="Logger" logEvery="1">
             <log idref="beta"/>
             <log idref="density"/>
-            <!--log idref="densityTrue"/-->
+            <log idref="densityTrue"/>
         </logger>
 
         <logger spec="Logger" logEvery="1" fileName="$(filebase).log">

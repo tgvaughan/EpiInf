@@ -232,8 +232,6 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                     + model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
 
             double tau = model.getTau(epsilon, particleState, infectionProp, removeProp);
-//            double tau = Double.POSITIVE_INFINITY;
-//            double tau = model.getOrigin()/(nResamples-1)/10;
 
             double nextModelEventTime = model.getNextModelEventTime(particleState);
             double trueDt = Math.min(tau, Math.min(nextModelEventTime, nextResampTime) - particleState.time);
@@ -243,6 +241,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                     *(1.0 - k0 * (k0 - 1) / particleState.I / (particleState.I + 1));
             double observedInfectProp = infectionProp - unobservedInfectProp;
             conditionalLogP += -trueDt*(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                    + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
                     + observedInfectProp);
 
             // Count tree events contained within leap interval
@@ -284,12 +283,20 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                      (int)Math.round(Randomizer.nextPoisson(
                              trueDt*model.propensities[EpidemicEvent.RECOVERY]))));
 
-            model.incrementState(particleState,
-                    EpidemicEvent.MultiplePsiSampleRemove(nLeaves));
+            int nSampleRemovals;
+            if (nLeaves>0) {
+                double sampleRemovalProb = model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE] /
+                        (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                                + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
+                nSampleRemovals = EpiInfUtilityMethods.nextBinomial(sampleRemovalProb, nLeaves);
+                model.incrementState(particleState,
+                        EpidemicEvent.MultiplePsiSampleRemove(nSampleRemovals));
+            } else
+                nSampleRemovals = 0;
 
             // Compute weight contributions of tree events:
 
-            model.calculatePropensities(particleState);
+            int k = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
 
             if (nObservedInfections>0) {
                 conditionalLogP += nObservedInfections*Math.log(
@@ -297,12 +304,20 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                         *model.propensities[EpidemicEvent.INFECTION]);
             }
 
-            if (nLeaves>0) {
-                conditionalLogP += nLeaves*Math.log(
-                        model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]);
+            if (nSampledAncestors>0) {
+                conditionalLogP += nSampledAncestors*Math.log(
+                        model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]/particleState.I);
             }
 
-            int k = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
+            if (nLeaves>0) {
+                conditionalLogP += nLeaves*Math.log(
+                        model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                        + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
+
+                if (nSampleRemovals<nLeaves)
+                    conditionalLogP += (nLeaves-nSampleRemovals)*Math.log(1.0 - k/particleState.I);
+            }
+
             if (conditionalLogP == Double.NEGATIVE_INFINITY
                     || !particleState.isValid() || particleState.I < k)
                 return Double.NEGATIVE_INFINITY;

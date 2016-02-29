@@ -109,6 +109,9 @@ public class EpiInfUtilityMethods {
         if (p == 0 || n == 0)
             return 0;
 
+        if (p == 1.0)
+            return n;
+
         if (n*p > 10.0 && n*(1.0 - p) > 10.0)
             return nextBinomialNormal(p, n);
 
