@@ -163,15 +163,12 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                 sumOfScaledWeights += particleWeights[p];
             }
 
-            // Update marginal likelihood estimate
-            thisLogP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
-
             if (!(sumOfScaledWeights > 0.0)) {
                 return Double.NEGATIVE_INFINITY;
             }
 
             // Update marginal likelihood estimate
-            thisLogP += Math.log(sumOfScaledWeights / nParticles);
+            thisLogP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
 
             // Normalize weights
             for (int i=0; i<nParticles; i++)
