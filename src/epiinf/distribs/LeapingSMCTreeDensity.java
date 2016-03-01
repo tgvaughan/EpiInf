@@ -65,15 +65,21 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             "Number of evenly-spaced particle resampling times.",
             100);
 
+    public Input<Double> resampThreshInput = new Input<>(
+            "resampThresh",
+            "Resampling performed when the effective relative number of " +
+                    "particles drops below this threshold.",
+            0.3);
+
     EpidemicModel model;
     TreeEventList treeEventList;
     int nParticles, nResamples;
-    double epsilon;
+    double epsilon, resampThresh;
 
     // Keep these around so we don't have to create these arrays/lists
     // for every density evaluation.
 
-    double[] particleWeights;
+    double[] particleWeights, logParticleWeights;
     EpidemicState[] particleStates, particleStatesNew;
 
     double recordedOrigin;
@@ -95,8 +101,10 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
         nParticles = nParticlesInput.get();
         nResamples = nResamplesInput.get();
         epsilon = epsilonInput.get();
+        resampThresh = resampThreshInput.get();
 
         particleWeights = new double[nParticles];
+        logParticleWeights = new double[nParticles];
         particleStates = new EpidemicState[nParticles];
         particleStatesNew = new EpidemicState[nParticles];
 
@@ -148,54 +156,62 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             double maxLogWeight = Double.NEGATIVE_INFINITY;
             for (int p = 0; p < nParticles; p++) {
 
-                double newLogWeight = recordTrajectory ?
+                logParticleWeights[p] += recordTrajectory ?
                         updateParticle(particleStates[p], nextResampTime, particleTrajectories.get(p))
                         : updateParticle(particleStates[p], nextResampTime, null);
 
-                particleWeights[p] = newLogWeight;
-                maxLogWeight = Math.max(newLogWeight, maxLogWeight);
+                maxLogWeight = Math.max(logParticleWeights[p], maxLogWeight);
             }
 
             // Compute mean of weights scaled relative to max log weight
             double sumOfScaledWeights = 0;
+            double sumOfSquaredScaledWeights = 0;
             for (int p=0; p<nParticles; p++) {
-                particleWeights[p] = Math.exp(particleWeights[p] - maxLogWeight);
+                particleWeights[p] = Math.exp(logParticleWeights[p] - maxLogWeight);
                 sumOfScaledWeights += particleWeights[p];
+                sumOfSquaredScaledWeights += particleWeights[p]*particleWeights[p];
             }
 
             if (!(sumOfScaledWeights > 0.0)) {
                 return Double.NEGATIVE_INFINITY;
             }
 
-            // Update marginal likelihood estimate
-            thisLogP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
 
-            // Normalize weights
-            for (int i=0; i<nParticles; i++)
-                particleWeights[i] = particleWeights[i]/sumOfScaledWeights;
+            double Neff = sumOfScaledWeights*sumOfScaledWeights/sumOfSquaredScaledWeights;
 
-            // Sample particle with replacement
-            ReplacementSampler replacementSampler = new ReplacementSampler(particleWeights);
-            for (int p=0; p<nParticles; p++) {
-                int srcIdx = replacementSampler.next();
-                particleStatesNew[p] = particleStates[srcIdx].copy();
+            if (Neff < resampThresh*nParticles || ridx == nResamples-1) {
 
-                if (recordTrajectory) {
-                    particleTrajectoriesNew.get(p).clear();
-                    particleTrajectoriesNew.get(p).addAll(particleTrajectories.get(srcIdx));
+                // Update marginal likelihood estimate
+                thisLogP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
+
+                // Normalize weights
+                for (int i = 0; i < nParticles; i++)
+                    particleWeights[i] = particleWeights[i] / sumOfScaledWeights;
+
+                // Sample particle with replacement
+                ReplacementSampler replacementSampler = new ReplacementSampler(particleWeights);
+                for (int p = 0; p < nParticles; p++) {
+                    int srcIdx = replacementSampler.next();
+                    particleStatesNew[p] = particleStates[srcIdx].copy();
+                    logParticleWeights[p] = 0.0;
+
+                    if (recordTrajectory) {
+                        particleTrajectoriesNew.get(p).clear();
+                        particleTrajectoriesNew.get(p).addAll(particleTrajectories.get(srcIdx));
+                    }
                 }
-            }
 
-            // Switch particleStates and particleStatesNew
-            EpidemicState[] tempStates = particleStates;
-            particleStates = particleStatesNew;
-            particleStatesNew = tempStates;
+                // Switch particleStates and particleStatesNew
+                EpidemicState[] tempStates = particleStates;
+                particleStates = particleStatesNew;
+                particleStatesNew = tempStates;
 
-            // Switch particleTrajectories and particleTrajectoriesNew
-            if (recordTrajectory) {
-                List<List<EpidemicState>> tmpTrajs = particleTrajectories;
-                particleTrajectories = particleTrajectoriesNew;
-                particleTrajectoriesNew = tmpTrajs;
+                // Switch particleTrajectories and particleTrajectoriesNew
+                if (recordTrajectory) {
+                    List<List<EpidemicState>> tmpTrajs = particleTrajectories;
+                    particleTrajectories = particleTrajectoriesNew;
+                    particleTrajectoriesNew = tmpTrajs;
+                }
             }
         }
 

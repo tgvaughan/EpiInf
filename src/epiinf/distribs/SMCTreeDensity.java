@@ -55,11 +55,17 @@ public class SMCTreeDensity extends TreeDistribution {
             "tauLeapingEpsilon", "Relative fraction of propensity change to allow " +
             "when selecting leap size.", 0.03);
 
+    public Input<Double> resampThreshInput = new Input<>(
+            "resampThresh",
+            "Resampling performed when the effective relative number of " +
+                    "particles drops below this threshold.",
+            0.3);
+
     EpidemicModel model;
     TreeEventList treeEventList;
     int nParticles;
     boolean useTauLeaping;
-    double epsilon;
+    double epsilon, resampThresh;
 
     // Keep these around so we don't have to create these arrays/lists
     // for every density evaluation.
@@ -86,6 +92,7 @@ public class SMCTreeDensity extends TreeDistribution {
         nParticles = nParticlesInput.get();
         useTauLeaping = useTauLeapingInput.get();
         epsilon = epsilonInput.get();
+        resampThresh = resampThreshInput.get();
 
         particleWeights = new double[nParticles];
         logParticleWeights = new double[nParticles];
@@ -163,7 +170,7 @@ public class SMCTreeDensity extends TreeDistribution {
 
             double Neff = sumOfScaledWeights*sumOfScaledWeights/sumOfSquaredScaledWeights;
 
-            if (Neff < 0.3*nParticles || treeEvent.isFinal) {
+            if (Neff < resampThresh*nParticles || treeEvent.isFinal) {
 
                 // Update marginal likelihood estimate
                 thisLogP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
