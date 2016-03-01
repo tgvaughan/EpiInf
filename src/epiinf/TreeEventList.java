@@ -109,6 +109,9 @@ public class TreeEventList {
                 i += 1;
         }
 
+        // Mark final event:
+        eventList.get(eventList.size()-1).isFinal = true;
+
         // Compute lineage counts
         lineageCounts.clear();
         int k = 1;

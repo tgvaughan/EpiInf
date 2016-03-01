@@ -16,4 +16,5 @@ public class TreeEvent extends Event {
     
     public Type type;
     public int multiplicity = 1;
+    public boolean isFinal = false;
 }

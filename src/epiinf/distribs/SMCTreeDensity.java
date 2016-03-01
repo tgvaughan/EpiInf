@@ -64,7 +64,7 @@ public class SMCTreeDensity extends TreeDistribution {
     // Keep these around so we don't have to create these arrays/lists
     // for every density evaluation.
 
-    double[] particleWeights;
+    double[] logParticleWeights, particleWeights;
     EpidemicState[] particleStates, particleStatesNew;
 
     double recordedOrigin;
@@ -88,6 +88,7 @@ public class SMCTreeDensity extends TreeDistribution {
         epsilon = epsilonInput.get();
 
         particleWeights = new double[nParticles];
+        logParticleWeights = new double[nParticles];
         particleStates = new EpidemicState[nParticles];
         particleStatesNew = new EpidemicState[nParticles];
 
@@ -141,55 +142,60 @@ public class SMCTreeDensity extends TreeDistribution {
             double maxLogWeight = Double.NEGATIVE_INFINITY;
             for (int p = 0; p < nParticles; p++) {
 
-                double newLogWeight = recordTrajectory ?
+                logParticleWeights[p] += recordTrajectory ?
                         updateParticle(particleStates[p], k, treeEvent, particleTrajectories.get(p))
                         : updateParticle(particleStates[p], k, treeEvent, null);
 
-                maxLogWeight = Math.max(newLogWeight, maxLogWeight);
-
-                particleWeights[p] = newLogWeight;
+                maxLogWeight = Math.max(logParticleWeights[p], maxLogWeight);
             }
 
             // Compute mean of weights scaled relative to max log weight
-            double sumOfScaledWeights = 0;
+            double sumOfScaledWeights = 0, sumOfSquaredScaledWeights = 0;
             for (int p=0; p<nParticles; p++) {
-                particleWeights[p] = Math.exp(particleWeights[p] - maxLogWeight);
+                particleWeights[p] = Math.exp(logParticleWeights[p] - maxLogWeight);
                 sumOfScaledWeights += particleWeights[p];
+                sumOfSquaredScaledWeights += particleWeights[p]*particleWeights[p];
             }
-
-            // Update marginal likelihood estimate
-            thisLogP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
 
             if (!(sumOfScaledWeights > 0.0)) {
                 return Double.NEGATIVE_INFINITY;
             }
 
-            // Normalize weights
-            for (int i=0; i<nParticles; i++)
-                particleWeights[i] = particleWeights[i]/sumOfScaledWeights;
+            double Neff = sumOfScaledWeights*sumOfScaledWeights/sumOfSquaredScaledWeights;
 
-            // Sample particle with replacement
-            ReplacementSampler replacementSampler = new ReplacementSampler(particleWeights);
-            for (int p=0; p<nParticles; p++) {
-                int srcIdx = replacementSampler.next();
-                particleStatesNew[p].assignFrom(particleStates[srcIdx]);
+            if (Neff < 0.3*nParticles || treeEvent.isFinal) {
 
-                if (recordTrajectory) {
-                    particleTrajectoriesNew.get(p).clear();
-                    particleTrajectoriesNew.get(p).addAll(particleTrajectories.get(srcIdx));
+                // Update marginal likelihood estimate
+                thisLogP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
+
+                // Normalize weights
+                for (int i = 0; i < nParticles; i++)
+                    particleWeights[i] = particleWeights[i] / sumOfScaledWeights;
+
+                // Sample particle with replacement
+                ReplacementSampler replacementSampler = new ReplacementSampler(particleWeights);
+                for (int p = 0; p < nParticles; p++) {
+                    int srcIdx = replacementSampler.next();
+                    particleStatesNew[p].assignFrom(particleStates[srcIdx]);
+                    logParticleWeights[p] = 0;
+
+                    if (recordTrajectory) {
+                        particleTrajectoriesNew.get(p).clear();
+                        particleTrajectoriesNew.get(p).addAll(particleTrajectories.get(srcIdx));
+                    }
                 }
-            }
 
-            // Switch particleStates and particleStatesNew
-            EpidemicState[] tempStates = particleStates;
-            particleStates = particleStatesNew;
-            particleStatesNew = tempStates;
+                // Switch particleStates and particleStatesNew
+                EpidemicState[] tempStates = particleStates;
+                particleStates = particleStatesNew;
+                particleStatesNew = tempStates;
 
-            // Switch particleTrajectories and particleTrajectoriesNew
-            if (recordTrajectory) {
-                List<List<EpidemicState>> tmpTrajs = particleTrajectories;
-                particleTrajectories = particleTrajectoriesNew;
-                particleTrajectoriesNew = tmpTrajs;
+                // Switch particleTrajectories and particleTrajectoriesNew
+                if (recordTrajectory) {
+                    List<List<EpidemicState>> tmpTrajs = particleTrajectories;
+                    particleTrajectories = particleTrajectoriesNew;
+                    particleTrajectoriesNew = tmpTrajs;
+                }
             }
 
             // Update lineage counter
