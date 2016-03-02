@@ -30,7 +30,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class LeapingSMCTreeDensityTestDONTRUN {
+public class LeapingSMCTreeDensityTest {
 
     @org.junit.Test
     public void testSISTreeDensityContemp() throws Exception {
@@ -66,13 +66,13 @@ public class LeapingSMCTreeDensityTestDONTRUN {
         System.out.println("Truth: " + logPtrue);
         System.out.println("Estimate: " + logP);
 
-        assertTrue(Math.abs(logP-logPtrue)<0.01);
+        assertTrue(2*Math.abs(logP-logPtrue)/Math.abs(logP + logPtrue)<0.05);
     }
 
     @org.junit.Test
     public void testSISTreeDensitySerial() throws Exception {
 
-//        Randomizer.setSeed(42);
+        Randomizer.setSeed(42);
 
         TreeParser tree = new TreeParser(
                 "(t19:0.5728982259951056,(t1:4.682548468426976,((((t13:0.1" +
@@ -115,7 +115,7 @@ public class LeapingSMCTreeDensityTestDONTRUN {
         System.out.println("Truth: " + logPtrue);
         System.out.println("Estimate: " + logP);
 
-        assertTrue(Math.abs(logP-logPtrue)<0.1);
+        assertTrue(2*Math.abs(logP-logPtrue)/Math.abs(logP + logPtrue)<0.05);
     }
 
 
@@ -170,7 +170,7 @@ public class LeapingSMCTreeDensityTestDONTRUN {
         System.out.println("Truth: " + logPtrue);
         System.out.println("Estimate: " + logP);
 
-        assertTrue(Math.abs(logP-logPtrue)<0.1);
+        assertTrue(2*Math.abs(logP-logPtrue)/Math.abs(logP + logPtrue)<0.05);
     }
 
     @org.junit.Test
@@ -214,7 +214,7 @@ public class LeapingSMCTreeDensityTestDONTRUN {
         System.out.println("Truth: " + logPtrue);
         System.out.println("Estimate: " + logP);
 
-        assertTrue(Math.abs(logP-logPtrue)<0.1);
+        assertTrue(2*Math.abs(logP-logPtrue)/Math.abs(logP + logPtrue)<0.05);
     }
 
 }

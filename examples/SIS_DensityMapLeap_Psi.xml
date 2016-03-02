@@ -26,8 +26,8 @@
           IsLabelledNewick="true" adjustTipHeights="false"/-->
 
     <run spec="feast.mapping.DensityMapper">
-        <distribution spec="LeapingSMCTreeDensity" id="density" tree="@tree"
-                      nParticles="100" nResamples="11" tauLeapingEpsilon="0.03">
+        <distribution spec="LeapingSMCTreeDensity" id="densityLeap" tree="@tree"
+                      nParticles="10000" nResamples="2001" tauLeapingEpsilon="0.03">
             <model spec="SISModel" id="model">
                 <treeOrigin spec="OriginFromTrajectory" trajectory="@trajectory"/>
                 <S0 spec="IntegerParameter" value="499"/>
@@ -40,7 +40,7 @@
             </model>
         </distribution>
 
-        <distribution spec="SMCTreeDensity" id="densityTrue" nParticles="100" useTauLeaping="true"
+        <distribution spec="SMCTreeDensity" id="density" nParticles="10000" useTauLeaping="false"
                       tree="@tree" model="@model"/>
 
         <realParam spec="RealParameter" id="beta" value="0.001" lower="0.001" upper="0.009"/>
@@ -48,14 +48,14 @@
 
         <logger spec="Logger" logEvery="1">
             <log idref="beta"/>
+            <log idref="densityLeap"/>
             <log idref="density"/>
-            <log idref="densityTrue"/>
         </logger>
 
         <logger spec="Logger" logEvery="1" fileName="$(filebase).log">
             <log idref="beta"/>
+            <log idref="densityLeap"/>
             <log idref="density"/>
-            <log idref="densityTrue"/>
         </logger>
     </run>
 </beast>

@@ -246,8 +246,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             double removeProp = model.propensities[EpidemicEvent.RECOVERY]
                     + model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
 
-//            double tau = model.getTau(epsilon, particleState, infectionProp, removeProp);
-            double tau = Double.POSITIVE_INFINITY;
+            double tau = model.getTau(epsilon, particleState, infectionProp, removeProp);
 
             double nextModelEventTime = model.getNextModelEventTime(particleState);
             double trueDt = Math.min(tau, Math.min(nextModelEventTime, nextResampTime) - particleState.time);
@@ -366,7 +365,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                 if (nextModelEvent.type == ModelEvent.Type.RHO_SAMPLING) {
                     // Handle rho-sampling events
 
-                    if (!model.timesEqual(nextTreeEvent.time, nextModelEventTime))
+                    if (nextTreeEvent == null || !model.timesEqual(nextTreeEvent.time, nextModelEventTime))
                         return Double.NEGATIVE_INFINITY;
 
                     int I = (int) Math.round(particleState.I);

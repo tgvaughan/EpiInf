@@ -25,37 +25,38 @@
     <!--tree spec="TreeFromNewickFile" id="tree" fileName="SIS_DensityMapLeap.tree.newick"
           IsLabelledNewick="true" adjustTipHeights="false"/-->
 
-    <run spec="feast.mapping.DensityMapper">
-        <distribution spec="LeapingSMCTreeDensity" id="density" tree="@tree"
-                      nParticles="100" nResamples="11" tauLeapingEpsilon="0.03">
-            <model spec="SISModel" id="model">
-                <treeOrigin idref="origin"/>
-                <S0 spec="IntegerParameter" value="499"/>
-                <infectionRate idref="beta"/>
-                <recoveryRate spec="RealParameter" value="0.1"/>
-                <psiSamplingVariable spec="RealParameter" value="0.0"/>
-                <removalProb spec="RealParameter" value="1.0"/>
-                <rhoSamplingProb spec="RealParameter" value="0.5"/>
-                <rhoSamplingTime id="origin" spec="RealParameter" value="4.0"/>
-            </model>
-        </distribution>
+    <model spec="SISModel" id="model">
+        <treeOrigin idref="origin"/>
+        <S0 spec="IntegerParameter" value="499"/>
+        <infectionRate idref="beta"/>
+        <recoveryRate spec="RealParameter" value="0.1"/>
+        <psiSamplingVariable spec="RealParameter" value="0.0"/>
+        <removalProb spec="RealParameter" value="1.0"/>
+        <rhoSamplingProb spec="RealParameter" value="0.5"/>
+        <rhoSamplingTime id="origin" spec="RealParameter" value="4.0"/>
+    </model>
 
-        <distribution spec="SMCTreeDensity" id="densityTrue" nParticles="100" useTauLeaping="true"
+    <run spec="feast.mapping.DensityMapper">
+        <distribution spec="LeapingSMCTreeDensity" id="densityLeap" nParticles="10000"
+                      nResamples="11" resampThresh="0.5" tauLeapingEpsilon="0.1"
                       tree="@tree" model="@model"/>
+
+        <!--<distribution spec="SMCTreeDensity" id="density" nParticles="10000" useTauLeaping="true"-->
+                      <!--tree="@tree" model="@model"/>-->
 
         <realParam spec="RealParameter" id="beta" value="0.001" lower="0.001" upper="0.009"/>
         <steps spec="IntegerParameter" value="9"/>
 
         <logger spec="Logger" logEvery="1">
             <log idref="beta"/>
-            <log idref="density"/>
-            <!--log idref="densityTrue"/-->
+            <log idref="densityLeap"/>
+            <!--<log idref="density"/>-->
         </logger>
 
         <logger spec="Logger" logEvery="1" fileName="$(filebase).log">
             <log idref="beta"/>
-            <log idref="density"/>
-            <log idref="densityTrue"/>
+            <log idref="densityLeap"/>
+            <!--<log idref="density"/>-->
         </logger>
     </run>
 </beast>
