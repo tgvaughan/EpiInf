@@ -137,6 +137,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
         // Initialize particles and trajectory storage
         for (int p = 0; p < nParticles; p++) {
             particleStates[p] = model.getInitialState();
+            logParticleWeights[p] = 0;
 
             if (recordTrajectory) {
                 particleTrajectories.get(p).clear();
