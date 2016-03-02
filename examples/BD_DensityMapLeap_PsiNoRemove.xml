@@ -29,7 +29,7 @@
                 <infectionRate spec="RealParameter" value="1.2"/>
                 <recoveryRate spec="RealParameter" value="0.2"/>
                 <psiSamplingVariable spec="RealParameter" value="0.2"/>
-                <removalProb spec="RealParameter" value="1.0"/>
+                <removalProb spec="RealParameter" value="0.5"/>
             </model>
         </epidemicTrajectory>
     </tree>
@@ -58,10 +58,10 @@
         </distribution>
 
         <realParam spec="RealParameter" id="psi" value="0.2" lower="0.05" upper="0.5"/>
-        <steps spec="IntegerParameter" value="11"/>
+        <steps spec="IntegerParameter" value="1"/>
 
         <realParam spec="RealParameter" id="r" value="1.0" lower="0.05" upper="0.95"/>
-        <steps spec="IntegerParameter" value="1"/>
+        <steps spec="IntegerParameter" value="11"/>
 
         <logger spec="Logger" logEvery="1">
             <log idref="psi"/>

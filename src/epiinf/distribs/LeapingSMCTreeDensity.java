@@ -181,8 +181,10 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
                 return Double.NEGATIVE_INFINITY;
             }
 
-            double Neff = sumOfScaledWeights*sumOfScaledWeights/sumOfSquaredScaledWeights;
 
+            // Resample only when effective particle count is low
+
+            double Neff = sumOfScaledWeights*sumOfScaledWeights/sumOfSquaredScaledWeights;
             if (Neff < resampThresh*nParticles || ridx == nResamples-1) {
 
                 // Update marginal likelihood estimate
@@ -244,9 +246,18 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             model.calculatePropensities(particleState);
 
             // Determine length of proposed leap
-            double infectionProp = model.propensities[EpidemicEvent.INFECTION];
 
-            double removeProp = model.propensities[EpidemicEvent.RECOVERY]
+            double infectionProp = model.propensities[EpidemicEvent.INFECTION];
+            double allowedRecovProp, forbiddenRecovProp;
+            int k0 = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
+            if (particleState.I>k0) {
+                allowedRecovProp = model.propensities[EpidemicEvent.RECOVERY];
+                forbiddenRecovProp = 0.0;
+            } else {
+                allowedRecovProp = 0.0;
+                forbiddenRecovProp = model.propensities[EpidemicEvent.RECOVERY];
+            }
+            double removeProp = allowedRecovProp
                     + model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
 
             double tau = model.getTau(epsilon, particleState, infectionProp, removeProp);
@@ -255,15 +266,17 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             double trueDt = Math.min(tau, Math.min(nextModelEventTime, nextResampTime) - particleState.time);
 
             // Waiting time weight contributions
-            int k0 = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
+
             double unobservedInfectProp = infectionProp
                     *(1.0 - k0 * (k0 - 1) / particleState.I / (particleState.I + 1));
             double observedInfectProp = infectionProp - unobservedInfectProp;
+
             conditionalLogP += -trueDt*(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
                     + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
-                    + observedInfectProp);
+                    + observedInfectProp + forbiddenRecovProp);
 
             // Count tree events contained within leap interval
+
             int nCoalescences = 0;
             int nLeaves = 0;
             int nSampledAncestors = 0;
@@ -305,8 +318,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
 
             model.incrementState(particleState,
                     EpidemicEvent.MultipleRecoveries(
-                     (int)Math.round(Randomizer.nextPoisson(
-                             trueDt*model.propensities[EpidemicEvent.RECOVERY]))));
+                     (int)Math.round(Randomizer.nextPoisson(trueDt*allowedRecovProp))));
 
             int nSampleRemovals;
             if (nLeaves>0) {
