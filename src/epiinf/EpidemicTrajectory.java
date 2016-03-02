@@ -29,23 +29,40 @@ import java.util.List;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 @Description("Object representing a complete epidemic trajectory.")
-public abstract class EpidemicTrajectory extends BEASTObject implements Loggable {
+public class EpidemicTrajectory extends BEASTObject implements Loggable {
 
     protected List<EpidemicEvent> eventList;
     protected List<EpidemicState> stateList;
     protected Double origin;
     
     
-    public EpidemicTrajectory () { }
-    
-    @Override
-    public void initAndValidate() throws Exception {
+    public EpidemicTrajectory () {
         eventList = new ArrayList<>();
         stateList = new ArrayList<>();
     }
 
+    public EpidemicTrajectory (List<EpidemicEvent> eventList,
+                               List<EpidemicState> stateList,
+                               double origin) {
+        this.eventList = eventList;
+        this.stateList = stateList;
+        this.origin = origin;
+    }
+
+    public void assignFrom(EpidemicTrajectory otherTrajectory) {
+        this.eventList = otherTrajectory.getEventList();
+        this.stateList = otherTrajectory.getStateList();
+        this.origin = otherTrajectory.getOrigin();
+    }
+
+    
+    @Override
+    public void initAndValidate() throws Exception {
+    }
+
     /**
-     * Retrieve list of states corresponding to complete epidemic trajectory.
+     * Retrieve list of states corresponding to complete epidemic trajectory
+     * or null if unavailable.
      * 
      * @return state list
      */
@@ -54,12 +71,22 @@ public abstract class EpidemicTrajectory extends BEASTObject implements Loggable
     }
 
     /**
-     * Retrieve list of events corresponding to complete epidemic trajectory.
+     * Retrieve list of events corresponding to complete epidemic trajectory
+     * or null if unavailable.
      * 
      * @return event list
      */
     public List<EpidemicEvent> getEventList() {
         return eventList;
+    }
+
+    /**
+     * Retrieve origin parameter or null if unavailable.
+     *
+     * @return origin parameter
+     */
+    public Double getOrigin() {
+        return origin;
     }
     
     /**

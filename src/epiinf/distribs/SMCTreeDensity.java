@@ -38,7 +38,7 @@ import java.util.Random;
     + "parameters.")
 @Citation("Gabriel Leventhal, Timothy Vaughan, David Welch, Alexei Drummond, Tanja Stadler,\n" +
         "\"Exact phylodynamic inference using particle filtering\", in preparation.")
-public class SMCTreeDensity extends TreeDistribution {
+public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecorder {
 
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
@@ -73,8 +73,7 @@ public class SMCTreeDensity extends TreeDistribution {
     double[] logParticleWeights, particleWeights;
     EpidemicState[] particleStates, particleStatesNew;
 
-    double recordedOrigin;
-    List<EpidemicState> recordedTrajectory;
+    List<EpidemicState> recordedTrajectoryStates;
     List<List<EpidemicState>> particleTrajectories, particleTrajectoriesNew;
 
 
@@ -99,7 +98,7 @@ public class SMCTreeDensity extends TreeDistribution {
         particleStates = new EpidemicState[nParticles];
         particleStatesNew = new EpidemicState[nParticles];
 
-        recordedTrajectory = new ArrayList<>();
+        recordedTrajectoryStates = new ArrayList<>();
         particleTrajectories = new ArrayList<>();
         particleTrajectoriesNew = new ArrayList<>();
 
@@ -123,8 +122,7 @@ public class SMCTreeDensity extends TreeDistribution {
         double thisLogP = 0.0;
 
         if (recordTrajectory) {
-            recordedOrigin = treeEventList.getOrigin();
-            recordedTrajectory.clear();
+            recordedTrajectoryStates.clear();
         }
 
         // Early exit if first tree event occurs before origin.
@@ -218,7 +216,7 @@ public class SMCTreeDensity extends TreeDistribution {
 
         // Choose arbitrary trajectory to log.
         if (recordTrajectory)
-            recordedTrajectory.addAll(particleTrajectories.get(0));
+            recordedTrajectoryStates.addAll(particleTrajectories.get(0));
 
         return thisLogP;
     }
@@ -430,12 +428,10 @@ public class SMCTreeDensity extends TreeDistribution {
             return conditionalLogP;
     }
 
-    public List<EpidemicState> getRecordedTrajectory() {
-        return recordedTrajectory;
-    }
+    public EpidemicTrajectory getConditionedTrajectory() {
+        calculateLogP(true);
 
-    public double getRecordedOrigin() {
-        return recordedOrigin;
+        return new EpidemicTrajectory(null, recordedTrajectoryStates, treeEventList.getOrigin());
     }
 
     @Override

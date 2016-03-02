@@ -1,3 +1,20 @@
+<!--
+  ~ Copyright (C) 2016 Tim Vaughan <tgvaughan@gmail.com>
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
 <beast version="2.0" namespace="beast.core
     :beast.core.parameter
     :beast.core.util
@@ -25,7 +42,7 @@
 
     <alignment id="alignment" spec="epiinf.SimulatedAlignment"
         tree="@simulated_tree" sequenceLength="2000" outputFileName="$(filebase)_alignment.nexus">
-        <siteModel id="siteModel" spec="beast.evolution.sitemodel.SiteModel">
+        <siteModel spec="beast.evolution.sitemodel.SiteModel">
             <substModel spec="beast.evolution.substitutionmodel.JukesCantor"/>
             <mutationRate spec="RealParameter" value="0.005"/>
         </siteModel>
@@ -46,7 +63,7 @@
             <stateNode id="recoveryRate" spec="RealParameter" value="0.1" />
             <stateNode id="samplingProp" spec="RealParameter" value="0.5" lower="0.0" upper="1.0"/>
             <stateNode id="origin" spec="RealParameter" value="6.0"/>
-            <stateNode id="S0" spec="IntegerParameter" value="300" lower="1" upper="400"/>
+            <stateNode id="S0" spec="IntegerParameter" value="199" lower="1" upper="400"/>
         </state>
 
         <distribution id="posterior" spec="CompoundDistribution">
@@ -60,8 +77,12 @@
                 </siteModel>
             </distribution>
 
-            <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100" tree="@tree"
-                useTauLeaping="true">
+            <!--<distribution spec="SMCTreeDensity" id="treePrior"-->
+                          <!--nParticles="100"-->
+                          <!--tree="@tree">-->
+            <distribution spec="LeapingSMCTreeDensity" id="treePrior"
+                          nParticles="100" nResamples="10" tauLeapingEpsilon="0.1"
+                          tree="@tree">
                 <model spec="SISModel" id="model" usePsiSamplingProportion="true">
                     <treeOrigin idref="origin"/>
                     <S0 idref="S0"/>
@@ -100,9 +121,9 @@
             <parameter idref="samplingProp"/>
         </operator-->
 
-        <operator id="S0walker" spec="IntRandomWalkOperator" windowSize="10" weight="1">
+        <!--operator id="S0walker" spec="IntRandomWalkOperator" windowSize="10" weight="1">
             <parameter idref="S0"/>
-        </operator>
+        </operator-->
 
         <!--operator id="removalSampPropUpDown" spec="UpDownOperator" scaleFactor="0.8" weight="1">
             <up idref="recoveryRate"/>

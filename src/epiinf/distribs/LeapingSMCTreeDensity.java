@@ -22,20 +22,15 @@ import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
-import beast.core.parameter.IntegerParameter;
-import beast.core.parameter.RealParameter;
 import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
 import beast.util.Randomizer;
-import beast.util.TreeParser;
 import epiinf.*;
 import epiinf.models.EpidemicModel;
-import epiinf.models.SISModel;
 import epiinf.util.EpiInfUtilityMethods;
 import epiinf.util.ReplacementSampler;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -47,7 +42,7 @@ import java.util.Random;
     + "parameters.  This variant leaps over tree events.")
 @Citation("Gabriel Leventhal, Timothy Vaughan, David Welch, Alexei Drummond, Tanja Stadler,\n" +
         "\"Exact phylodynamic inference using particle filtering\", in preparation.")
-public class LeapingSMCTreeDensity extends TreeDistribution {
+public class LeapingSMCTreeDensity extends TreeDistribution implements TrajectoryRecorder {
 
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
@@ -85,8 +80,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
     double[] particleWeights, logParticleWeights;
     EpidemicState[] particleStates, particleStatesNew;
 
-    double recordedOrigin;
-    List<EpidemicState> recordedTrajectory;
+    List<EpidemicState> recordedEpidemicStates;
     List<List<EpidemicState>> particleTrajectories, particleTrajectoriesNew;
 
 
@@ -111,7 +105,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
         particleStates = new EpidemicState[nParticles];
         particleStatesNew = new EpidemicState[nParticles];
 
-        recordedTrajectory = new ArrayList<>();
+        recordedEpidemicStates = new ArrayList<>();
         particleTrajectories = new ArrayList<>();
         particleTrajectoriesNew = new ArrayList<>();
 
@@ -132,8 +126,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
         double thisLogP = 0.0;
 
         if (recordTrajectory) {
-            recordedOrigin = treeEventList.getOrigin();
-            recordedTrajectory.clear();
+            recordedEpidemicStates.clear();
         }
 
         // Early exit if first tree event occurs before origin.
@@ -223,7 +216,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
 
         // Choose arbitrary trajectory to log.
         if (recordTrajectory)
-            recordedTrajectory.addAll(particleTrajectories.get(0));
+            recordedEpidemicStates.addAll(particleTrajectories.get(0));
 
         return thisLogP;
     }
@@ -424,12 +417,10 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
             return conditionalLogP;
     }
 
-    public List<EpidemicState> getRecordedTrajectory() {
-        return recordedTrajectory;
-    }
-
-    public double getRecordedOrigin() {
-        return recordedOrigin;
+    @Override
+    public EpidemicTrajectory getConditionedTrajectory() {
+        calculateLogP(true);
+        return new EpidemicTrajectory(null, recordedEpidemicStates, treeEventList.getOrigin());
     }
 
     @Override

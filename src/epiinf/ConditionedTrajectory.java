@@ -17,11 +17,8 @@
 
 package epiinf;
 
-import beast.core.BEASTObject;
 import beast.core.Input;
-import beast.core.Loggable;
-import beast.core.parameter.RealParameter;
-import epiinf.distribs.SMCTreeDensity;
+import epiinf.distribs.TrajectoryRecorder;
 
 import java.io.PrintStream;
 
@@ -30,11 +27,11 @@ import java.io.PrintStream;
  */
 public class ConditionedTrajectory extends EpidemicTrajectory {
 
-    public Input<SMCTreeDensity> treeDensityInput = new Input<>("treeDensity",
+    public Input<TrajectoryRecorder> treeDensityInput = new Input<>("treeDensity",
             "SMC Tree density from which to log trajectories.",
             Input.Validate.REQUIRED);
 
-    SMCTreeDensity treeDensity;
+    TrajectoryRecorder treeDensity;
 
     public ConditionedTrajectory() {
     }
@@ -47,10 +44,7 @@ public class ConditionedTrajectory extends EpidemicTrajectory {
 
     @Override
     public void log(int nSample, PrintStream out) {
-        treeDensity.calculateLogP(true);
-        stateList.clear();
-        stateList.addAll((treeDensity.getRecordedTrajectory()));
-        origin = treeDensity.getRecordedOrigin();
+        assignFrom(treeDensity.getConditionedTrajectory());
         super.log(nSample, out);
     }
 }
