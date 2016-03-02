@@ -500,6 +500,18 @@ public abstract class EpidemicModel extends CalculationNode {
     }
 
     /**
+     * Test whether timeA is less than or equal to timeB within
+     * the model's tolerance.
+     *
+     * @param timeA first time
+     * @param timeB second time
+     * @return true if timeA <= timeB
+     */
+    public boolean timesLEQ(double timeA, double timeB) {
+        return timeA < timeB || timesEqual(timeA, timeB);
+    }
+
+    /**
      * Main method for debugging.
      *
      * @param args

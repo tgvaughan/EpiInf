@@ -46,7 +46,7 @@
         </distribution>
 
         <distribution spec="LeapingSMCTreeDensity" id="densityLeap" tree="@tree" model="@model"
-                      nParticles="10000" nResamples="11" tauLeapingEpsilon="0.03"/>
+                      nParticles="10000" nResamples="2001" tauLeapingEpsilon="0.03"/>
 
         <distribution spec="beast.evolution.speciation.SABirthDeathModel" id="densitySA">
             <tree idref="tree"/>
