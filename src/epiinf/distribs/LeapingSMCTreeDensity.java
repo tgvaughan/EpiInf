@@ -62,7 +62,10 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
 
     public Input<Integer> nResamplesInput = new Input<>(
             "nResamples",
-            "Number of evenly-spaced particle resampling times.",
+            "Number of evenly-spaced particle resampling times. Whether or not " +
+                    "resampling actually takes place at each of these times " +
+                    "is determined by the particle weight variance via " +
+                    "resampThresh.",
             100);
 
     public Input<Double> resampThreshInput = new Input<>(
@@ -446,53 +449,6 @@ public class LeapingSMCTreeDensity extends TreeDistribution {
     @Override
     public boolean isStochastic() {
         return true;
-    }
-
-    public static void main(String[] args) throws Exception {
-
-//        TreeFromNewickFile tree = new TreeFromNewickFile();
-//        tree.initByName("fileName", "examples/SIS_DensityMapLeap.tree.newick",
-//                "IsLabelledNewick", true,
-//                "adjustTipHeights", false);
-        TreeParser tree = new TreeParser("(A:2,B:2):2;", false, false, true, 1);
-
-        PrintStream ps = new PrintStream("out.txt");
-        ps.println("beta density densityTrue");
-
-        double betaMin = 0.005, betaMax = 0.015;
-        double dBeta = (betaMax - betaMin)/11;
-        for (int i=0; i<=10; i++) {
-            double beta = dBeta*i + betaMin;
-
-            SISModel model = new SISModel();
-            model.initByName("treeOrigin", new RealParameter("4.0"),
-                    "S0", new IntegerParameter("99"),
-                    "infectionRate", new RealParameter(String.valueOf(beta)),
-                    "recoveryRate", new RealParameter("0.1"),
-                    "psiSamplingVariable", new RealParameter("0.0"),
-                    "removalProb", new RealParameter("1.0"),
-                    "rhoSamplingProb", new RealParameter("0.1"),
-                    "rhoSamplingTime", new RealParameter("4.0"));
-
-            LeapingSMCTreeDensity density = new LeapingSMCTreeDensity();
-            density.initByName(
-                    "tree", tree,
-                    "model", model,
-                    "nParticles", 1000,
-                    "nResamples", 501);
-
-            SMCTreeDensity densityTrue = new SMCTreeDensity();
-            densityTrue.initByName(
-                    "tree", tree,
-                    "model", model,
-                    "nParticles", 1000);
-
-            ps.print(beta);
-            ps.print(" " + density.calculateLogP(false));
-            ps.println(" " + densityTrue.calculateLogP(false));
-        }
-
-        ps.close();
     }
 
 }
