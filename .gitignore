@@ -9,6 +9,10 @@
 *.log
 *.expotree
 *.newick
+*.tree*
+*.traj
+*.state
+*.nexus
 
 # Misc
 /.localrc*
