@@ -25,6 +25,7 @@ import beast.core.State;
 import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
+import beast.math.statistic.DiscreteStatistics;
 import beast.util.Randomizer;
 import epiinf.*;
 import epiinf.models.EpidemicModel;
@@ -53,7 +54,8 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
 
     public Input<Double> epsilonInput = new Input<>(
             "tauLeapingEpsilon", "Relative fraction of propensity change to allow " +
-            "when selecting leap size.", 0.03);
+            "when selecting leap size. A value of 1 causes leaps to bridge the " +
+            "entire interval between resampling events.", 0.03);
 
     public Input<Integer> nResamplesInput = new Input<>(
             "nResamples",
@@ -172,6 +174,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
             }
 
             if (!(sumOfScaledWeights > 0.0)) {
+//                System.out.println("Particle ensemble crashed.");
                 return Double.NEGATIVE_INFINITY;
             }
 
@@ -183,6 +186,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
 
                 // Update marginal likelihood estimate
                 thisLogP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
+//                thisLogP += DiscreteStatistics.median(logParticleWeights);
 
                 // Normalize weights
                 for (int i = 0; i < nParticles; i++)
@@ -254,7 +258,9 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
             double removeProp = allowedRecovProp
                     + model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
 
-            double tau = model.getTau(epsilon, particleState, infectionProp, removeProp);
+            double tau = epsilon < 1
+                    ? model.getTau(epsilon, particleState, infectionProp, removeProp)
+                    : Double.POSITIVE_INFINITY;
 
             double nextModelEventTime = model.getNextModelEventTime(particleState);
             double trueDt = Math.min(tau, Math.min(nextModelEventTime, nextResampTime) - particleState.time);
@@ -454,5 +460,4 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
     public boolean isStochastic() {
         return true;
     }
-
 }
