@@ -411,16 +411,7 @@ public abstract class EpidemicModel extends CalculationNode {
         addRateShiftEvents(infectionRateShiftTimesInput.get(), infectionRateShiftTimesBackwardInput.get());
         addRateShiftEvents(recoveryRateShiftTimesInput.get(), recoveryRateShiftTimesBackwardInput.get());
 
-        Collections.sort(modelEventList, (e1, e2) -> {
-            if (e1.time < e2.time)
-                return -1;
-
-            if (e1.time > e2.time)
-                return 1;
-
-            return 0;
-        });
-
+        Collections.sort(modelEventList);
     }
 
     public void addRateShiftEvents(Function rateShiftTimesParam, boolean rateShiftTimesBackward) {

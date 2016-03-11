@@ -88,15 +88,7 @@ public class TreeEventList {
         }
 
         // Sort events in order of absolute time
-        Collections.sort(eventList, (TreeEvent e1, TreeEvent e2) -> {
-            if (e1.time < e2.time)
-                return -1;
-            
-            if (e1.time > e2.time)
-                return 1;
-            
-            return 0;
-        });
+        Collections.sort(eventList);
 
         // Collate concurrent events
         int i=1;

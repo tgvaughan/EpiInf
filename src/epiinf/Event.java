@@ -20,6 +20,16 @@ package epiinf;
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class Event {
+public class Event implements Comparable<Event> {
     public double time;
+
+    @Override
+    public int compareTo(Event o) {
+        if (this.time < o.time)
+            return -1;
+        else if (this.time > o.time)
+            return 1;
+
+        return 0;
+    }
 }
