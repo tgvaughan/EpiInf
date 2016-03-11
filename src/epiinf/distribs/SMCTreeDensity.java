@@ -25,6 +25,7 @@ import beast.math.GammaFunction;
 import beast.util.Randomizer;
 import epiinf.*;
 import epiinf.models.EpidemicModel;
+import epiinf.util.IncidenceData;
 import epiinf.util.ReplacementSampler;
 
 import java.util.ArrayList;
@@ -60,6 +61,10 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
             "Resampling performed when the effective relative number of " +
                     "particles drops below this threshold.",
             0.3);
+
+    public Input<IncidenceData> incidenceDataInput = new Input<>(
+            "incidenceData",
+            "Times and numbers of unsequenced samples.");
 
     EpidemicModel model;
     TreeEventList treeEventList;

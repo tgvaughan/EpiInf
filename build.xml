@@ -11,7 +11,7 @@
 
     <!-- Beast version to build against -->
     <property name="beastRev" value="master"/>
-    <property name="beastAr" value="master"/>
+    <property name="beastAr" value="beast2-master"/>
 
     <!-- Directories necessary for all BEAST 2 packages -->
     <property name="doc" location="doc"/>
