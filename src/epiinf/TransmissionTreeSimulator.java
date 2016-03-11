@@ -38,7 +38,7 @@ public class TransmissionTreeSimulator extends beast.core.Runnable {
     
     
     @Override
-    public void initAndValidate() throws Exception { }
+    public void initAndValidate() { }
     
     @Override
     public void run() throws Exception {

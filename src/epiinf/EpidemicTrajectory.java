@@ -57,7 +57,7 @@ public class EpidemicTrajectory extends BEASTObject implements Loggable {
 
     
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
     }
 
     /**
@@ -106,7 +106,7 @@ public class EpidemicTrajectory extends BEASTObject implements Loggable {
     }
 
     @Override
-    public void init(PrintStream out) throws Exception {
+    public void init(PrintStream out) {
         if (getID() == null)
             out.print("trajectory\t");
         else

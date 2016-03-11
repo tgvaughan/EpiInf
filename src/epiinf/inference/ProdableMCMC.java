@@ -32,7 +32,7 @@ public class ProdableMCMC extends MCMC {
     int ssp;
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         super.initAndValidate();
         ssp = sspInput.get();
     }

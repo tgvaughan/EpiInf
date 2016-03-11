@@ -24,6 +24,8 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
+
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,7 +55,7 @@ public class SimulatedTransmissionTree extends Tree {
     public SimulatedTransmissionTree() { }
     
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         EpidemicTrajectory traj = trajInput.get();
         boolean truncateTrajectory = truncateTrajectoryInput.get();
 
@@ -176,6 +178,9 @@ public class SimulatedTransmissionTree extends Tree {
             try (PrintStream ps = new PrintStream(fileNameInput.get())) {
                 String newick = root.toNewick().concat(";");
                 ps.println(newick.replace(":0.0;", ":" + (youngestSamp-root.getHeight()) + ";"));
+            } catch(FileNotFoundException ex) {
+                throw new RuntimeException("Error writing to file "
+                        + fileNameInput.get() + ".");
             }
         }
     }
@@ -184,7 +189,7 @@ public class SimulatedTransmissionTree extends Tree {
      * Exception thrown when available trajectory contains no samples to
      * generate a tree from.
      */
-    public class NoSamplesException extends Exception {
+    public class NoSamplesException extends RuntimeException {
 
         @Override
         public String getMessage() {

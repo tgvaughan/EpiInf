@@ -37,7 +37,7 @@ public class ConditionedTrajectory extends EpidemicTrajectory {
     }
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         treeDensity = treeDensityInput.get();
         super.initAndValidate();
     }

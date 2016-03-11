@@ -39,11 +39,11 @@ public class ExponentialChangeTimesPrior extends beast.core.Distribution {
             Input.Validate.REQUIRED);
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
     }
 
     @Override
-    public double calculateLogP() throws Exception {
+    public double calculateLogP() {
         RealParameter changeTimes = changeTimesInput.get();
         double meanInterval = meanIntervalInput.get().getValue();
 

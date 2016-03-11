@@ -63,7 +63,5 @@ public class ChangeTimesOperator extends Operator {
     }
 
     @Override
-    public void initAndValidate() throws Exception {
-
-    }
+    public void initAndValidate() { }
 }

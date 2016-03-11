@@ -33,6 +33,7 @@ import feast.nexus.NexusBlock;
 import feast.nexus.NexusBuilder;
 import feast.nexus.TaxaBlock;
 
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,7 +77,7 @@ public class SimulatedAlignment extends Alignment {
     }
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
 
         tree = treeInput.get();
         siteModel = siteModelInput.get();
@@ -90,31 +91,35 @@ public class SimulatedAlignment extends Alignment {
 
         // Write simulated alignment to disk if required
         if (outputFileNameInput.get() != null) {
-            PrintStream pstream = new PrintStream(outputFileNameInput.get());
-            NexusBuilder nb = new NexusBuilder();
-            nb.append(new TaxaBlock(new TaxonSet(this)));
-            nb.append(new CharactersBlock(this));
-            nb.append(new NexusBlock() {
-                @Override
-                public String getBlockName() {
-                    return "EpiInf";
-                }
+            try (PrintStream pstream = new PrintStream(outputFileNameInput.get())) {
+                NexusBuilder nb = new NexusBuilder();
+                nb.append(new TaxaBlock(new TaxonSet(this)));
+                nb.append(new CharactersBlock(this));
+                nb.append(new NexusBlock() {
+                    @Override
+                    public String getBlockName() {
+                        return "EpiInf";
+                    }
 
-                @Override
-                public List<String> getBlockLines() {
-                    List<String> lines = new ArrayList<>();
-                    lines.add("ancestralSeq " + ancestralSeqStr);
-                    return lines;
-                }
-            });
-            nb.write(pstream);
+                    @Override
+                    public List<String> getBlockLines() {
+                        List<String> lines = new ArrayList<>();
+                        lines.add("ancestralSeq " + ancestralSeqStr);
+                        return lines;
+                    }
+                });
+                nb.write(pstream);
+            } catch (FileNotFoundException ex) {
+                throw new RuntimeException("Error writing to file "
+                        + outputFileNameInput.get() + ".");
+            }
         }
     }
 
     /**
      * Perform actual sequence simulation.
      */
-    private void simulate() throws Exception {
+    private void simulate() {
         int nTaxa = tree.getLeafNodeCount();
 
         double[] categoryProbs = siteModel.getCategoryProportions(tree.getRoot());

@@ -91,7 +91,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
     }
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         model = modelInput.get();
         if (model.treeOriginInput.get() == null)
             throw new IllegalArgumentException("The treeOrigin input to " +
@@ -118,7 +118,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
     }
 
     @Override
-    public double calculateLogP() throws Exception {
+    public double calculateLogP() {
         logP = calculateLogP(false);
         return logP;
     }

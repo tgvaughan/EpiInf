@@ -43,7 +43,7 @@ public class MultiParamDeltaExchange extends Operator {
     double relWindowSize;
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         params = paramsInput.get();
 
         if (params.size()<2)

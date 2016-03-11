@@ -82,7 +82,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
     }
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         model = modelInput.get();
         if (model.treeOriginInput.get() == null)
             throw new IllegalArgumentException("The treeOrigin input to " +
@@ -112,7 +112,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
     }
 
     @Override
-    public double calculateLogP() throws Exception {
+    public double calculateLogP() {
         logP = calculateLogP(false);
         return logP;
     }

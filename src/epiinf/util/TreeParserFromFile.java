@@ -18,9 +18,8 @@ package epiinf.util;
 
 import beast.core.Input;
 import beast.util.TreeParser;
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+
+import java.io.*;
 
 /**
  * @author Tim Vaughan (tgvaughan@gmail.com)
@@ -33,11 +32,18 @@ public class TreeParserFromFile extends TreeParser {
     public TreeParserFromFile() { }
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         if (newickFileNameInput.get() != null) {
-            FileInputStream inputStream = new FileInputStream(newickFileNameInput.get());
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            newickInput.setValue(reader.readLine(), this);
+            try (FileInputStream inputStream = new FileInputStream(newickFileNameInput.get())) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                newickInput.setValue(reader.readLine(), this);
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException("File " + newickFileNameInput.get()
+                        + " not found.");
+            } catch (IOException e) {
+                throw new RuntimeException("Error reading from file "
+                        + newickFileNameInput.get() + ".");
+            }
         }
         super.initAndValidate();
     }

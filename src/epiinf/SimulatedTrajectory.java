@@ -91,7 +91,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
     }
     
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         super.initAndValidate();
         
         model = modelInput.get();

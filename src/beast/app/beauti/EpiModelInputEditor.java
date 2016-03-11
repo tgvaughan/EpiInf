@@ -116,7 +116,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
         // Set up fields
         m_bAddButtons = bAddButtons;
         m_input = input;
-        m_plugin = beastObject;
+        m_beastObject = beastObject;
         this.itemNr = itemNr;
         epidemicModel = (EpidemicModel) input.get();
 
@@ -481,7 +481,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
         modelSaveInProgress = true;
 
-        PartitionContext partitionContext = doc.getContextFor(m_plugin);
+        PartitionContext partitionContext = doc.getContextFor(m_beastObject);
         String partitionID = ".t:" + partitionContext.tree;
 
         try {
@@ -568,7 +568,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
             epidemicModel.initAndValidate();
 
-            m_input.setValue(epidemicModel, m_plugin);
+            m_input.setValue(epidemicModel, m_beastObject);
             BEASTObjectPanel.addPluginToMap(epidemicModel, doc);
 
         } catch (Exception e) {

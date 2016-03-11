@@ -35,7 +35,7 @@ public class OriginFromTrajectory extends RealParameter {
     }
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         List<EpidemicEvent> eventList = trajectoryInput.get().getEventList();
         for (int i=0; i<eventList.size(); i++) {
             if (eventList.get(i).isSample()) {
