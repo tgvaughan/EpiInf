@@ -68,6 +68,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
 
     EpidemicModel model;
     TreeEventList treeEventList;
+    IncidenceData incidenceData;
     int nParticles;
     boolean useTauLeaping;
     double epsilon, resampThresh;
@@ -93,6 +94,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
             throw new IllegalArgumentException("The treeOrigin input to " +
                     "EpidemicModel must be set when the model is used for inference.");
         treeEventList = new TreeEventList(treeInput.get(), model.treeOriginInput.get());
+        incidenceData = incidenceDataInput.get();
         nParticles = nParticlesInput.get();
         useTauLeaping = useTauLeapingInput.get();
         epsilon = epsilonInput.get();
