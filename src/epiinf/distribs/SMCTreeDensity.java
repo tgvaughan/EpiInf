@@ -298,9 +298,32 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                     }
                 }
 
-                // Stop here if we're past the next observed event
-                if (particleState.time > nextObservedEvent.time)
-                    break;
+                // Deal with observed events
+                if (particleState.time > nextObservedEvent.time) {
+
+                    // Stop here if we're past the next tree event
+                    if (nextObservedEvent.type != ObservedEvent.Type.UNSEQUENCED_SAMPLE)
+                        break;
+
+                    double psiSamplingProp = model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
+                            + model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
+                    conditionalLogP += Math.log(psiSamplingProp);
+
+                    if (Randomizer.nextDouble()*psiSamplingProp < model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE])
+                        model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
+
+                    particleState.time = nextObservedEvent.time;
+                    particleState.observedEventIdx += 1;
+                    nextObservedEvent = observedEventsList.getNextObservedEvent(particleState);
+
+                    if (particleTrajectory != null)
+                        particleTrajectory.add(particleState.copy());
+
+                    if (nextObservedEvent == null)
+                        return conditionalLogP;
+                    else
+                        continue;
+                }
 
                 EpidemicEvent event = new EpidemicEvent();
                 event.time = particleState.time;
