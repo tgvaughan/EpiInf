@@ -25,7 +25,7 @@ package epiinf;
 public class EpidemicState {
     public double S, I, R;
     public double time;
-    public int modelIntervalIdx, treeIntervalIdx;
+    public int modelIntervalIdx, observedEventIdx;
 
     public EpidemicState() { }
     
@@ -35,7 +35,7 @@ public class EpidemicState {
         this.R = R;
         this.time = 0;
         this.modelIntervalIdx = 0;
-        this.treeIntervalIdx = 0;
+        this.observedEventIdx = 0;
     }
 
     /**
@@ -54,7 +54,7 @@ public class EpidemicState {
         stateCopy.R = R;
         stateCopy.time = time;
         stateCopy.modelIntervalIdx = modelIntervalIdx;
-        stateCopy.treeIntervalIdx = treeIntervalIdx;
+        stateCopy.observedEventIdx = observedEventIdx;
 
         return stateCopy;
     }
@@ -65,7 +65,7 @@ public class EpidemicState {
         R = otherState.R;
         time = otherState.time;
         modelIntervalIdx = otherState.modelIntervalIdx;
-        treeIntervalIdx = otherState.treeIntervalIdx;
+        observedEventIdx = otherState.observedEventIdx;
     }
 
     @Override

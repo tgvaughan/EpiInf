@@ -25,11 +25,11 @@ import beast.core.State;
 import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
-import beast.math.statistic.DiscreteStatistics;
 import beast.util.Randomizer;
 import epiinf.*;
 import epiinf.models.EpidemicModel;
 import epiinf.util.EpiInfUtilityMethods;
+import epiinf.util.IncidenceData;
 import epiinf.util.ReplacementSampler;
 
 import java.util.ArrayList;
@@ -47,6 +47,10 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
 
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
+
+    public Input<IncidenceData> incidenceDataInput = new Input<>(
+            "incidenceData",
+            "Times and numbers of unsequenced samples.");
 
     public Input<Integer> nParticlesInput = new Input<>(
             "nParticles", "Number of particles to use in SMC calculation.",
@@ -72,7 +76,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
             0.5);
 
     EpidemicModel model;
-    TreeEventList treeEventList;
+    ObservedEventsList observedEventsList;
     int nParticles, nResamples;
     double epsilon, resampThresh;
 
@@ -96,7 +100,8 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
         if (model.treeOriginInput.get() == null)
             throw new IllegalArgumentException("The treeOrigin input to " +
                     "EpidemicModel must be set when the model is used for inference.");
-        treeEventList = new TreeEventList(treeInput.get(), model.treeOriginInput.get());
+        observedEventsList = new ObservedEventsList(treeInput.get(), incidenceDataInput.get(),
+                model.treeOriginInput.get());
         nParticles = nParticlesInput.get();
         nResamples = nResamplesInput.get();
         epsilon = epsilonInput.get();
@@ -132,7 +137,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
         }
 
         // Early exit if first tree event occurs before origin.
-        if (treeEventList.getEventList().get(0).time < 0) {
+        if (observedEventsList.getEventList().get(0).time < 0) {
             return Double.NEGATIVE_INFINITY;
         }
 
@@ -247,7 +252,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
 
             double infectionProp = model.propensities[EpidemicEvent.INFECTION];
             double allowedRecovProp, forbiddenRecovProp;
-            int k0 = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
+            int k0 = observedEventsList.getCurrentLineageCount(particleState);
             if (particleState.I>k0) {
                 allowedRecovProp = model.propensities[EpidemicEvent.RECOVERY];
                 forbiddenRecovProp = 0.0;
@@ -280,12 +285,13 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
             int nCoalescences = 0;
             int nLeaves = 0;
             int nSampledAncestors = 0;
-            TreeEvent nextTreeEvent = treeEventList.getEventList()
-                    .get(particleState.treeIntervalIdx);
-            while (model.timesLEQ(nextTreeEvent.time, particleState.time + trueDt)
-                    && !model.timesEqual(nextTreeEvent.time, nextModelEventTime)) {
+            int nUnsequencedSamples = 0;
+            ObservedEvent nextObservedEvent = observedEventsList.getEventList()
+                    .get(particleState.observedEventIdx);
+            while (model.timesLEQ(nextObservedEvent.time, particleState.time + trueDt)
+                    && !model.timesEqual(nextObservedEvent.time, nextModelEventTime)) {
 
-                switch(nextTreeEvent.type) {
+                switch(nextObservedEvent.type) {
                     case COALESCENCE:
                         nCoalescences += 1;
                         break;
@@ -297,28 +303,32 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
                     case SAMPLED_ANCESTOR:
                         nSampledAncestors += 1;
                         break;
-                }
-                particleState.treeIntervalIdx += 1;
 
-                if (!nextTreeEvent.isFinal) {
-                    nextTreeEvent = treeEventList.getEventList()
-                            .get(particleState.treeIntervalIdx);
+                    case UNSEQUENCED_SAMPLE:
+                        nUnsequencedSamples += 1;
+                        break;
+                }
+                particleState.observedEventIdx += 1;
+
+                if (!nextObservedEvent.isFinal) {
+                    nextObservedEvent = observedEventsList.getEventList()
+                            .get(particleState.observedEventIdx);
                 } else {
-                    nextTreeEvent = null;
+                    nextObservedEvent = null;
                     break;
                 }
             }
 
             // Perform state increments
 
-            int nUnobservedInfections = (int)Math.round(Randomizer.nextPoisson(trueDt*unobservedInfectProp));
+            int nUnobservedInfections = (int)Randomizer.nextPoisson(trueDt*unobservedInfectProp);
             int nInfections = nUnobservedInfections + nCoalescences;
             model.incrementState(particleState,
                     EpidemicEvent.MultipleInfections(nInfections));
 
             model.incrementState(particleState,
                     EpidemicEvent.MultipleRecoveries(
-                     (int)Math.round(Randomizer.nextPoisson(trueDt*allowedRecovProp))));
+                            (int)Randomizer.nextPoisson(trueDt*allowedRecovProp)));
 
             int nSampleRemovals;
             if (nLeaves>0) {
@@ -333,7 +343,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
 
             // Compute weight contributions of tree events:
 
-            int k = treeEventList.getLineageCounts().get(particleState.treeIntervalIdx);
+            int k = observedEventsList.getCurrentLineageCount(particleState);
             if (nCoalescences>0) {
                 if (particleState.I<2)
                     return Double.NEGATIVE_INFINITY;
@@ -380,17 +390,17 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
                 if (nextModelEvent.type == ModelEvent.Type.RHO_SAMPLING) {
                     // Handle rho-sampling events
 
-                    if (nextTreeEvent == null || !model.timesEqual(nextTreeEvent.time, nextModelEventTime))
+                    if (nextObservedEvent == null || !model.timesEqual(nextObservedEvent.time, nextModelEventTime))
                         return Double.NEGATIVE_INFINITY;
 
                     int I = (int) Math.round(particleState.I);
-                    int nSamples = nextTreeEvent.multiplicity;
+                    int nSamples = nextObservedEvent.multiplicity;
                     conditionalLogP += Binomial.logChoose(I, nSamples)
                             + nSamples*Math.log(nextModelEvent.rho)
                             + (I-nSamples)*Math.log(1.0 - nextModelEvent.rho)
                             + GammaFunction.lnGamma(1 + nSamples);
 
-                    particleState.treeIntervalIdx += 1;
+                    particleState.observedEventIdx += 1;
                 }
 
                 particleState.time = nextModelEventTime;
@@ -427,7 +437,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
     @Override
     public EpidemicTrajectory getConditionedTrajectory() {
         calculateLogP(true);
-        return new EpidemicTrajectory(null, recordedEpidemicStates, treeEventList.getOrigin());
+        return new EpidemicTrajectory(null, recordedEpidemicStates, observedEventsList.getOrigin());
     }
 
     @Override
@@ -446,13 +456,13 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
 
     @Override
     protected boolean requiresRecalculation() {
-        treeEventList.makeDirty();
+        observedEventsList.makeDirty();
         return true;
     }
 
     @Override
     public void restore() {
-        treeEventList.makeDirty();
+        observedEventsList.makeDirty();
         super.restore();
     }
 

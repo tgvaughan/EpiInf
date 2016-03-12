@@ -67,8 +67,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
             "Times and numbers of unsequenced samples.");
 
     EpidemicModel model;
-    TreeEventList treeEventList;
-    IncidenceData incidenceData;
+    ObservedEventsList observedEventsList;
     int nParticles;
     boolean useTauLeaping;
     double epsilon, resampThresh;
@@ -93,8 +92,8 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
         if (model.treeOriginInput.get() == null)
             throw new IllegalArgumentException("The treeOrigin input to " +
                     "EpidemicModel must be set when the model is used for inference.");
-        treeEventList = new TreeEventList(treeInput.get(), model.treeOriginInput.get());
-        incidenceData = incidenceDataInput.get();
+        observedEventsList = new ObservedEventsList(treeInput.get(), incidenceDataInput.get(),
+                model.treeOriginInput.get());
         nParticles = nParticlesInput.get();
         useTauLeaping = useTauLeapingInput.get();
         epsilon = epsilonInput.get();
@@ -133,7 +132,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
         }
 
         // Early exit if first tree event occurs before origin.
-        if (treeEventList.getEventList().get(0).time < 0) {
+        if (observedEventsList.getEventList().get(0).time < 0) {
             return Double.NEGATIVE_INFINITY;
         }
 
@@ -147,16 +146,15 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
             }
         }
 
-        int k = 1;
-        for (TreeEvent treeEvent : treeEventList.getEventList()) {
+        for (ObservedEvent observedEvent : observedEventsList.getEventList()) {
 
             // Update particles and record max log weight
             double maxLogWeight = Double.NEGATIVE_INFINITY;
             for (int p = 0; p < nParticles; p++) {
 
                 logParticleWeights[p] += recordTrajectory ?
-                        updateParticle(particleStates[p], k, treeEvent, particleTrajectories.get(p))
-                        : updateParticle(particleStates[p], k, treeEvent, null);
+                        updateParticle(particleStates[p], particleTrajectories.get(p))
+                        : updateParticle(particleStates[p], null);
 
                 maxLogWeight = Math.max(logParticleWeights[p], maxLogWeight);
             }
@@ -175,7 +173,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
 
             double Neff = sumOfScaledWeights*sumOfScaledWeights/sumOfSquaredScaledWeights;
 
-            if (Neff < resampThresh*nParticles || treeEvent.isFinal) {
+            if (Neff < resampThresh*nParticles || observedEvent.isFinal) {
 
                 // Update marginal likelihood estimate
                 thisLogP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
@@ -209,16 +207,6 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                     particleTrajectoriesNew = tmpTrajs;
                 }
             }
-
-            // Update lineage counter
-            switch (treeEvent.type) {
-                case COALESCENCE:
-                    k += 1;
-                    break;
-                case LEAF:
-                    k -= treeEvent.multiplicity;
-                    break;
-            }
         }
 
         // Choose arbitrary trajectory to log.
@@ -232,19 +220,19 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
      * Updates weight and state of particle.
      *
      * @param particleState State of particle
-     * @param lineages number of tree lineages in interval
-     * @param finalTreeEvent tree event which terminates interval
      * @param particleTrajectory if non-null, add particle states to this trajectory
      *
      * @return log conditional prob of tree interval under trajectory
      */
     private double updateParticle(EpidemicState particleState,
-                                  int lineages, TreeEvent finalTreeEvent,
                                   List<EpidemicState> particleTrajectory) {
         double conditionalLogP = 0;
+        ObservedEvent nextObservedEvent = observedEventsList.getNextObservedEvent(particleState);
 
         while (true) {
             model.calculatePropensities(particleState);
+
+            int lineages = nextObservedEvent.lineages;
 
             double infectionProp = model.propensities[EpidemicEvent.INFECTION];
             double unobservedInfectProp = infectionProp
@@ -288,7 +276,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                 double nextModelEventTime = model.getNextModelEventTime(particleState);
 
                 // Condition against psi-sampling and illegal recovery within interval
-                double trueDt = Math.min(dt, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);
+                double trueDt = Math.min(dt, Math.min(nextModelEventTime, nextObservedEvent.time) - particleState.time);
                 conditionalLogP += -trueDt * (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
                         + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
                         + observedInfectProp + forbiddenRecovProp);
@@ -297,7 +285,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                 particleState.time += dt;
 
                 // Deal with model events (rho sampling and rate shifts)
-                if (nextModelEventTime < finalTreeEvent.time && particleState.time > nextModelEventTime) {
+                if (nextModelEventTime < nextObservedEvent.time && particleState.time > nextModelEventTime) {
 
                     ModelEvent nextModelEvent = model.getNextModelEvent(particleState);
                     if (nextModelEvent.type == ModelEvent.Type.RHO_SAMPLING)
@@ -309,8 +297,8 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                     }
                 }
 
-                // Stop here if we're past the end of the tree interval
-                if (particleState.time > finalTreeEvent.time)
+                // Stop here if we're past the next observed event
+                if (particleState.time > nextObservedEvent.time)
                     break;
 
                 EpidemicEvent event = new EpidemicEvent();
@@ -336,7 +324,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
             } else {
 
                 double nextModelEventTime = model.getNextModelEventTime(particleState);
-                double trueDt = Math.min(tau, Math.min(nextModelEventTime, finalTreeEvent.time) - particleState.time);
+                double trueDt = Math.min(tau, Math.min(nextModelEventTime, nextObservedEvent.time) - particleState.time);
                 conditionalLogP += -trueDt * (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
                         + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
                         + observedInfectProp + forbiddenRecovProp);
@@ -347,7 +335,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
 
                 EpidemicEvent recovEvent = new EpidemicEvent();
                 recovEvent.type = EpidemicEvent.RECOVERY;
-                recovEvent.multiplicity = (int)Math.round(Randomizer.nextPoisson(trueDt*allowedRecovProp));
+                recovEvent.multiplicity = (int)Randomizer.nextPoisson(trueDt*allowedRecovProp);
 
                 model.incrementState(particleState, infectEvent);
                 model.incrementState(particleState, recovEvent);
@@ -356,11 +344,11 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                         || !particleState.isValid() || particleState.I < lineages)
                     return Double.NEGATIVE_INFINITY;
 
-                if (nextModelEventTime < finalTreeEvent.time && particleState.time + tau > nextModelEventTime) {
+                if (nextModelEventTime < nextObservedEvent.time && particleState.time + tau > nextModelEventTime) {
                     particleState.time = nextModelEventTime;
                     particleState.modelIntervalIdx += 1;
                 } else {
-                    if (particleState.time + tau > finalTreeEvent.time)
+                    if (particleState.time + tau > nextObservedEvent.time)
                         break;
                     else
                         particleState.time += tau;
@@ -368,10 +356,10 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
             }
         }
 
-        particleState.time = finalTreeEvent.time;
+        particleState.time = nextObservedEvent.time;
 
         // Include probability of tree event
-        if (finalTreeEvent.type == TreeEvent.Type.COALESCENCE) {
+        if (nextObservedEvent.type == ObservedEvent.Type.COALESCENCE) {
             model.calculatePropensities(particleState);
             model.incrementState(particleState, EpidemicEvent.Infection);
             conditionalLogP += Math.log(2.0 / particleState.I / (particleState.I - 1)
@@ -379,26 +367,26 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
 
         } else {
 
-            if (model.timesEqual(finalTreeEvent.time, model.getNextModelEventTime(particleState))
+            if (model.timesEqual(nextObservedEvent.time, model.getNextModelEventTime(particleState))
                     && model.getNextModelEvent(particleState).type == ModelEvent.Type.RHO_SAMPLING) {
 
                 ModelEvent nextModelEvent = model.getNextModelEvent(particleState);
 
                 int I = (int) Math.round(particleState.I);
-                int k = finalTreeEvent.multiplicity;
+                int k = nextObservedEvent.multiplicity;
                 conditionalLogP += Binomial.logChoose(I, k)
                         + k*Math.log(nextModelEvent.rho)
                         + (I-k)*Math.log(1.0 - nextModelEvent.rho);
 
                 model.incrementState(particleState,
-                        EpidemicEvent.MultipleRhoSamples(finalTreeEvent.multiplicity));
+                        EpidemicEvent.MultipleRhoSamples(nextObservedEvent.multiplicity));
 
             } else {
-                if (model.psiSamplingVariableInput.get() != null && finalTreeEvent.multiplicity == 1) {
+                if (model.psiSamplingVariableInput.get() != null && nextObservedEvent.multiplicity == 1) {
 
                     model.calculatePropensities(particleState);
 
-                    if (finalTreeEvent.type == TreeEvent.Type.SAMPLED_ANCESTOR) {
+                    if (nextObservedEvent.type == ObservedEvent.Type.SAMPLED_ANCESTOR) {
                         conditionalLogP += Math.log(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]/particleState.I);
                     } else {
                         double psiSamplingProp = (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
@@ -412,18 +400,18 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                         if (isRemoval) {
                             model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
                         } else {
-                            conditionalLogP += Math.log(1.0 - (lineages-1)/particleState.I);
+                            conditionalLogP += Math.log(1.0 - (nextObservedEvent.lineages-1)/particleState.I);
                         }
                     }
 
                 } else {
                     // No explicit sampling process
                     model.incrementState(particleState,
-                            EpidemicEvent.MultipleOtherSamples(finalTreeEvent.multiplicity));
+                            EpidemicEvent.MultipleOtherSamples(nextObservedEvent.multiplicity));
                 }
             }
 
-            conditionalLogP += GammaFunction.lnGamma(1 + finalTreeEvent.multiplicity);
+            conditionalLogP += GammaFunction.lnGamma(1 + nextObservedEvent.multiplicity);
         }
 
         if (particleTrajectory != null)
@@ -435,10 +423,11 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
             return conditionalLogP;
     }
 
+    @Override
     public EpidemicTrajectory getConditionedTrajectory() {
         calculateLogP(true);
 
-        return new EpidemicTrajectory(null, recordedTrajectoryStates, treeEventList.getOrigin());
+        return new EpidemicTrajectory(null, recordedTrajectoryStates, observedEventsList.getOrigin());
     }
 
     @Override
@@ -457,13 +446,13 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
 
     @Override
     protected boolean requiresRecalculation() {
-        treeEventList.makeDirty();
+        observedEventsList.makeDirty();
         return true;
     }
 
     @Override
     public void restore() {
-        treeEventList.makeDirty();
+        observedEventsList.makeDirty();
         super.restore();
     }
 

@@ -11,10 +11,11 @@ package epiinf;
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class TreeEvent extends Event {
-    public enum Type { COALESCENCE, LEAF, SAMPLED_ANCESTOR};
+public class ObservedEvent extends Event {
+    public enum Type { COALESCENCE, LEAF, SAMPLED_ANCESTOR, UNSEQUENCED_SAMPLE};
     
     public Type type;
     public int multiplicity = 1;
+    public int lineages;
     public boolean isFinal = false;
 }

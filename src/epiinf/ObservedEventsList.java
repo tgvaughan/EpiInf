@@ -21,6 +21,7 @@ import beast.core.Description;
 import beast.core.Function;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
+import epiinf.util.IncidenceData;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,13 +30,13 @@ import java.util.List;
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-@Description("Maintains a sorted list of events in the tree.")
-public class TreeEventList {
+@Description("Maintains a sorted list of observed events.")
+public class ObservedEventsList {
 
     private TreeInterface tree;
+    private IncidenceData incidenceData;
     private Function treeOrigin;
-    private List<TreeEvent> eventList;
-    private List<Integer> lineageCounts;
+    private List<ObservedEvent> eventList;
 
     /**
      * Tolerance for deviation between tree node ages and trajectory events.
@@ -47,12 +48,13 @@ public class TreeEventList {
     /**
      * Default constructor.
      */
-    public TreeEventList(TreeInterface tree, Function treeOrigin) {
+    public ObservedEventsList(TreeInterface tree, IncidenceData incidenceData,
+                              Function treeOrigin) {
         this.tree = tree;
         this.treeOrigin = treeOrigin;
+        this.incidenceData = incidenceData;
 
         eventList = new ArrayList<>();
-        lineageCounts = new ArrayList<>();
 
         dirty = true;
     }
@@ -72,19 +74,29 @@ public class TreeEventList {
             if (node.isFake())
                 continue;
 
-            TreeEvent event = new TreeEvent();
+            ObservedEvent event = new ObservedEvent();
             if (node.isLeaf()) {
                 if (node.isDirectAncestor())
-                    event.type = TreeEvent.Type.SAMPLED_ANCESTOR;
+                    event.type = ObservedEvent.Type.SAMPLED_ANCESTOR;
                 else
-                    event.type = TreeEvent.Type.LEAF;
+                    event.type = ObservedEvent.Type.LEAF;
             } else {
-                event.type = TreeEvent.Type.COALESCENCE;
+                event.type = ObservedEvent.Type.COALESCENCE;
             }
        
             event.time = getTimeFromHeight(node.getHeight());
             
             eventList.add(event);
+        }
+
+        if (incidenceData != null) {
+            for (int i = 0; i < incidenceData.nCounts; i++) {
+                ObservedEvent event = new ObservedEvent();
+                event.type = ObservedEvent.Type.UNSEQUENCED_SAMPLE;
+                event.time = getTimeFromHeight(incidenceData.ages[i]);
+                event.multiplicity = incidenceData.counts[i];
+                eventList.add(event);
+            }
         }
 
         // Sort events in order of absolute time
@@ -105,10 +117,9 @@ public class TreeEventList {
         eventList.get(eventList.size()-1).isFinal = true;
 
         // Compute lineage counts
-        lineageCounts.clear();
         int k = 1;
-        for (TreeEvent event : eventList) {
-            lineageCounts.add(k);
+        for (ObservedEvent event : eventList) {
+            event.lineages = k;
 
             switch (event.type) {
                 case COALESCENCE:
@@ -118,9 +129,9 @@ public class TreeEventList {
                     k -= event.multiplicity;
                     break;
                 default:
+                    break;
             }
         }
-        lineageCounts.add(k);
 
         dirty = false;
     }
@@ -147,23 +158,36 @@ public class TreeEventList {
      * 
      * @return event list
      */
-    public List<TreeEvent> getEventList() {
+    public List<ObservedEvent> getEventList() {
         updateEventList();
         return eventList;
     }
 
-    /**
-     * Obtain the list of lineage counts within each tree interval.
-     * Note that the time before the first tree event and the time
-     * following the last tree event are counted as intervals in their
-     * own right, so there is one more lineage count than there are
-     * tree events.
-     *
-     * @return list of lineage counts within each tree interval
-     */
-    public List<Integer> getLineageCounts() {
+    public ObservedEvent getNextObservedEvent(EpidemicState state) {
         updateEventList();
-        return lineageCounts;
+
+        if (state.observedEventIdx<eventList.size())
+            return eventList.get(state.observedEventIdx);
+        else
+            return null;
+    }
+
+    public double getNextObservedEventTime(EpidemicState state) {
+        updateEventList();
+
+        if (state.observedEventIdx<eventList.size())
+            return eventList.get(state.observedEventIdx).time;
+        else
+            return Double.POSITIVE_INFINITY;
+    }
+
+    public int getCurrentLineageCount(EpidemicState state) {
+        updateEventList();
+
+        if (state.observedEventIdx<eventList.size())
+            return eventList.get(state.observedEventIdx).lineages;
+        else
+            return 0;
     }
 
     /**
