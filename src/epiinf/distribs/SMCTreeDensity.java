@@ -217,7 +217,8 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
     }
 
     /**
-     * Updates weight and state of particle.
+     * Updates weight and state of particle, simulating until the next tree
+     * event (if there is one) or the last incidence report (if there isn't).
      *
      * @param particleState State of particle
      * @param particleTrajectory if non-null, add particle states to this trajectory
@@ -419,8 +420,10 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
 
         if (!particleState.isValid())
             return Double.NEGATIVE_INFINITY; // Can occur due to susceptible pool depletion
-        else
+        else {
+            particleState.observedEventIdx += 1;
             return conditionalLogP;
+        }
     }
 
     @Override
