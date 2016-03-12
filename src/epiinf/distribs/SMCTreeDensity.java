@@ -301,31 +301,9 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                     continue;
                 }
 
-                // Deal with observed events
-                if (particleState.time > nextObservedEventTime) {
-
-                    // Stop here if we're past the next tree event
-                    if (nextObservedEvent.type != ObservedEvent.Type.UNSEQUENCED_SAMPLE)
+                // Stop here if we're past the next observed event
+                if (particleState.time > nextObservedEventTime)
                         break;
-
-                    double psiSamplingProp = model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
-                            + model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
-                    conditionalLogP += nextObservedEvent.multiplicity*Math.log(psiSamplingProp);
-
-                    if (Randomizer.nextDouble()*psiSamplingProp < model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE])
-                        model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
-
-                    particleState.time = nextObservedEvent.time;
-                    particleState.observedEventIdx += 1;
-
-                    if (particleTrajectory != null)
-                        particleTrajectory.add(particleState.copy());
-
-                    if (nextObservedEvent.isFinal)
-                        return conditionalLogP;
-                    else
-                        continue;
-                }
 
                 EpidemicEvent event = new EpidemicEvent();
                 event.time = particleState.time;
@@ -378,14 +356,11 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                     continue;
                 }
 
-                if (particleState.time + tau > nextObservedEventTime) {
+                // Stop here if we're at an observed event
+                if (particleState.time + tau > nextObservedEventTime)
+                    break;
 
-                    if (nextObservedEvent.type != ObservedEvent.Type.UNSEQUENCED_SAMPLE)
-                        break;
-
-
-                } else
-                    particleState.time += tau;
+                particleState.time += tau;
             }
         }
 
@@ -413,25 +388,28 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                         EpidemicEvent.MultipleRhoSamples(nextObservedEvent.multiplicity));
 
             } else {
-                if (model.psiSamplingVariableInput.get() != null && nextObservedEvent.multiplicity == 1) {
+                if (model.psiSamplingVariableInput.get() != null) {
 
-                    model.calculatePropensities(particleState);
+                    for (int i=0; i<nextObservedEvent.multiplicity; i++) {
+                        model.calculatePropensities(particleState);
 
-                    if (nextObservedEvent.type == ObservedEvent.Type.SAMPLED_ANCESTOR) {
-                        conditionalLogP += Math.log(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]/particleState.I);
-                    } else {
-                        double psiSamplingProp = (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
-                                + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
-
-                        conditionalLogP += Math.log(psiSamplingProp);
-
-                        boolean isRemoval = Randomizer.nextDouble()*psiSamplingProp
-                                < model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
-
-                        if (isRemoval) {
-                            model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
+                        if (nextObservedEvent.type == ObservedEvent.Type.SAMPLED_ANCESTOR) {
+                            conditionalLogP += Math.log( model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE] / particleState.I);
                         } else {
-                            conditionalLogP += Math.log(1.0 - (nextObservedEvent.lineages-1)/particleState.I);
+                            double psiSamplingProp = (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                                    + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
+
+                            conditionalLogP += Math.log(psiSamplingProp);
+
+                            boolean isRemoval = Randomizer.nextDouble() * psiSamplingProp
+                                    < model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
+
+                            if (isRemoval) {
+                                model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
+                            } else {
+                                if (nextObservedEvent.type == ObservedEvent.Type.LEAF)
+                                    conditionalLogP += Math.log(1.0 - (nextObservedEvent.lineages - 1) / particleState.I);
+                            }
                         }
                     }
 
