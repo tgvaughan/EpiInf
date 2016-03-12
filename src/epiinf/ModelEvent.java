@@ -24,7 +24,7 @@ package epiinf;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class ModelEvent extends Event {
-    public enum Type { RHO_SAMPLING, RATE_CHANGE };
+    public enum Type { RHO_SAMPLING, RATE_CHANGE};
     public double rho;
     public Type type;
 }

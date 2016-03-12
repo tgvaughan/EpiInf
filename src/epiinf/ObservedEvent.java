@@ -13,9 +13,8 @@ package epiinf;
  */
 public class ObservedEvent extends Event {
     public enum Type { COALESCENCE, LEAF, SAMPLED_ANCESTOR, UNSEQUENCED_SAMPLE};
-    
+
     public Type type;
     public int multiplicity = 1;
     public int lineages;
-    public boolean isFinal = false;
 }

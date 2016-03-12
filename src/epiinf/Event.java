@@ -20,8 +20,9 @@ package epiinf;
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class Event implements Comparable<Event> {
+public abstract class Event implements Comparable<Event> {
     public double time;
+    public boolean isFinal = false;
 
     @Override
     public int compareTo(Event o) {
