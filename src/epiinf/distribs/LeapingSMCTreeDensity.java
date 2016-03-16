@@ -17,11 +17,8 @@
 
 package epiinf.distribs;
 
-import beast.core.Citation;
-import beast.core.Description;
-import beast.core.Input;
+import beast.core.*;
 import beast.core.Input.Validate;
-import beast.core.State;
 import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
@@ -29,7 +26,6 @@ import beast.util.Randomizer;
 import epiinf.*;
 import epiinf.models.EpidemicModel;
 import epiinf.util.EpiInfUtilityMethods;
-import epiinf.util.IncidenceData;
 import epiinf.util.ReplacementSampler;
 
 import java.util.ArrayList;
@@ -48,8 +44,8 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
 
-    public Input<IncidenceData> incidenceDataInput = new Input<>(
-            "incidenceData",
+    public Input<Function> incidenceInput = new Input<>(
+            "incidence",
             "Times and numbers of unsequenced samples.");
 
     public Input<Integer> nParticlesInput = new Input<>(
@@ -100,7 +96,7 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
         if (model.treeOriginInput.get() == null)
             throw new IllegalArgumentException("The treeOrigin input to " +
                     "EpidemicModel must be set when the model is used for inference.");
-        observedEventsList = new ObservedEventsList(treeInput.get(), incidenceDataInput.get(),
+        observedEventsList = new ObservedEventsList(treeInput.get(), incidenceInput.get(),
                 model.treeOriginInput.get());
         nParticles = nParticlesInput.get();
         nResamples = nResamplesInput.get();

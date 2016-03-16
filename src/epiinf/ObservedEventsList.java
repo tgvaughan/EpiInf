@@ -19,9 +19,9 @@ package epiinf;
 
 import beast.core.Description;
 import beast.core.Function;
+import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
-import epiinf.util.IncidenceData;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +34,7 @@ import java.util.List;
 public class ObservedEventsList {
 
     private TreeInterface tree;
-    private IncidenceData incidenceData;
+    private Function incidenceData;
     private Function treeOrigin;
     private List<ObservedEvent> eventList;
 
@@ -48,7 +48,7 @@ public class ObservedEventsList {
     /**
      * Default constructor.
      */
-    public ObservedEventsList(TreeInterface tree, IncidenceData incidenceData,
+    public ObservedEventsList(TreeInterface tree, Function incidenceData,
                               Function treeOrigin) {
         this.tree = tree;
         this.treeOrigin = treeOrigin;
@@ -90,11 +90,10 @@ public class ObservedEventsList {
         }
 
         if (incidenceData != null) {
-            for (int i = 0; i < incidenceData.nCounts; i++) {
+            for (int i = 0; i < incidenceData.getDimension(); i++) {
                 ObservedEvent event = new ObservedEvent();
                 event.type = ObservedEvent.Type.UNSEQUENCED_SAMPLE;
-                event.time = getTimeFromHeight(incidenceData.ages[i]);
-                event.multiplicity = incidenceData.counts[i];
+                event.time = getTimeFromHeight(incidenceData.getArrayValue(i));
                 eventList.add(event);
             }
         }

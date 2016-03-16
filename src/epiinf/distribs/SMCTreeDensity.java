@@ -25,7 +25,6 @@ import beast.math.GammaFunction;
 import beast.util.Randomizer;
 import epiinf.*;
 import epiinf.models.EpidemicModel;
-import epiinf.util.IncidenceData;
 import epiinf.util.ReplacementSampler;
 
 import java.util.ArrayList;
@@ -62,9 +61,9 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                     "particles drops below this threshold.",
             0.3);
 
-    public Input<IncidenceData> incidenceDataInput = new Input<>(
-            "incidenceData",
-            "Times and numbers of unsequenced samples.");
+    public Input<IncidenceParameter> incidenceParamInput = new Input<>(
+            "incidenceParameter",
+            "Times of unsequenced samples.");
 
     EpidemicModel model;
     ObservedEventsList observedEventsList;
@@ -92,7 +91,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
         if (model.treeOriginInput.get() == null)
             throw new IllegalArgumentException("The treeOrigin input to " +
                     "EpidemicModel must be set when the model is used for inference.");
-        observedEventsList = new ObservedEventsList(treeInput.get(), incidenceDataInput.get(),
+        observedEventsList = new ObservedEventsList(treeInput.get(), incidenceParamInput.get(),
                 model.treeOriginInput.get());
         nParticles = nParticlesInput.get();
         useTauLeaping = useTauLeapingInput.get();
