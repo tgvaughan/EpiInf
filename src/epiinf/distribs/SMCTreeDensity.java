@@ -139,6 +139,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
         // Initialize particles and trajectory storage
         for (int p = 0; p < nParticles; p++) {
             particleStates[p].assignFrom(model.getInitialState());
+            logParticleWeights[p] = 0.0;
 
             if (recordTrajectory) {
                 particleTrajectories.get(p).clear();
