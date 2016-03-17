@@ -19,6 +19,7 @@ package epiinf.distribs;
 
 import beast.core.*;
 import beast.core.Input.Validate;
+import beast.core.parameter.RealParameter;
 import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
@@ -61,7 +62,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                     "particles drops below this threshold.",
             0.3);
 
-    public Input<IncidenceParameter> incidenceParamInput = new Input<>(
+    public Input<Function> incidenceParamInput = new Input<>(
             "incidenceParameter",
             "Times of unsequenced samples.");
 

@@ -20,6 +20,7 @@ package epiinf;
 import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.State;
+import beast.core.parameter.RealParameter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,13 +34,13 @@ public class IncidencePrior extends Distribution {
     public Input<IncidenceData> incidenceDataInput = new Input<>(
             "incidenceData", "Incidence data.", Input.Validate.REQUIRED);
 
-    public Input<IncidenceParameter> incidenceParamInput = new Input<>(
+    public Input<RealParameter> incidenceParamInput = new Input<>(
             "incidenceParam", "Incidence parameter", Input.Validate.REQUIRED);
 
     List<Double> lower, upper;
 
     IncidenceData incidenceData;
-    IncidenceParameter incidenceParameter;
+    RealParameter incidenceParameter;
 
     @Override
     public void initAndValidate() {

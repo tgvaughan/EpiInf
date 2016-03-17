@@ -20,6 +20,7 @@ package epiinf;
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
+import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
@@ -30,6 +31,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.TreeSet;
 
 /**
  * State node initializer which simulates a transmission tree compatible with
@@ -52,27 +54,58 @@ public class SimulatedTransmissionTree extends Tree {
             "truncateTrajectory",
             "Truncate trajectory at most recent sample. (Default true.)", true);
 
+    public Input<Double> sequencingFractionInput = new Input<>(
+            "sequencingFraction", "Fraction of samples that are sequenced. " +
+            "(The rest are simply used as incidence data.)", 1.0);
+
+    public Input<RealParameter> incidenceParamInput = new Input<>(
+            "incidenceParam", "Incidence times parameter");
+
     public SimulatedTransmissionTree() { }
     
     @Override
     public void initAndValidate() {
         EpidemicTrajectory traj = trajInput.get();
         boolean truncateTrajectory = truncateTrajectoryInput.get();
+        double seqFrac = sequencingFractionInput.get();
 
-        int nSamples = 0;
-        double youngestSamp = 0.0;
+        if (seqFrac<1.0 && incidenceParamInput.get() == null)
+            throw new IllegalArgumentException("Must provide incidenceParam " +
+                    "if sequencingFraction below 1.0.");
+
+        TreeSet<EpidemicEvent> sequencedSamples = new TreeSet<>();
+        TreeSet<EpidemicEvent> unsequencedSamples = new TreeSet<>();
+
         for (EpidemicEvent event : traj.getEventList()) {
             if (event.isSample()) {
-                nSamples += event.multiplicity;
-                youngestSamp = Math.max(event.time, youngestSamp);
+
+                if (event.type == EpidemicEvent.RHO_SAMPLE
+                        || event.type == EpidemicEvent.OTHER_SAMPLE
+                        || seqFrac == 1.0 || Randomizer.nextDouble()<seqFrac) {
+                    sequencedSamples.add(event);
+                } else {
+                    unsequencedSamples.add(event);
+                }
             }
         }
+
+        double youngestSequencedSampTime = sequencedSamples.last().time;
         
-        if (nSamples==0)
+        if (sequencedSamples.isEmpty())
             throw new NoSamplesException();
 
+        // Store times of unsequenced samples to incidence parameter
+        incidenceParamInput.get().setDimension(unsequencedSamples.size());
+        int idx = 0;
+        for (EpidemicEvent event : unsequencedSamples) {
+            incidenceParamInput.get().setValue(idx++,
+                    youngestSequencedSampTime - event.time);
+        }
+
+        // Simulate tree
+
         int nextLeafNr = 0;
-        int nextInternalID = nSamples;
+        int nextInternalID = sequencedSamples.size();
         
         List<Node> activeNodes = new ArrayList<>();
 
@@ -82,7 +115,7 @@ public class SimulatedTransmissionTree extends Tree {
         List<EpidemicState> revStateList = traj.getStateList();
         Collections.reverse(revStateList);
         
-        int samplesSeen = 0;
+        int sequencedSamplesSeen = 0;
         for (int eidx=0; eidx<revEventList.size(); eidx++) {
             
             EpidemicEvent epidemicEvent = revEventList.get(eidx);
@@ -111,7 +144,7 @@ public class SimulatedTransmissionTree extends Tree {
                             parent = new Node();
                             parent.addChild(child1);
                             parent.addChild(child2);
-                            parent.setHeight(youngestSamp - epidemicEvent.time);
+                            parent.setHeight(youngestSequencedSampTime - epidemicEvent.time);
                             parent.setNr(nextInternalID++);
                             activeNodes.add(parent);
                         }
@@ -119,18 +152,25 @@ public class SimulatedTransmissionTree extends Tree {
 
                     case EpidemicEvent.RHO_SAMPLE:
                     case EpidemicEvent.PSI_SAMPLE_REMOVE:
+                        if (!sequencedSamples.contains(epidemicEvent))
+                            break;
+
                         leaf = new Node();
-                        leaf.setHeight(youngestSamp - epidemicEvent.time);
+                        leaf.setHeight(youngestSequencedSampTime - epidemicEvent.time);
                         leaf.setNr(nextLeafNr);
                         leaf.setID("t" + nextLeafNr);
                         nextLeafNr += 1;
                         activeNodes.add(leaf);
-                        samplesSeen += 1;
+
+                        sequencedSamplesSeen += 1;
                         break;
 
                     case EpidemicEvent.PSI_SAMPLE_NOREMOVE:
+                        if (!sequencedSamples.contains(epidemicEvent))
+                            break;
+
                         leaf = new Node();
-                        leaf.setHeight(youngestSamp - epidemicEvent.time);
+                        leaf.setHeight(youngestSequencedSampTime - epidemicEvent.time);
                         leaf.setNr(nextLeafNr);
                         leaf.setID("t" + nextLeafNr);
                         nextLeafNr += 1;
@@ -142,15 +182,14 @@ public class SimulatedTransmissionTree extends Tree {
                             parent = new Node();
                             parent.addChild(sibling);
                             parent.addChild(leaf);
-                            parent.setHeight(youngestSamp - epidemicEvent.time);
+                            parent.setHeight(youngestSequencedSampTime - epidemicEvent.time);
                             parent.setNr(nextInternalID++);
                             activeNodes.add(parent);
                         } else {
                             activeNodes.add(leaf);
                         }
 
-                        samplesSeen += 1;
-
+                        sequencedSamplesSeen += 1;
                         break;
 
                     default:
@@ -158,13 +197,13 @@ public class SimulatedTransmissionTree extends Tree {
             }
 
             // Stop when we reach the MRCA of all sampled events.
-            if (samplesSeen==nSamples && activeNodes.size()<2)
+            if (sequencedSamplesSeen==sequencedSamples.size() && activeNodes.size() == 1)
                 break;
         }
         
         // Truncate trajectory at most recent sample if requested:
         if (truncateTrajectory) {
-            while (revEventList.get(0).time>youngestSamp) {
+            while (revEventList.get(0).time>youngestSequencedSampTime) {
                 revEventList.remove(0);
                 revStateList.remove(0);
             }
@@ -177,7 +216,7 @@ public class SimulatedTransmissionTree extends Tree {
         if (fileNameInput.get() != null) {
             try (PrintStream ps = new PrintStream(fileNameInput.get())) {
                 String newick = root.toNewick().concat(";");
-                ps.println(newick.replace(":0.0;", ":" + (youngestSamp-root.getHeight()) + ";"));
+                ps.println(newick.replace(":0.0;", ":" + (youngestSequencedSampTime-root.getHeight()) + ";"));
             } catch(FileNotFoundException ex) {
                 throw new RuntimeException("Error writing to file "
                         + fileNameInput.get() + ".");
