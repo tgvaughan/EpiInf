@@ -11,7 +11,7 @@
     :feast.mapping">
 
 
-    <!--tree spec="SimulatedTransmissionTree" id="simulated_tree" fileName="$(filebase)_truth.tree">
+    <tree spec="SimulatedTransmissionTree" id="simulated_tree" fileName="$(filebase)_truth.tree">
         <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="5.0" fileName="$(filebase)_truth.traj">
             <model spec="SISModel">
                 <S0 spec="IntegerParameter" value="199"/>
@@ -25,15 +25,15 @@
 
     <alignment id="alignment" spec="epiinf.SimulatedAlignment"
         tree="@simulated_tree" sequenceLength="2000" outputFileName="$(filebase)_alignment.nexus">
-        <siteModel id="siteModel" spec="beast.evolution.sitemodel.SiteModel">
+        <siteModel spec="beast.evolution.sitemodel.SiteModel">
             <substModel spec="beast.evolution.substitutionmodel.JukesCantor"/>
             <mutationRate spec="RealParameter" value="0.005"/>
         </siteModel>
-    </alignment-->
+    </alignment>
 
-    <tree id="simulated_tree" spec='feast.fileio.TreeFromNewickFile' fileName="$(filebase)_truth.tree"
+    <!--tree id="simulated_tree" spec='feast.fileio.TreeFromNewickFile' fileName="$(filebase)_truth.tree"
         IsLabelledNewick="true" adjustTipHeights="false"/>
-    <alignment id="alignment" spec='feast.fileio.AlignmentFromNexus' fileName="$(filebase)_alignment.nexus"/>
+    <alignment id="alignment" spec='feast.fileio.AlignmentFromNexus' fileName="$(filebase)_alignment.nexus"/-->
 
     <run spec="MCMC" id="mcmc" chainLength="1000000">
         <state>

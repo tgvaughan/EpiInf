@@ -42,9 +42,9 @@ plotTraj <- function(fileName, header, burninFrac=0.1,
     for (i in 1:nRecords) {
         if (!is.na(df[[colidx]][i])) {
             traj[[i]] <- parseTrajectoryString(df[[colidx]][i])
-            maxOccupancy <- max(maxOccupancy, traj[[i]]$S)
+            #maxOccupancy <- max(maxOccupancy, traj[[i]]$S)
             maxOccupancy <- max(maxOccupancy, traj[[i]]$I)
-            maxOccupancy <- max(maxOccupancy, traj[[i]]$R)
+            #maxOccupancy <- max(maxOccupancy, traj[[i]]$R)
             maxHeight <- max(maxHeight, traj[[i]]$t)
         }
     }
@@ -57,7 +57,7 @@ plotTraj <- function(fileName, header, burninFrac=0.1,
 
     for (i in 1:length(traj)) {
         indices <- which(traj[[i]]$t>=0)
-        lines(traj[[i]]$t[indices], traj[[i]]$I[indices], 's', col=col, ...)
+        lines(traj[[i]]$t[indices], traj[[i]]$I[indices], col=col, ...)
 
         midx <- which.min(traj[[i]]$t[indices])
         mval <- traj[[i]]$t[indices][midx]

@@ -61,6 +61,9 @@ public class SimulatedTransmissionTree extends Tree {
     public Input<RealParameter> incidenceParamInput = new Input<>(
             "incidenceParam", "Incidence times parameter");
 
+    public Input<String> incidenceFileNameInput = new Input<>(
+            "incidenceFileName", "Name of file to write incidence times to.");
+
     public SimulatedTransmissionTree() { }
     
     @Override
@@ -222,6 +225,19 @@ public class SimulatedTransmissionTree extends Tree {
             } catch(FileNotFoundException ex) {
                 throw new RuntimeException("Error writing to file "
                         + fileNameInput.get() + ".");
+            }
+        }
+
+        // Write incidence times to disk if requested
+        if (incidenceFileNameInput.get() != null && !unsequencedSamples.isEmpty()) {
+            try (PrintStream ps = new PrintStream(incidenceFileNameInput.get())) {
+                ps.println("time age");
+                for (EpidemicEvent event : unsequencedSamples) {
+                    ps.println(event.time + " " + (youngestSequencedSampTime - event.time));
+                }
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException("Error writing to file "
+                        + incidenceFileNameInput.get() + ".");
             }
         }
     }
