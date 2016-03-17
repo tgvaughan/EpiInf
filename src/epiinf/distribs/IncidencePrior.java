@@ -15,12 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package epiinf;
+package epiinf.distribs;
 
 import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.State;
 import beast.core.parameter.RealParameter;
+import epiinf.IncidenceData;
 
 import java.util.ArrayList;
 import java.util.List;

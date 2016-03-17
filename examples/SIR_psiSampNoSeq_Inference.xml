@@ -1,0 +1,165 @@
+<beast version="2.0" namespace="beast.core
+    :beast.core.parameter
+    :beast.core.util
+    :beast.evolution.likelihood
+    :beast.evolution.operators
+    :epiinf
+    :epiinf.models
+    :epiinf.distribs
+    :epiinf.util
+    :feast.expressions
+    :feast.mapping">
+
+
+    <tree spec="SimulatedTransmissionTree" id="simulated_tree" fileName="$(filebase)_truth.tree"
+        sequencingFraction="0.1" incidenceFileName="$(filebase)_incidence.txt">
+        <incidenceParam id="incidenceParam" spec="RealParameter" value="0"/>
+        <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="7.0" fileName="$(filebase)_truth.traj">
+            <model spec="SIRModel" usePsiSamplingProportion="true">
+                <S0 spec="IntegerParameter" value="199"/>
+                <infectionRate spec="RealParameter" value="0.02"/>
+                <recoveryRate spec="RealParameter" value="0.2"/>
+                <psiSamplingVariable spec="RealParameter" value="0.5"/>
+                <removalProb spec="RealParameter" value="1.0"/>
+            </model>
+        </epidemicTrajectory>
+    </tree>
+
+    <alignment id="alignment" spec="epiinf.SimulatedAlignment"
+        tree="@simulated_tree" sequenceLength="2000" outputFileName="$(filebase)_alignment.nexus">
+        <siteModel id="siteModel" spec="beast.evolution.sitemodel.SiteModel">
+            <substModel spec="beast.evolution.substitutionmodel.JukesCantor"/>
+            <mutationRate spec="RealParameter" value="0.005"/>
+        </siteModel>
+    </alignment>
+
+    <run spec="MCMC" id="mcmc" chainLength="1000000">
+        <state>
+            <stateNode id="tree" spec="beast.util.ClusterTree" taxa="@alignment" clusterType="upgma">
+                <trait spec='TipDatesFromTree' tree="@simulated_tree">
+                    <taxa spec='beast.evolution.alignment.TaxonSet' alignment="@alignment"/>
+                </trait>
+            </stateNode>
+            <stateNode id="beta" spec="RealParameter" value="0.01"/>
+            <stateNode id="recoveryRate" spec="RealParameter" value="0.1"/>
+            <stateNode id="psiSamplingProp" spec="RealParameter" value="0.5" lower="0.0" upper="1.0"/>
+            <stateNode id="origin" spec="RealParameter" value="8.0"/>
+            <stateNode id="S0" spec="IntegerParameter" value="200" lower="1" upper="400"/>
+        </state>
+
+        <distribution id="posterior" spec="CompoundDistribution">
+
+            <distribution spec="TreeLikelihood" id="treeLikelihood" siteModel="@siteModel">
+                <data idref="alignment"/>
+                <tree idref="tree"/>
+            </distribution>
+
+            <distribution spec="SMCTreeDensity" id="treePrior"
+                          tree="@tree" incidenceParameter="@incidenceParam" nParticles="100">
+                <model id="model" spec="SIRModel" usePsiSamplingProportion="true">
+                    <treeOrigin idref="origin"/>
+                    <S0 idref="S0"/>
+                    <infectionRate idref="beta" />
+                    <recoveryRate idref="recoveryRate"/>
+                    <psiSamplingVariable idref="psiSamplingProp"/>
+                    <removalProb spec="RealParameter" value="1.0"/>
+                </model>
+            </distribution>
+
+            <distribution spec="CompoundDistribution" id="paramPriors">
+                <distribution spec="beast.math.distributions.Prior" x="@origin">
+                    <distr spec="beast.math.distributions.OneOnX"/>
+                </distribution>
+                <distribution spec="beast.math.distributions.Prior" x="@beta">
+                    <distr spec="beast.math.distributions.OneOnX"/>
+                </distribution>
+                <distribution spec="beast.math.distributions.Prior" x="@recoveryRate">
+                    <distr spec="beast.math.distributions.OneOnX"/>
+                </distribution>
+                <!--distribution spec="beast.math.distributions.Prior" x="@S0">
+                    <distr spec="beast.math.distributions.OneOnX"/>
+                </distribution-->
+            </distribution>
+        </distribution>
+
+        <operator id='betaScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="beta"/>
+        </operator>
+
+        <operator id='removalRateScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="recoveryRate"/>
+        </operator>
+
+        <!--operator id='samplingPropScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="psiSamplingProp"/>
+        </operator-->
+
+        <operator id='originScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="origin"/>
+        </operator>
+
+        <operator id="S0walker" spec="IntRandomWalkOperator" windowSize="10" weight="1">
+            <parameter idref="S0"/>
+        </operator>
+
+        <operator id='treeScaler' spec='ScaleOperator' scaleFactor="0.5" weight="1">
+            <tree idref="tree"/>
+        </operator>
+
+        <operator id='treeUpDown' spec='UpDownOperator' scaleFactor="0.8" weight="1">
+            <up idref="tree"/>
+            <up idref="origin"/>
+            <down idref="beta"/>
+            <down idref="recoveryRate"/>
+        </operator>
+
+        <operator spec='Uniform' weight="10">
+            <tree idref="tree"/>
+        </operator>
+        <operator spec='SubtreeSlide' weight="5" gaussian="true" size="1.0">
+            <tree idref="tree"/>
+        </operator>
+        <operator id='narrow' spec='Exchange' isNarrow='true' weight="1">
+            <tree idref="tree"/>
+        </operator>
+        <operator id='wide' spec='Exchange' isNarrow='false' weight="1">
+            <tree idref="tree"/>
+        </operator>
+        <operator spec='WilsonBalding' weight="1">
+            <tree idref="tree"/>
+        </operator>
+
+
+        <logger id="screenlog" spec="Logger" logEvery="1000">
+            <log idref="posterior"/>
+            <log idref="treeLikelihood"/>
+            <log idref="treePrior"/>
+            <log idref="beta"/>
+            <log idref="recoveryRate"/>
+            <log idref="psiSamplingProp"/>
+            <log idref="S0"/>
+            <log idref="origin"/>
+        </logger>
+
+        <logger logEvery="1000" fileName="$(filebase).trees">
+            <log idref="tree"/>
+        </logger>
+
+        <logger logEvery="250" fileName="$(filebase).traj">
+            <log id="trajConditioned" spec='ConditionedTrajectory' treeDensity="@treePrior" />
+            <log id="trajUnconditioned" spec="SimulatedTrajectory"
+                 origin="@origin" model="@model" maxDuration="15.0"/>
+        </logger>
+
+        <logger id="filelog" spec="Logger" logEvery="1000" fileName="$(filebase).log">
+            <log idref="posterior"/>
+            <log idref="treeLikelihood"/>
+            <log idref="treePrior"/>
+            <log idref="beta"/>
+            <log idref="recoveryRate"/>
+            <log idref="psiSamplingProp"/>
+            <log idref="S0"/>
+            <log idref="origin"/>
+        </logger>
+    </run>
+</beast>

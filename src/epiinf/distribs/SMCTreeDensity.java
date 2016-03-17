@@ -19,7 +19,6 @@ package epiinf.distribs;
 
 import beast.core.*;
 import beast.core.Input.Validate;
-import beast.core.parameter.RealParameter;
 import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
 import beast.math.GammaFunction;

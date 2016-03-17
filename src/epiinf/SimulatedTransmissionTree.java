@@ -92,19 +92,19 @@ public class SimulatedTransmissionTree extends Tree {
             }
         }
 
-        double youngestSequencedSampTime = sequencedSamples.last().time;
-        
         if (sequencedSamples.isEmpty())
             throw new NoSamplesException();
 
+        double youngestSequencedSampTime = sequencedSamples.last().time;
+
         // Store times of unsequenced samples to incidence parameter
         if (incidenceParamInput.get() != null && seqFrac < 1.0) {
-            incidenceParamInput.get().setDimension(unsequencedSamples.size());
+            Double[] incidenceTimes = new Double[unsequencedSamples.size()];
             int idx = 0;
-            for (EpidemicEvent event : unsequencedSamples) {
-                incidenceParamInput.get().setValue(idx++,
-                        youngestSequencedSampTime - event.time);
-            }
+            for (EpidemicEvent event : unsequencedSamples)
+                incidenceTimes[idx++] = youngestSequencedSampTime - event.time;
+
+            incidenceParamInput.get().assignFromWithoutID(new RealParameter(incidenceTimes));
         }
 
         // Simulate tree
