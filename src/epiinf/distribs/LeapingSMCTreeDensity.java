@@ -45,8 +45,8 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
             "model", "Epidemic model.", Validate.REQUIRED);
 
     public Input<Function> incidenceInput = new Input<>(
-            "incidence",
-            "Times and numbers of unsequenced samples.");
+            "incidenceParameter",
+            "Ages of unsequenced samples.");
 
     public Input<Integer> nParticlesInput = new Input<>(
             "nParticles", "Number of particles to use in SMC calculation.",
@@ -88,16 +88,21 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
 
     public LeapingSMCTreeDensity() {
         treeIntervalsInput.setRule(Validate.FORBIDDEN);
+        treeInput.setRule(Validate.OPTIONAL); // Possible to have only incidence data!
     }
 
     @Override
     public void initAndValidate() {
         model = modelInput.get();
-        if (model.treeOriginInput.get() == null)
+        if (model.originInput.get() == null)
             throw new IllegalArgumentException("The treeOrigin input to " +
                     "EpidemicModel must be set when the model is used for inference.");
+
+        if (treeInput.get() == null && incidenceInput.get() == null)
+            throw new IllegalArgumentException("Must specify at least one of tree or incidence.");
+
         observedEventsList = new ObservedEventsList(treeInput.get(), incidenceInput.get(),
-                model.treeOriginInput.get());
+                model.originInput.get());
         nParticles = nParticlesInput.get();
         nResamples = nResamplesInput.get();
         epsilon = epsilonInput.get();
@@ -337,6 +342,19 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
             } else
                 nSampleRemovals = 0;
 
+            int nUnsequencedSampleRemovals;
+            if (nUnsequencedSamples>0) {
+                double sampleRemovalProb = model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE] /
+                        (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                                + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
+                nUnsequencedSampleRemovals = EpiInfUtilityMethods.nextBinomial(sampleRemovalProb, nUnsequencedSamples);
+                model.incrementState(particleState,
+                        EpidemicEvent.MultiplePsiSampleRemove(nUnsequencedSampleRemovals));
+
+            } else {
+                nUnsequencedSampleRemovals = 0;
+            }
+
             // Compute weight contributions of tree events:
 
             int k = observedEventsList.getCurrentLineageCount(particleState);
@@ -368,6 +386,12 @@ public class LeapingSMCTreeDensity extends TreeDistribution implements Trajector
 
                     conditionalLogP += (nLeaves - nSampleRemovals) * Math.log(1.0 - k / particleState.I);
                 }
+            }
+
+            if (nUnsequencedSamples>0) {
+                conditionalLogP += nUnsequencedSamples*Math.log(
+                        model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                        + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
             }
 
             // Discard if we're left with an invalid state

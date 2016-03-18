@@ -92,10 +92,12 @@ public class SimulatedTransmissionTree extends Tree {
             }
         }
 
-        if (sequencedSamples.isEmpty())
+        if (sequencedSamples.isEmpty() && unsequencedSamples.isEmpty())
             throw new NoSamplesException();
 
-        double youngestSequencedSampTime = sequencedSamples.last().time;
+        double youngestSequencedSampTime = !sequencedSamples.isEmpty()
+                ? sequencedSamples.last().time
+                : unsequencedSamples.last().time;
 
         // Store times of unsequenced samples to incidence parameter
         if (incidenceParamInput.get() != null && seqFrac < 1.0) {
@@ -215,10 +217,12 @@ public class SimulatedTransmissionTree extends Tree {
         }
 
         // Initialise state nodes
-        assignFromWithoutID(new Tree(activeNodes.get(0)));
+        if (!sequencedSamples.isEmpty())
+            assignFromWithoutID(new Tree(activeNodes.get(0)));
         
         // Write tree to disk if requested:
-        if (fileNameInput.get() != null) {
+
+        if (!sequencedSamples.isEmpty() && fileNameInput.get() != null) {
             try (PrintStream ps = new PrintStream(fileNameInput.get())) {
                 String newick = root.toNewick().concat(";");
                 ps.println(newick.replace(":0.0;", ":" + (youngestSequencedSampTime-root.getHeight()) + ";"));

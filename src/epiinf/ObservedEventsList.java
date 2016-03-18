@@ -19,7 +19,6 @@ package epiinf;
 
 import beast.core.Description;
 import beast.core.Function;
-import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
 
@@ -35,7 +34,7 @@ public class ObservedEventsList {
 
     private TreeInterface tree;
     private Function incidenceData;
-    private Function treeOrigin;
+    private Function origin;
     private List<ObservedEvent> eventList;
 
     /**
@@ -49,10 +48,10 @@ public class ObservedEventsList {
      * Default constructor.
      */
     public ObservedEventsList(TreeInterface tree, Function incidenceData,
-                              Function treeOrigin) {
+                              Function origin) {
         this.tree = tree;
-        this.treeOrigin = treeOrigin;
         this.incidenceData = incidenceData;
+        this.origin = origin;
 
         eventList = new ArrayList<>();
 
@@ -69,24 +68,27 @@ public class ObservedEventsList {
         eventList.clear();
 
         // Assemble event list
-        for (Node node : tree.getNodesAsArray()) {
 
-            if (node.isFake())
-                continue;
+        if (tree != null) {
+            for (Node node : tree.getNodesAsArray()) {
 
-            ObservedEvent event = new ObservedEvent();
-            if (node.isLeaf()) {
-                if (node.isDirectAncestor())
-                    event.type = ObservedEvent.Type.SAMPLED_ANCESTOR;
-                else
-                    event.type = ObservedEvent.Type.LEAF;
-            } else {
-                event.type = ObservedEvent.Type.COALESCENCE;
+                if (node.isFake())
+                    continue;
+
+                ObservedEvent event = new ObservedEvent();
+                if (node.isLeaf()) {
+                    if (node.isDirectAncestor())
+                        event.type = ObservedEvent.Type.SAMPLED_ANCESTOR;
+                    else
+                        event.type = ObservedEvent.Type.LEAF;
+                } else {
+                    event.type = ObservedEvent.Type.COALESCENCE;
+                }
+
+                event.time = getTimeFromHeight(node.getHeight());
+
+                eventList.add(event);
             }
-       
-            event.time = getTimeFromHeight(node.getHeight());
-            
-            eventList.add(event);
         }
 
         if (incidenceData != null) {
@@ -142,14 +144,14 @@ public class ObservedEventsList {
      * @return time
      */
     public double getTimeFromHeight (double height) {
-        return treeOrigin.getArrayValue() - height;
+        return origin.getArrayValue() - height;
     }
 
     /**
      * @return The time before the most recent sample that the epidemic began.
      */
     public double getOrigin() {
-        return treeOrigin.getArrayValue();
+        return origin.getArrayValue();
     }
     
     /**

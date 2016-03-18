@@ -83,16 +83,21 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
 
     public SMCTreeDensity() {
         treeIntervalsInput.setRule(Validate.FORBIDDEN);
+        treeInput.setRule(Validate.OPTIONAL); // Possible to have only incidence data!
     }
 
     @Override
     public void initAndValidate() {
         model = modelInput.get();
-        if (model.treeOriginInput.get() == null)
+        if (model.originInput.get() == null)
             throw new IllegalArgumentException("The treeOrigin input to " +
                     "EpidemicModel must be set when the model is used for inference.");
+
+        if (treeInput.get() == null && incidenceParamInput.get() == null)
+            throw new IllegalArgumentException("Must specify at least one of tree or incidence.");
+
         observedEventsList = new ObservedEventsList(treeInput.get(), incidenceParamInput.get(),
-                model.treeOriginInput.get());
+                model.originInput.get());
         nParticles = nParticlesInput.get();
         useTauLeaping = useTauLeapingInput.get();
         epsilon = epsilonInput.get();

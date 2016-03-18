@@ -22,7 +22,6 @@ import epiinf.ModelEvent;
 import epiinf.SimulatedTrajectory;
 import epiinf.models.EpidemicModel;
 import org.knowm.xchart.*;
-import org.knowm.xchart.internal.chartpart.Chart;
 import org.knowm.xchart.internal.style.Styler;
 import org.knowm.xchart.internal.style.markers.SeriesMarkers;
 
@@ -81,7 +80,7 @@ public class EpiTrajPanel extends JPanel {
 
         @Override
         protected Void doInBackground() throws Exception {
-            double origin = epidemicModel.treeOriginInput.get().getArrayValue();
+            double origin = epidemicModel.originInput.get().getArrayValue();
 
             final int nSamples = 1000;
 
@@ -109,7 +108,7 @@ public class EpiTrajPanel extends JPanel {
 
         @Override
         protected void done() {
-            double origin = epidemicModel.treeOriginInput.get().getArrayValue();
+            double origin = epidemicModel.originInput.get().getArrayValue();
 
             for (int i=0; i<nTraj; i++) {
                 Series_XY series = chart.addSeries("traj" + i,

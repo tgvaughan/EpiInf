@@ -18,9 +18,9 @@
             <model spec="SIRModel" usePsiSamplingProportion="true">
                 <S0 spec="IntegerParameter" value="199"/>
                 <infectionRate spec="RealParameter" value="0.02"/>
-                <recoveryRate spec="RealParameter" value="0.2"/>
+                <recoveryRate spec="RealParameter" value="0.4"/>
                 <psiSamplingVariable spec="RealParameter" value="0.5"/>
-                <removalProb spec="RealParameter" value="1.0"/>
+                <removalProb spec="RealParameter" value="0.0"/>
             </model>
         </epidemicTrajectory>
     </tree>
@@ -44,7 +44,7 @@
             <stateNode id="recoveryRate" spec="RealParameter" value="0.1"/>
             <stateNode id="psiSamplingProp" spec="RealParameter" value="0.5" lower="0.0" upper="1.0"/>
             <stateNode id="origin" spec="RealParameter" value="8.0"/>
-            <stateNode id="S0" spec="IntegerParameter" value="200" lower="1" upper="400"/>
+            <stateNode id="S0" spec="IntegerParameter" value="300" lower="1" upper="400"/>
         </state>
 
         <distribution id="posterior" spec="CompoundDistribution">
@@ -55,14 +55,14 @@
             </distribution>
 
             <distribution spec="SMCTreeDensity" id="treePrior"
-                          tree="@tree" incidenceParameter="@incidenceParam" nParticles="100">
+                incidenceParameter="@incidenceParam" nParticles="100">
                 <model id="model" spec="SIRModel" usePsiSamplingProportion="true">
-                    <treeOrigin idref="origin"/>
+                    <origin idref="origin"/>
                     <S0 idref="S0"/>
                     <infectionRate idref="beta" />
                     <recoveryRate idref="recoveryRate"/>
                     <psiSamplingVariable idref="psiSamplingProp"/>
-                    <removalProb spec="RealParameter" value="1.0"/>
+                    <removalProb spec="RealParameter" value="0.0"/>
                 </model>
             </distribution>
 

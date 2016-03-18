@@ -124,8 +124,8 @@ public abstract class EpidemicModel extends CalculationNode {
             false);
 
 
-    public Input<Function> treeOriginInput = new Input<>(
-            "treeOrigin",
+    public Input<Function> originInput = new Input<>(
+            "origin",
             "Time before most recent sample that epidemic began. ");
 
     public Input<Double> toleranceInput = new Input<>("tolerance",
@@ -172,9 +172,9 @@ public abstract class EpidemicModel extends CalculationNode {
                 || psiSamplingVariableShiftTimesBackwardInput.get()
                 || rhoSamplingTimesBackwardInput.get()
                 || removalProbShiftTimesBackwardInput.get())
-            && treeOriginInput.get() == null) {
+            && originInput.get() == null) {
             throw new IllegalArgumentException(
-                    "Must specify treeOrigin input if backward times are used.");
+                    "Must specify origin input if backward times are used.");
         }
 
         ratesDirty = true;
@@ -207,12 +207,12 @@ public abstract class EpidemicModel extends CalculationNode {
      * @return age of epidemic start relative to last tree event
      */
     public double getOrigin() {
-        if (treeOriginInput.get() == null)
+        if (originInput.get() == null)
             throw new UnsupportedOperationException(
                     "Origin requested from EpidemicModel not initialized " +
                     "with an origin parameter.");
 
-        return treeOriginInput.get().getArrayValue();
+        return originInput.get().getArrayValue();
     }
 
     /**
@@ -229,7 +229,7 @@ public abstract class EpidemicModel extends CalculationNode {
      */
     protected double getForwardTime(Function timeParam, int i, boolean isReversed) {
         if (isReversed) {
-            return treeOriginInput.get().getArrayValue()
+            return originInput.get().getArrayValue()
                     - timeParam.getArrayValue(timeParam.getDimension()-1-i);
         } else {
             return timeParam.getArrayValue(i);
@@ -513,7 +513,7 @@ public abstract class EpidemicModel extends CalculationNode {
 
         SISModel model = new SISModel();
         model.initByName(
-                "treeOrigin", new RealParameter("10.0"),
+                "origin", new RealParameter("10.0"),
                 "S0", new IntegerParameter("200"),
                 "infectionRate", new RealParameter("0.01"),
                 "recoveryRate", new RealParameter("0.1"));

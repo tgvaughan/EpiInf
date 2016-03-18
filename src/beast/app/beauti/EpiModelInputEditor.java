@@ -31,13 +31,10 @@ import epiinf.models.SISModel;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.EtchedBorder;
-import javax.swing.border.SoftBevelBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.plaf.basic.BasicBorders;
 import javax.swing.table.DefaultTableModel;
-import java.awt.Dimension;
 
 /**
  * Input editor for EpidemicModels.  Special message to anyone (including
@@ -406,7 +403,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
             estimateRhoSamplingProb.setSelected(false);
         }
 
-        epiOrigin = (RealParameter)epidemicModel.treeOriginInput.get();
+        epiOrigin = (RealParameter)epidemicModel.originInput.get();
         originTextField.setText(String.valueOf(epiOrigin.getArrayValue()));
         estimateOrigin.setSelected(epiOrigin.isEstimatedInput.get());
 
