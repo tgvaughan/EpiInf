@@ -47,7 +47,7 @@ public class SMCTreeDensityTest {
 
         EpidemicModel model = new SISModel();
         model.initByName(
-                "treeOrigin", new RealParameter("4.0"),
+                "origin", new RealParameter("4.0"),
                 "S0", new IntegerParameter("99"),
                 "infectionRate", new RealParameter("0.01"),
                 "recoveryRate", new RealParameter("0.2"),
@@ -97,7 +97,7 @@ public class SMCTreeDensityTest {
 
         EpidemicModel model = new SISModel();
         model.initByName(
-                "treeOrigin", new RealParameter("4.96590947152"),
+                "origin", new RealParameter("4.96590947152"),
                 "S0", new IntegerParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
@@ -148,7 +148,7 @@ public class SMCTreeDensityTest {
                 "S0", new IntegerParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
-                "treeOrigin", new RealParameter("4.96590947152"),
+                "origin", new RealParameter("4.96590947152"),
                 "psiSamplingVariable", new RealParameter("0.1"));
 
         SMCTreeDensity density = new SMCTreeDensity();
@@ -198,7 +198,7 @@ public class SMCTreeDensityTest {
 
         EpidemicModel model = new SIRModel();
         model.initByName(
-                "treeOrigin", new RealParameter("4.0"),
+                "origin", new RealParameter("4.0"),
                 "S0", new IntegerParameter("199"),
                 "infectionRate", new RealParameter("0.01"),
                 "recoveryRate", new RealParameter("0.2"),
@@ -244,7 +244,7 @@ public class SMCTreeDensityTest {
 
         EpidemicModel model = new SIRModel();
         model.initByName(
-                "treeOrigin", new RealParameter("4.89922758686"),
+                "origin", new RealParameter("4.89922758686"),
                 "S0", new IntegerParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
@@ -288,7 +288,7 @@ public class SMCTreeDensityTest {
 
         EpidemicModel model = new SIRModel();
         model.initByName(
-                "treeOrigin", new RealParameter("4.89922758686"),
+                "origin", new RealParameter("4.89922758686"),
                 "S0", new IntegerParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
