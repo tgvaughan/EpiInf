@@ -560,7 +560,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
             epiOrigin.valuesInput.setValue(originTextField.getText(), epiOrigin);
             epiOrigin.isEstimatedInput.setValue(estimateOrigin.isSelected(), epiOrigin);
-            epidemicModel.setInputValue("treeOrigin", epiOrigin);
+            epidemicModel.setInputValue("origin", epiOrigin);
             epiOrigin.initAndValidate();
 
             epidemicModel.initAndValidate();
