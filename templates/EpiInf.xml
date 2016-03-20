@@ -92,7 +92,7 @@
                     <psiSamplingVariable id="psiSamplingVariable.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.1" estimate="true"/>
                     <removalProb id="removalProb.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0.0" upper="1.0" value="1.0" estimate="true"/>
                     <rhoSamplingProb id="rhoSamplingProb.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.0" estimate="false"/>
-                    <treeOrigin id="epiOrigin.t:$(n)" spec="beast.core.parameter.RealParameter" value="10.0" estimate="true"/>
+                    <origin id="epiOrigin.t:$(n)" spec="beast.core.parameter.RealParameter" value="10.0" estimate="true"/>
                 </model>
             </distribution>
 
