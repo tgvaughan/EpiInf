@@ -19,8 +19,18 @@ parseTrajectoryString <- function(trajString) {
     return(res)
 }
 
+getTime <- function(times, presentTime) {
+    if (is.na(presentTime))
+        return(times)
+    else
+        return(presentTime - times)
+}
+
 plotTraj <- function(fileName, header, burninFrac=0.1,
                      col=rgb(1,0,0,0.3), add=FALSE,
+                     xlim=NA, ylim=NA,
+                     showMean=TRUE,
+                     presentTime=NA,
                      xlab='Time', ylab='Prevalence', main='Trajectory distribution', ...) {
     df <- read.table(fileName, header=T, as.is=T)
 
@@ -49,19 +59,54 @@ plotTraj <- function(fileName, header, burninFrac=0.1,
         }
     }
 
+    # Compute mean prevalence
+    if (showMean) {
+        meanPrevTimes <- seq(maxHeight, 0, length.out=100)
+        meanPrev <- rep(0, 100)
+
+        for (i in 1:nRecords) {
+            tidx <- 1
+            for (sidx in 1:length(meanPrevTimes)) {
+                tSamp <- meanPrevTimes[sidx]
+                while (tidx <= length(traj[[i]]$t) && traj[[i]]$t[tidx]>tSamp) {
+                    tidx <- tidx + 1
+                }
+
+                meanPrev[sidx] <- meanPrev[sidx] + traj[[i]]$I[tidx]
+            }
+        }
+        for (sidx in 1:length(meanPrev)) {
+            meanPrev[sidx] <- meanPrev[sidx]/nRecords
+        }
+    }
+
+
     # Create plot if necessary
     if (!add) {
-        plot(traj[[1]]$t, traj[[1]]$I, col=NA, xlim=c(0, maxHeight), ylim=c(0, maxOccupancy),
+        if (length(ylim)==1 && is.na(ylim))
+            ylim = c(0, maxOccupancy)
+
+        if (length(xlim)==1 && is.na(xlim))
+            xlim=sort(getTime(c(0, maxHeight), presentTime))
+
+
+        plot(getTime(traj[[1]]$t, presentTime), traj[[1]]$I,
+             col=NA, xlim=xlim, ylim=ylim,
              xlab=xlab, ylab=ylab, main=main, ...)
     }
 
     for (i in 1:length(traj)) {
         indices <- which(traj[[i]]$t>=0)
-        lines(traj[[i]]$t[indices], traj[[i]]$I[indices], col=col, ...)
+        lines(getTime(traj[[i]]$t[indices], presentTime), traj[[i]]$I[indices], col=col, ...)
 
         midx <- which.min(traj[[i]]$t[indices])
         mval <- traj[[i]]$t[indices][midx]
-        lines(c(0, mval), rep(traj[[i]]$I[indices][midx],2), col=col, ...)
+        lines(getTime(c(0, mval), presentTime), rep(traj[[i]]$I[indices][midx],2), col=col, ...)
+    }
+
+    if (showMean) {
+        lines(getTime(meanPrevTimes, presentTime), meanPrev, lwd=4, col='white')
+        lines(getTime(meanPrevTimes, presentTime), meanPrev, lwd=2, col='black')
     }
 }
 
