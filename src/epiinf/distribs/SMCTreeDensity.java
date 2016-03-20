@@ -352,11 +352,11 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                         || !particleState.isValid() || particleState.I < lineages)
                     return Double.NEGATIVE_INFINITY;
 
-                if (nextModelEvent.time < nextObservedEvent.time && particleState.time + tau > nextModelEvent.time) {
+                if (nextModelEventTime < nextObservedEvent.time && particleState.time + tau > nextModelEventTime) {
                     if (nextModelEvent.type == ModelEvent.Type.RHO_SAMPLING) {
                         // TODO: include probability that rho sampling produces no samples
                     }
-                    particleState.time = nextModelEvent.time;
+                    particleState.time = nextModelEventTime;
                     particleState.modelIntervalIdx += 1;
                     continue;
                 }
