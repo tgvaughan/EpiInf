@@ -29,7 +29,7 @@
         <distribution spec="LeapingSMCTreeDensity" id="densityLeap" tree="@tree"
                       nParticles="10000" nResamples="2001" tauLeapingEpsilon="0.03">
             <model spec="SISModel" id="model">
-                <treeOrigin spec="OriginFromTrajectory" trajectory="@trajectory"/>
+                <origin spec="OriginFromTrajectory" trajectory="@trajectory"/>
                 <S0 spec="IntegerParameter" value="499"/>
                 <infectionRate idref="beta"/>
                 <recoveryRate spec="RealParameter" value="0.05"/>

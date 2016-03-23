@@ -52,7 +52,7 @@
             </distribution>
 
             <distribution spec="SMCTreeDensity" id="treePrior"
-                          tree="@tree" treeOrigin="@origin" nParticles="100">
+                          tree="@tree" origin="@origin" nParticles="100">
                 <model id="model" spec="SIRModel">
                     <S0 idref="S0"/>
                     <infectionRate idref="beta" />

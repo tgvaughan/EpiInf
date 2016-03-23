@@ -50,7 +50,7 @@
             </distribution>
 
             <distribution spec="SMCTreeDensity" id="treePrior"
-                          tree="@tree" treeOrigin="@origin" nParticles="100">
+                          tree="@tree" origin="@origin" nParticles="100">
                 <model spec="BirthDeathModel">
                     <infectionRate idref="birthRate" />
                     <recoveryRate id="deathRate" spec="ExpCalculator" expression="removalRate*(1-samplingProp)">

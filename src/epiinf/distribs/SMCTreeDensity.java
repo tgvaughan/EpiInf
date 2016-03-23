@@ -55,6 +55,15 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
             "tauLeapingEpsilon", "Relative fraction of propensity change to allow " +
             "when selecting leap size.", 0.03);
 
+    public Input<Integer> minLeapCountInput = new Input<>(
+            "minLeapCount", "This is the minimum number of identically-sized " +
+            "tau leaps that will be performed across the tree.", 1);
+
+    public Input<Double> relStdThreshInput = new Input<>(
+            "relStdThresh", "Threshold on relative size of standard deviation of" +
+            "reaction firings below which deterministic approximation will be used. " +
+            "Set to zero to turn off.", 0.0);
+
     public Input<Double> resampThreshInput = new Input<>(
             "resampThresh",
             "Resampling performed when the effective relative number of " +
@@ -69,7 +78,8 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
     ObservedEventsList observedEventsList;
     int nParticles;
     boolean useTauLeaping;
-    double epsilon, resampThresh;
+    double epsilon, resampThresh, relStdThresh;
+    int minLeapCount;
 
     // Keep these around so we don't have to create these arrays/lists
     // for every density evaluation.
@@ -90,7 +100,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
     public void initAndValidate() {
         model = modelInput.get();
         if (model.originInput.get() == null)
-            throw new IllegalArgumentException("The treeOrigin input to " +
+            throw new IllegalArgumentException("The origin input to " +
                     "EpidemicModel must be set when the model is used for inference.");
 
         if (treeInput.get() == null && incidenceParamInput.get() == null)
@@ -101,7 +111,9 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
         nParticles = nParticlesInput.get();
         useTauLeaping = useTauLeapingInput.get();
         epsilon = epsilonInput.get();
+        minLeapCount = minLeapCountInput.get();
         resampThresh = resampThreshInput.get();
+        relStdThresh = relStdThreshInput.get();
 
         particleWeights = new double[nParticles];
         logParticleWeights = new double[nParticles];
@@ -237,6 +249,8 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
         ModelEvent nextModelEvent;
         double nextObservedEventTime, nextModelEventTime;
 
+        double maxLeapSize = model.getOrigin()/minLeapCount;
+
         while (true) {
             nextObservedEvent = observedEventsList.getNextObservedEvent(particleState);
             nextObservedEventTime = observedEventsList.getNextObservedEventTime(particleState);
@@ -265,8 +279,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
 
             // Do we leap?
 
-            boolean isLeap = particleTrajectory == null
-                    && useTauLeaping;
+            boolean isLeap = useTauLeaping;
 
             // Determine length of proposed leap and switch back to SSA
             // if length isn't much greater than the expected SSA step size.
@@ -317,11 +330,7 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                 else
                     event.type = EpidemicEvent.RECOVERY;
 
-
                 model.incrementState(particleState, event);
-
-                if (particleTrajectory != null)
-                    particleTrajectory.add(particleState.copy());
 
                 if (conditionalLogP == Double.NEGATIVE_INFINITY) {
                     // Should never get here, as we explicitly condition against
@@ -333,17 +342,28 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
             } else {
 
                 double trueDt = Math.min(tau, Math.min(nextModelEventTime, nextObservedEventTime) - particleState.time);
+                trueDt = Math.min(trueDt, maxLeapSize);
                 conditionalLogP += -trueDt * (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
                         + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
                         + observedInfectProp + forbiddenRecovProp);
 
+                double propThresh = relStdThresh > 0.0 && trueDt > 0.0
+                        ? 1.0/trueDt/relStdThresh/relStdThresh
+                        : Double.POSITIVE_INFINITY;
+
                 EpidemicEvent infectEvent = new EpidemicEvent();
                 infectEvent.type = EpidemicEvent.INFECTION;
-                infectEvent.multiplicity = (int)Randomizer.nextPoisson(trueDt*unobservedInfectProp);
+                if (unobservedInfectProp<propThresh)
+                    infectEvent.multiplicity = (int)Randomizer.nextPoisson(trueDt*unobservedInfectProp);
+                else
+                    infectEvent.multiplicity = (int)(trueDt*unobservedInfectProp);
 
                 EpidemicEvent recovEvent = new EpidemicEvent();
                 recovEvent.type = EpidemicEvent.RECOVERY;
-                recovEvent.multiplicity = (int)Randomizer.nextPoisson(trueDt*allowedRecovProp);
+                if (allowedEventProp < propThresh)
+                    recovEvent.multiplicity = (int)Randomizer.nextPoisson(trueDt*allowedRecovProp);
+                else
+                    recovEvent.multiplicity = (int)(trueDt*allowedEventProp);
 
                 model.incrementState(particleState, infectEvent);
                 model.incrementState(particleState, recovEvent);
@@ -367,6 +387,9 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
 
                 particleState.time += tau;
             }
+
+            if (particleTrajectory != null)
+                particleTrajectory.add(particleState.copy());
         }
 
         particleState.time = nextObservedEvent.time;

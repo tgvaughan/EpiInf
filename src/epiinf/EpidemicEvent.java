@@ -41,7 +41,7 @@ public class EpidemicEvent extends Event {
     };
 
     public int type;
-    public int multiplicity;
+    public double multiplicity;
 
     public EpidemicEvent() {
         multiplicity = 1;

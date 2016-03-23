@@ -39,7 +39,7 @@
     <run spec="DensityMapper">
         <distribution spec="SMCTreeDensity" id="density" tree="@tree" nParticles="10000">
             <model spec="SISModel" usePsiSamplingProportion="true">
-                <treeOrigin spec="OriginFromTrajectory" trajectory="@trajectory"/>
+                <origin spec="OriginFromTrajectory" trajectory="@trajectory"/>
                 <S0 spec="IntegerParameter" value="299"/>
                 <infectionRate spec="RealParameter" value="0.01"/>
                 <recoveryRate spec="RealParameter" value="0.1"/>

@@ -37,7 +37,7 @@
 
     <run spec="DensityMapper">
         <distribution spec="SMCTreeDensity" id="density" tree="@tree" nParticles="1000" useTauLeaping="true">
-            <treeOrigin spec="OriginFromTrajectory" trajectory="@trajectory"/>
+            <origin spec="OriginFromTrajectory" trajectory="@trajectory"/>
             <model spec="SISModel">
                 <S0 spec="IntegerParameter" value="100000"/>
                 <infectionRate spec="RealParameter" value="0.0002"/>

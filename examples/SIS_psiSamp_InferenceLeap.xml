@@ -84,7 +84,7 @@
                           nParticles="100" nResamples="10" tauLeapingEpsilon="0.1"
                           tree="@tree">
                 <model spec="SISModel" id="model" usePsiSamplingProportion="true">
-                    <treeOrigin idref="origin"/>
+                    <origin idref="origin"/>
                     <S0 idref="S0"/>
                     <infectionRate idref="beta"/>
                     <recoveryRate idref="recoveryRate"/>

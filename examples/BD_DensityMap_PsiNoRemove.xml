@@ -37,7 +37,7 @@
     <run spec="DensityMapper">
         <distribution spec="SMCTreeDensity" id="density" tree="@tree" nParticles="10000">
             <model spec="BirthDeathModel" usePsiSamplingProportion="false">
-                <treeOrigin spec="OriginFromTrajectory" id="origin" trajectory="@trajectory"/>
+                <origin spec="OriginFromTrajectory" id="origin" trajectory="@trajectory"/>
                 <infectionRate spec="RealParameter" id="infectionRate" value="1.2"/>
                 <recoveryRate spec="RealParameter" id="recoveryRate" value="0.2"/>
                 <psiSamplingVariable idref="psi"/>

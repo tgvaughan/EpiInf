@@ -28,7 +28,7 @@
         <distribution spec="LeapingSMCTreeDensity" id="density" tree="@tree"
                       nParticles="1000" nResamples="101" tauLeapingEpsilon="0.03">
             <model spec="SISModel">
-                <treeOrigin idref="origin"/>
+                <origin idref="origin"/>
                 <S0 spec="IntegerParameter" value="5000"/>
                 <infectionRate idref="beta"/>
                 <recoveryRate spec="RealParameter" value="0.05"/>

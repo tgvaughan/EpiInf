@@ -63,7 +63,7 @@
             <distribution spec="SMCTreeDensity" id="treePrior" nParticles="100" tree="@tree"
                 useTauLeaping="true">
                 <model spec="SISModel" id="model" usePsiSamplingProportion="true">
-                    <treeOrigin idref="origin"/>
+                    <origin idref="origin"/>
                     <S0 idref="S0"/>
                     <infectionRate idref="beta"/>
                     <recoveryRate idref="recoveryRate"/>

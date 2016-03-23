@@ -18,7 +18,7 @@
       <model id="model" spec="epiinf.models.SISModel"
           psiSamplingVariableShiftTimesBackward="true"
           usePsiSamplingProportion="true">
-          <treeOrigin spec="RealParameter" value="50.0"/>
+          <origin spec="RealParameter" value="50.0"/>
           <infectionRate idref="beta"/>
           <recoveryRate spec="RealParameter" value="0.1"/>
           <psiSamplingVariable spec="RealParameter" dimension="2" value="0.1 0.01"/>

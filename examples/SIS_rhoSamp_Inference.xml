@@ -48,7 +48,7 @@
             </distribution>
 
             <distribution spec="SMCTreeDensity" id="treePrior"
-                          tree="@tree" treeOrigin="@origin" nParticles="100">
+                          tree="@tree" origin="@origin" nParticles="100">
                 <model spec="SISModel">
                     <S0 spec="IntegerParameter" value="199"/>
                     <infectionRate id="beta" spec="RealParameter" value="0.01"/>
