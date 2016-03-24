@@ -13,11 +13,12 @@
 
     <tree spec="SimulatedTransmissionTree" id="simulated_tree" fileName="$(filebase)_truth.tree">
         <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="7.0" fileName="$(filebase)_truth.traj">
-            <model spec="SIRModel">
-                <S0 spec="IntegerParameter" value="199"/>
+            <model spec="SIRModel" usePsiSamplingProportion="true">
+                <S0 spec="IntegerParameter" value="199" upper="400"/>
                 <infectionRate spec="RealParameter" value="0.02"/>
                 <recoveryRate spec="RealParameter" value="0.2"/>
-                <psiSamplingRate spec="RealParameter" value="0.2"/>
+                <psiSamplingVariable spec="RealParameter" value="0.5"/>
+                <removalProb spec="RealParameter" value="1.0"/>
             </model>
         </epidemicTrajectory>
     </tree>
@@ -52,18 +53,14 @@
             </distribution>
 
             <distribution spec="SMCTreeDensity" id="treePrior"
-                          tree="@tree" origin="@origin" nParticles="100">
-                <model id="model" spec="SIRModel">
+                          tree="@tree" nParticles="1" useTauLeaping="true" tauLeapingEpsilon="1.0" relStdThresh="1.0" minLeapCount="100">
+                <model id="model" spec="SIRModel" usePsiSamplingProportion="true">
+                    <origin idref="origin"/>
                     <S0 idref="S0"/>
                     <infectionRate idref="beta" />
-                    <recoveryRate id="recoveryRate" spec="ExpCalculator" expression="removalRate*(1-samplingProp)">
-                        <parameter idref="removalRate"/>
-                        <parameter idref="samplingProp"/>
-                    </recoveryRate>
-                    <psiSamplingRate id="psiSamplingRate" spec="ExpCalculator" expression="removalRate*samplingProp">
-                        <parameter idref="removalRate"/>
-                        <parameter idref="samplingProp"/>
-                    </psiSamplingRate>
+                    <recoveryRate idref="removalRate"/>
+                    <psiSamplingVariable idref="samplingProp"/>
+                    <removalProb spec="RealParameter" value="1.0"/>
                 </model>
             </distribution>
 
@@ -77,9 +74,9 @@
                 <distribution spec="beast.math.distributions.Prior" x="@removalRate">
                     <distr spec="beast.math.distributions.OneOnX"/>
                 </distribution>
-                <distribution spec="beast.math.distributions.Prior" x="@S0">
+                <!--distribution spec="beast.math.distributions.Prior" x="@S0">
                     <distr spec="beast.math.distributions.Poisson" lambda="300"/>
-                </distribution>
+                </distribution-->
             </distribution>
         </distribution>
 
@@ -91,14 +88,14 @@
             <parameter idref="removalRate"/>
         </operator>
 
-        <operator id='samplingPropScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+        <!--operator id='samplingPropScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
             <parameter idref="samplingProp"/>
         </operator>
 
         <operator id="removalSampPropUpDown" spec="UpDownOperator" scaleFactor="0.8" weight="1">
             <up idref="removalRate"/>
             <down idref="samplingProp"/>
-        </operator>
+        </operator-->
 
         <operator id='originScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
             <parameter idref="origin"/>
@@ -138,38 +135,34 @@
         </operator>
 
 
-        <logger id="screenlog" spec="Logger" logEvery="1000">
+        <logger id="screenlog" spec="Logger" logEvery="10000">
             <log idref="posterior"/>
             <log idref="treeLikelihood"/>
             <log idref="treePrior"/>
             <log idref="beta"/>
             <log idref="removalRate"/>
             <log idref="samplingProp"/>
-            <log idref="recoveryRate"/>
-            <log idref="psiSamplingRate"/>
             <log idref="S0"/>
             <log idref="origin"/>
         </logger>
 
-        <logger logEvery="1000" fileName="$(filebase).trees">
+        <logger logEvery="10000" fileName="$(filebase).trees">
             <log idref="tree"/>
         </logger>
 
-        <logger logEvery="250" fileName="$(filebase).traj">
+        <logger logEvery="10000" fileName="$(filebase).traj">
             <log id="trajConditioned" spec='ConditionedTrajectory' treeDensity="@treePrior" />
             <log id="trajUnconditioned" spec="SimulatedTrajectory"
                  origin="@origin" model="@model" maxDuration="15.0"/>
         </logger>
 
-        <logger id="filelog" spec="Logger" logEvery="1000" fileName="$(filebase).log">
+        <logger id="filelog" spec="Logger" logEvery="10000" fileName="$(filebase).log">
             <log idref="posterior"/>
             <log idref="treeLikelihood"/>
             <log idref="treePrior"/>
             <log idref="beta"/>
             <log idref="removalRate"/>
             <log idref="samplingProp"/>
-            <log idref="recoveryRate"/>
-            <log idref="psiSamplingRate"/>
             <log idref="S0"/>
             <log idref="origin"/>
         </logger>

@@ -347,23 +347,27 @@ public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecord
                         + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
                         + observedInfectProp + forbiddenRecovProp);
 
-                double propThresh = relStdThresh > 0.0 && trueDt > 0.0
-                        ? 1.0/trueDt/relStdThresh/relStdThresh
-                        : Double.POSITIVE_INFINITY;
+                double propThresh = Double.POSITIVE_INFINITY;
+                if (trueDt > 0.0 && relStdThresh > 0.0) {
+                    if (relStdThresh < 1.0)
+                        propThresh = 1.0/trueDt/relStdThresh/relStdThresh;
+                    else
+                        propThresh = 0.0;
+                }
 
                 EpidemicEvent infectEvent = new EpidemicEvent();
                 infectEvent.type = EpidemicEvent.INFECTION;
                 if (unobservedInfectProp<propThresh)
                     infectEvent.multiplicity = (int)Randomizer.nextPoisson(trueDt*unobservedInfectProp);
                 else
-                    infectEvent.multiplicity = (int)(trueDt*unobservedInfectProp);
+                    infectEvent.multiplicity = (int)Math.round(trueDt*unobservedInfectProp);
 
                 EpidemicEvent recovEvent = new EpidemicEvent();
                 recovEvent.type = EpidemicEvent.RECOVERY;
                 if (allowedEventProp < propThresh)
                     recovEvent.multiplicity = (int)Randomizer.nextPoisson(trueDt*allowedRecovProp);
                 else
-                    recovEvent.multiplicity = (int)(trueDt*allowedEventProp);
+                    recovEvent.multiplicity = (int)Math.round(trueDt*allowedEventProp);
 
                 model.incrementState(particleState, infectEvent);
                 model.incrementState(particleState, recovEvent);

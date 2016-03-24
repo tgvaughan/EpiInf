@@ -26,12 +26,12 @@ getTime <- function(times, presentTime) {
         return(presentTime - times)
 }
 
-plotTraj <- function(fileName, header, burninFrac=0.1,
+plotTraj <- function(fileName, header="trajectory", burninFrac=0.1,
                      col=rgb(1,0,0,0.3), add=FALSE,
                      xlim=NA, ylim=NA,
                      showMean=TRUE,
                      presentTime=NA,
-                     xlab='Time', ylab='Prevalence', main='Trajectory distribution', ...) {
+                     xlab='Age', ylab='Prevalence', main='Trajectory distribution', ...) {
     df <- read.table(fileName, header=T, as.is=T)
 
     # Determine which columns contain traj data
