@@ -497,6 +497,8 @@ public class EpiModelInputEditor extends InputEditor.Base {
                     throw new RuntimeException("Incompatible epidemic model.");
             }
 
+            epidemicModel.rhoSamplingTimesBackwardInput.setValue(true, epidemicModel);
+
             if (epidemicModel instanceof SISModel || epidemicModel instanceof SIRModel) {
                 if (S0 == null) {
                     try {

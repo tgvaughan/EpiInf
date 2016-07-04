@@ -401,7 +401,8 @@ public abstract class EpidemicModel extends CalculationNode {
                 ModelEvent event = new ModelEvent();
                 event.type = ModelEvent.Type.RHO_SAMPLING;
                 event.rho = rhoSamplingProbInput.get().getArrayValue(i);
-                event.time = rhoSamplingTimeInput.get().getArrayValue(i);
+                event.time = getForwardTime(rhoSamplingTimeInput.get(), i,
+                        rhoSamplingTimesBackwardInput.get());
                 modelEventList.add(event);
             }
         }
