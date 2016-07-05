@@ -5,8 +5,8 @@
         <depends on='BEAST' atleast='2.3.2' atmost='2.3.3'/>
     </package>
 
-    <package name='EpiInf' version='4.0.0'
-           url="https://github.com/tgvaughan/EpiInf/releases/download/v4.0.0/EpiInf.v4.0.0.zip"
+    <package name='EpiInf' version='4.0.1'
+           url="https://github.com/tgvaughan/EpiInf/releases/download/v4.0.1/EpiInf.v4.0.1.zip"
            description="Inference of epidemic trajectories" >
         <depends on='BEAST' atleast='2.4.0'/>
     </package>
