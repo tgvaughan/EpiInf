@@ -76,6 +76,28 @@
         </fragment>
     </mergewith>
 
+    <mergewith point='misc'>
+        <fragment id='SATreeOperators' spec="beast.app.beauti.Fragment">
+            <![CDATA[
+            <operator id='$(m)SATreeScaler.t:$(n)' spec='beast.evolution.operators.SAScaleOperator' scaleFactor=".95" weight="3" tree="@Tree.t:$(n)"/>
+            <operator id='$(m)SATreeRootScaler.t:$(n)' spec='beast.evolution.operators.SAScaleOperator' scaleFactor=".95" weight="1" tree="@Tree.t:$(n)" rootOnly='true'/>
+            <operator id='$(m)SAUniformOperator.t:$(n)' spec='beast.evolution.operators.SAUniform' weight="20" tree="@Tree.t:$(n)"/>
+            <operator id='$(m)SAWilsonBalding.t:$(n)' spec='beast.evolution.operators.SAWilsonBalding' weight="10" tree="@Tree.t:$(n)"/>
+            <operator id='$(m)SAWide.t:$(n)' spec='beast.evolution.operators.SAExchange' isNarrow="false" weight="10" tree="@Tree.t:$(n)"/>
+            <operator id='$(m)SANarrow.t:$(n)' spec='beast.evolution.operators.SAExchange' weight="10" tree="@Tree.t:$(n)"/>
+            <operator id='$(m)LeafToSA.t:$(n)' spec='beast.evolution.operators.LeafToSampledAncestorJump' weight="10" tree="@Tree.t:$(n)"/>
+            ]]>
+
+            <connect srcID='$(m)SATreeScaler.t:$(n)'              targetID='mcmc' inputName='operator' if='inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true'/>
+            <connect srcID='$(m)SATreeRootScaler.t:$(n)'          targetID='mcmc' inputName='operator' if='inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true'/>
+            <connect srcID='$(m)SAUniformOperator.t:$(n)'         targetID='mcmc' inputName='operator' if='inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true'/>
+            <connect srcID='$(m)SAWilsonBalding.t:$(n)'           targetID='mcmc' inputName='operator' if='inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true'/>
+            <connect srcID='$(m)SAWide.t:$(n)'                    targetID='mcmc' inputName='operator' if='inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true'/>
+            <connect srcID='$(m)SANarrow.t:$(n)'                  targetID='mcmc' inputName='operator' if='inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true'/>
+            <connect srcID='$(m)LeafToSA.t:$(n)'                  targetID='mcmc' inputName='operator' if='inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true'/>
+        </fragment>
+    </mergewith>
+
     <mergewith point="treePriorTemplates">
 
         <subtemplate id="EpiTreePrior" class="epiinf.distribs.SMCTreeDensity" mainid="EpiTreePrior.t:$(n)"
@@ -121,7 +143,7 @@
             </logger>
             ]]>
 
-            <plate fragment="TreeOperators" var="m" range="EpiTreePrior"/>
+            <plate fragment="SATreeOperators" var="m" range="EpiTreePrior"/>
             <plate fragment="EpiModelParameter" var="p" range="infectionRate"/>
             <plate fragment="EpiModelParameter" var="p" range="recoveryRate"/>
             <plate fragment="EpiModelParameter" var="p" range="psiSamplingVariable"/>
