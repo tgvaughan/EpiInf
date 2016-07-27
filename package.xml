@@ -7,7 +7,8 @@
 
     <package name='EpiInf' version='4.0.1'
            url="https://github.com/tgvaughan/EpiInf/releases/download/v4.0.1/EpiInf.v4.0.1.zip"
-           description="Inference of epidemic trajectories" >
+           description="Inference of epidemic trajectories"
+           projectURL="http://tgvaughan.github.io/EpiInf" >
         <depends on='BEAST' atleast='2.4.0'/>
     </package>
 </packages>
