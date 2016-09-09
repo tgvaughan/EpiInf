@@ -19,52 +19,72 @@ parseTrajectoryString <- function(trajString) {
     return(res)
 }
 
-getTime <- function(times, presentTime) {
-    if (is.na(presentTime))
-        return(times)
-    else
-        return(presentTime - times)
-}
-
-plotTraj <- function(fileName, header="trajectory", burninFrac=0.1,
+plotTraj <- function(fileName=NA, dataFrame=NA, colidx=2, burninFrac=0.1,
                      col=rgb(1,0,0,0.3), add=FALSE,
                      xlim=NA, ylim=NA,
                      showMean=TRUE,
                      presentTime=NA,
+                     timesAreCalendarYears=FALSE,
+                     maxTrajectories=NA,
                      xlab='Age', ylab='Prevalence', main='Trajectory distribution', ...) {
-    df <- read.table(fileName, header=T, as.is=T)
 
-    # Determine which columns contain traj data
-    colidx <- which(colnames(df)==header)
+    if (is.na(fileName) && is.na(dataFrame)) {
+        cat("Either fileName or df must be specified.\n")
+        return()
+    }
+        
+    if (!is.na(fileName)) {
+        cat("Loading data...")
+        dataFrame <- read.table(fileName, header=T, as.is=T)
+        cat("done.\n")
+    }
 
     # Remove burnin
-    nRecords <- dim(df)[1]
-    df <- df[-(1:ceiling(nRecords*burninFrac)),]
+    nRecords <- dim(dataFrame)[1]
+    df <- dataFrame[-(1:ceiling(nRecords*burninFrac)),]
 
     # Update record count
-    nRecords <- dim(df)[1]
+    nRecords <- dim(dataFrame)[1]
 
     # Parse trajectories
+    cat("Parsing trajectories...")
+
+
+    if (!is.na(maxTrajectories)) {
+        step <- ceiling(nRecords/maxTrajectories)
+    } else {
+        step <- 1
+    }
+    
     maxOccupancy <- 0
     maxHeight <- 0
     traj <- list()
-#    trajUC <- list()
-    for (i in 1:nRecords) {
+    thisRecord <- 0
+    for (i in seq(1,nRecords,by=step)) {
         if (!is.na(df[[colidx]][i])) {
-            traj[[i]] <- parseTrajectoryString(df[[colidx]][i])
-            #maxOccupancy <- max(maxOccupancy, traj[[i]]$S)
-            maxOccupancy <- max(maxOccupancy, traj[[i]]$I)
-            #maxOccupancy <- max(maxOccupancy, traj[[i]]$R)
-            maxHeight <- max(maxHeight, traj[[i]]$t)
+            thisRecord <- thisRecord + 1
+            
+            traj[[thisRecord]] <- parseTrajectoryString(df[[colidx]][i])
+            maxOccupancy <- max(maxOccupancy, traj[[thisRecord]]$I)
+            maxHeight <- max(maxHeight, traj[[thisRecord]]$t)
         }
     }
 
+    nValidRecords <- thisRecord
+
+    cat("done.\n")
+
     # Compute mean prevalence
     if (showMean) {
+        cat("Computing mean prevalence...")
+        
         meanPrevTimes <- seq(maxHeight, 0, length.out=100)
         meanPrev <- rep(0, 100)
 
-        for (i in 1:nRecords) {
+        for (i in 1:nValidRecords) {
+            if (is.null(traj[[i]]))
+                next
+
             tidx <- 1
             for (sidx in 1:length(meanPrevTimes)) {
                 tSamp <- meanPrevTimes[sidx]
@@ -76,9 +96,26 @@ plotTraj <- function(fileName, header="trajectory", burninFrac=0.1,
             }
         }
         for (sidx in 1:length(meanPrev)) {
-            meanPrev[sidx] <- meanPrev[sidx]/nRecords
+            meanPrev[sidx] <- meanPrev[sidx]/nValidRecords
+        }
+
+        cat("done.\n")
+    }
+
+    getTime <- function(times) {
+        if (is.na(presentTime))
+            return(times)
+        else {
+            if (timesAreCalendarYears) {
+                presentYear <- floor(presentTime)
+                return(as.Date(365*(presentTime - times - presentYear),
+                    origin=as.Date(paste(presentYear,"-01-01", sep=""))))
+            } else {
+                return(presentTime - times)
+            }
         }
     }
+
 
 
     # Create plot if necessary
@@ -87,27 +124,29 @@ plotTraj <- function(fileName, header="trajectory", burninFrac=0.1,
             ylim = c(0, maxOccupancy)
 
         if (length(xlim)==1 && is.na(xlim))
-            xlim=sort(getTime(c(0, maxHeight), presentTime))
+            xlim=sort(getTime(c(0, maxHeight)))
 
 
-        plot(getTime(traj[[1]]$t, presentTime), traj[[1]]$I,
+        plot(getTime(traj[[1]]$t), traj[[1]]$I,
              col=NA, xlim=xlim, ylim=ylim,
              xlab=xlab, ylab=ylab, main=main, ...)
     }
 
-    for (i in 1:length(traj)) {
+    cat("Plotting...")
+    for (i in 1:nValidRecords) {
         indices <- which(traj[[i]]$t>=0)
-        lines(getTime(traj[[i]]$t[indices], presentTime), traj[[i]]$I[indices], col=col, ...)
+        lines(getTime(traj[[i]]$t[indices]), traj[[i]]$I[indices], col=col, ...)
 
         midx <- which.min(traj[[i]]$t[indices])
         mval <- traj[[i]]$t[indices][midx]
-        lines(getTime(c(0, mval), presentTime), rep(traj[[i]]$I[indices][midx],2), col=col, ...)
+        lines(getTime(c(0, mval)), rep(traj[[i]]$I[indices][midx],2), col=col, ...)
     }
 
     if (showMean) {
-        lines(getTime(meanPrevTimes, presentTime), meanPrev, lwd=4, col='white')
-        lines(getTime(meanPrevTimes, presentTime), meanPrev, lwd=2, col='black')
+        lines(getTime(meanPrevTimes), meanPrev, lwd=4, col='white')
+        lines(getTime(meanPrevTimes), meanPrev, lwd=2, col='black')
     }
+    cat("done.\n")
 }
 
 simSIR <- function(origin, beta, gamma, N) {
