@@ -5,7 +5,8 @@ EpiInf
 
 EpiInf (working title) is a [BEAST 2](http://www.beast2.org/) package for
 performing inference of compartmental epidemiological model parameters using
-particle filtering to compute the prior probability density of a tree.
+particle filtering to compute the prior probability density of a transmission
+tree.
 
 This archive contains the source code and is therefore mostly of interest to
 programmers. Users should proceed to the [project website] (http://tgvaughan.github.io/EpiInf).
