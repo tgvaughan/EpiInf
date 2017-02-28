@@ -11,4 +11,13 @@
            projectURL="http://tgvaughan.github.io/EpiInf" >
         <depends on='BEAST' atleast='2.4.0'/>
     </package>
+
+
+    <addon name="EpiInf" version="5.0.0"
+           url="https://github.com/tgvaughan/EpiInf/releases/download/v5.0.0/EpiInf.v5.0.0.zip"
+           description="Inference of epidemic trajectories"
+           projectURL="http://tgvaughan.github.io/EpiInf" >
+      <depends on="BEAST" atleast="2.4.0"/>
+      <depends on="SA" atleast="1.1.5"/>
+    </addon>
 </packages>
