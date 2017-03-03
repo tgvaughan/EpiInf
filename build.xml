@@ -15,6 +15,7 @@
     <!-- Directories necessary for all BEAST 2 packages -->
     <property name="doc" location="doc"/>
     <property name="examples" location="examples"/>
+    <property name="scripts" location="scripts"/>
     <property name="templates" location="templates"/>
 
     <!-- BEAST branch and version to build against
@@ -176,6 +177,7 @@
 
         <mkdir dir="${pack}"/>
         <mkdir dir="${pack}/examples"/>
+        <mkdir dir="${pack}/scripts"/>
         <mkdir dir="${pack}/templates"/>
         <mkdir dir="${pack}/lib"/>
         <mkdir dir="${pack}/doc"/>
@@ -199,6 +201,12 @@
             <fileset dir="${examples}" includes="**/*.xml" />
             <fileset dir="${examples}" includes="**/*.fasta" />
         </copy>
+
+        <mkdir dir="${scripts}" />
+        <copy todir="${pack}/scripts">
+            <fileset dir="${scripts}" includes="**/*" />
+        </copy>
+
 
         <mkdir dir="${templates}" />
         <copy todir="${pack}/templates">
