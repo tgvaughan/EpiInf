@@ -117,7 +117,7 @@
 
     <!-- Install dependencies -->
     <target name="install-dependencies" depends="build-beast">
-        <java classname="beast.util.AddOnManager">
+        <java classname="beast.util.AddOnManager" fork="true">
             <arg line="-add BEASTLabs"/>
             <classpath>
                 <pathelement path="${classpath}"/>
@@ -125,7 +125,7 @@
             </classpath>
         </java>
 
-        <java classname="beast.util.AddOnManager">
+        <java classname="beast.util.AddOnManager" fork="true">
             <arg line="-add SA"/>
             <classpath>
                 <pathelement path="${classpath}"/>

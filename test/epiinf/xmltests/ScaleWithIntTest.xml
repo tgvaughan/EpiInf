@@ -9,13 +9,13 @@
 
         <distribution spec="beast.core.util.CompoundDistribution">
             <distribution spec="beast.math.distributions.Prior" x="@x">
-                <distr spec="beast.math.distributions.UniformDistribution" lower="0.0" upper="1.0"/>
+                <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="1.0"/>
             </distribution>
             <distribution spec="beast.math.distributions.Prior" x="@y">
-                <distr spec="beast.math.distributions.UniformDistribution" lower="0.0" upper="1.0"/>
+                <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="1.0"/>
             </distribution>
-                <distribution spec="beast.math.distributions.Prior" x="@n">
-                <distr spec="beast.math.distributions.UniformDistribution" lower="0.0" upper="100.0"/>
+            <distribution spec="beast.math.distributions.Prior" x="@n">
+                <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="100.0"/>
             </distribution>
         </distribution>
 
