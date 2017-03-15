@@ -31,6 +31,7 @@
     <property name="test-reports" location="test-reports"/>
     <property name="dist" location="dist"/>
     <property name="pack" location="${dist}/package"/>
+    <property name="depends" location="depends"/>
 
     <!-- Prepare for compilation -->
     <target name="init">
@@ -50,6 +51,7 @@
 
         <mkdir dir="${build}"/>
         <mkdir dir="${build-lib}"/>
+        <mkdir dir="${depends}"/>
         <mkdir dir="${dist}"/>
 
         <copy todir="${build-lib}">
@@ -113,6 +115,25 @@
 
     <target name="build-beast" depends="build-local-beast,build-remote-beast"/>
 
+    <!-- Install dependencies -->
+    <target name="install-dependencies" depends="build-beast">
+        <java classname="beast.util.AddOnManager">
+            <arg line="-add BEASTLabs"/>
+            <classpath>
+                <pathelement path="${classpath}"/>
+                <fileset dir="${build-lib}" includes="*.jar"/>
+            </classpath>
+        </java>
+
+        <java classname="beast.util.AddOnManager">
+            <arg line="-add SA"/>
+            <classpath>
+                <pathelement path="${classpath}"/>
+                <fileset dir="${build-lib}" includes="*.jar"/>
+            </classpath>
+        </java>
+    </target>
+
     <!-- Compile -->
     <target name="compile" depends="build-beast">
         <javac target="${targetVersion}" source="${sourceVersion}" srcdir="${src}" destdir="${build}" includeantruntime="false">
@@ -136,7 +157,6 @@
         <mkdir dir="${test-reports}"/>
     </target>
 
-
     <!-- Compile unit tests -->
     <target name="compile-test" depends="init-test,compile,copy-resources">
         <javac target="${targetVersion}" source="${sourceVersion}" srcdir="${test}" destdir="${build-test}" includeantruntime="false">
@@ -150,7 +170,7 @@
 
 
     <!-- Run unit tests -->
-    <target name="test" depends="compile-test">
+    <target name="test" depends="compile-test, install-dependencies">
         <junit printsummary="yes" failureproperty="testFailed" showoutput="true">
             <classpath>
                 <pathelement path="${classpath}"/>

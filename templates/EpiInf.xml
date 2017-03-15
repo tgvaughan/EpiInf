@@ -134,6 +134,7 @@
             </distribution>
 
             <operator id='epiOriginScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@epiOrigin.t:$(n)" weight="1"/>
+
             <operator id='S0Walker.t:$(n)' spec='IntRandomWalkOperator' windowSize="10" parameter="@S0.t:$(n)" weight="1"/>
             <operator id='rhoSamplingProbScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@rhoSamplingProb.t:$(n)" weight="1"/>
 

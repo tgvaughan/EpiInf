@@ -54,12 +54,12 @@ public class OperatorTests {
         expectations.add(new Expectation("n", 50.5, 1.0));
         LogAnalyser logAnalyser = new LogAnalyser("ScaleWithIntTest.log", expectations);
 
+        Files.deleteIfExists(Paths.get("ScaleWithIntTest.xml.state"));
+        Files.deleteIfExists(Paths.get("ScaleWithIntTest.log"));
+
         for (Expectation expectation : expectations) {
             assertTrue(expectation.isValid());
             assertTrue(expectation.isPassed());
         }
-
-        Files.deleteIfExists(Paths.get("ScaleWithIntTest.xml.state"));
-        Files.deleteIfExists(Paths.get("ScaleWithIntTest.log"));
     }
 }
