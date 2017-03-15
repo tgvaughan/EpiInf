@@ -77,7 +77,13 @@ public class ScaleWithInt extends Operator {
         for (RealParameter param : realParameterInput.get()) {
             for (int i=0; i<param.getDimension(); i++) {
                 if(param.getValue(i) != 0.0) {
-                    param.setValue(i, param.getValue(i)*f);
+                    double newValue = param.getValue(i)*f;
+
+                    if (newValue<param.getLower() || newValue>param.getUpper())
+                        return Double.NEGATIVE_INFINITY;
+
+                    param.setValue(i, newValue);
+
                     upMinusDown += 1;
                 }
             }
@@ -86,7 +92,13 @@ public class ScaleWithInt extends Operator {
         for (RealParameter param : realParameterInverseInput.get()) {
             for (int i=0; i<param.getDimension(); i++) {
                 if (param.getValue(i) != 0.0) {
-                    param.setValue(i, param.getValue(i)/f);
+                    double newValue = param.getValue(i)/f;
+
+                    if (newValue<param.getLower() || newValue>param.getUpper())
+                        return Double.NEGATIVE_INFINITY;
+
+                    param.setValue(i, newValue);
+
                     upMinusDown -= 1;
                 }
             }
