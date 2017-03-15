@@ -33,20 +33,37 @@ public class GeomRandomWalk extends Operator {
     public Input<IntegerParameter> parameterInput = new Input<>("parameter",
             "Integer parameter to scale.", Input.Validate.REQUIRED);
 
+    IntegerParameter parameter;
+
     @Override
-    public void initAndValidate() { }
+    public void initAndValidate() {
+        parameter = parameterInput.get();
+    }
 
     @Override
     public double proposal() {
 
-        int thisVal = parameterInput.get().getValue();
-        double p = 1/(double)thisVal;
+        int dim = parameter.getDimension();
+        int idx = dim > 1 ? Randomizer.nextInt(dim) : 0;
 
-        int newVal = (int)Randomizer.nextGeometric(p);
+        int n = parameter.getValue(idx);
 
-        double p2 = 1/(double)newVal;
+        if (n <=0)
+            return Double.NEGATIVE_INFINITY;
 
-        return thisVal*Math.log(1-p2) + Math.log(p2)
-                - (newVal*Math.log(1-p) + Math.log(p));
+        double p = 1/(double)n;
+
+        int nPrime = (int)Randomizer.nextGeometric(p);
+
+        if (nPrime <= 0
+                || nPrime < parameterInput.get().getLower()
+                || nPrime > parameterInput.get().getUpper())
+            return Double.NEGATIVE_INFINITY;
+
+        double pPrime = 1/(double)nPrime;
+
+        parameterInput.get().setValue(idx, nPrime);
+
+        return n*Math.log(1-pPrime) + Math.log(pPrime) - (nPrime*Math.log(1-p) + Math.log(p));
     }
 }

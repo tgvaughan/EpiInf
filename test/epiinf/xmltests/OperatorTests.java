@@ -69,4 +69,33 @@ public class OperatorTests {
             Files.deleteIfExists(Paths.get("ScaleWithIntTest.log"));
         }
     }
+
+    @Test
+    public void testGeomRandomWalk() throws Exception {
+        Randomizer.setSeed(1);
+
+        XMLParser parser = new XMLParser();
+        beast.core.Runnable runnable = parser.parseFile(
+                new File("test/epiinf/xmltests/GeomRandomWalkTest.xml"));
+        Logger.FILE_MODE = Logger.LogFileMode.overwrite;
+        runnable.run();
+
+
+        List<Expectation> expectations = new ArrayList<>();
+        expectations.add(new Expectation("n", 50.0, 1.0));
+        LogAnalyser logAnalyser = new LogAnalyser("GeomRandomWalkTest.log", expectations);
+
+        try {
+            for (Expectation expectation : expectations) {
+                assertTrue(expectation.isValid());
+                assertTrue(expectation.isPassed());
+            }
+        } catch (Exception e) {
+            throw e;
+
+        } finally {
+            Files.deleteIfExists(Paths.get("GeomRandomWalkTest.xml.state"));
+            Files.deleteIfExists(Paths.get("GeomRandomWalkTest.log"));
+        }
+    }
 }

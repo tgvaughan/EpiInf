@@ -1,0 +1,38 @@
+<!--
+  ~ Copyright (C) 2017 Tim Vaughan <tgvaughan@gmail.com>
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<beast version='2.0' namespace='beast.core:beast.core.parameter:beast.evolution.operators:feast:feast.expressions:epiinf.operators'>
+
+    <run spec="MCMC" id="mcmc" chainLength="10000000">
+        <state>
+            <input name='stateNode' spec='IntegerParameter' value="50" id="n" lower="0" upper="100"/>
+        </state>
+
+        <distribution spec="beast.math.distributions.Prior" x="@n">
+            <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="100.0"/>
+        </distribution>
+
+        <operator spec="IntRandomWalkOperator" windowSize="10" parameter="@n" weight="1"/>
+
+        <operator spec="epiinf.operators.GeomRandomWalk" parameter="@n" weight="1"/>
+
+        <logger logEvery="1000" fileName="$(filebase).log">
+            <log idref="n"/>
+        </logger>
+    </run>
+
+</beast>
