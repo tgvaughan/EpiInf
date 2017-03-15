@@ -160,7 +160,7 @@
             </classpath>
             <batchtest fork="yes" todir="${test-reports}">
                 <fileset dir="${test}">
-                    <include name="**/*Test.java"/>
+                    <include name="**/*.java"/>
                 </fileset>
                 <formatter type="plain"/>
                 <!--formatter type="plain" usefile="false"/--> <!-- to screen -->
