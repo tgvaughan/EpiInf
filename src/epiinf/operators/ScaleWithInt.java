@@ -68,8 +68,8 @@ public class ScaleWithInt extends Operator {
         logHR = integerOperator.proposal();
         int m = integerParameter.getValue();
 
-        if (m<=0 || logHR==Double.NEGATIVE_INFINITY)
-            return logHR;
+        if (m<=0)
+            return Double.NEGATIVE_INFINITY;
 
         double f = m/(double)n;
 

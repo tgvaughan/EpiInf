@@ -17,6 +17,7 @@
 
 package epiinf.xmltests;
 
+import beast.core.Logger;
 import beast.util.Randomizer;
 import beast.util.XMLParser;
 import org.junit.Test;
@@ -43,6 +44,7 @@ public class OperatorTests {
         XMLParser parser = new XMLParser();
         beast.core.Runnable runnable = parser.parseFile(
                 new File("test/epiinf/xmltests/ScaleWithIntTest.xml"));
+        Logger.FILE_MODE = Logger.LogFileMode.overwrite;
         runnable.run();
 
 
@@ -51,7 +53,7 @@ public class OperatorTests {
         expectations.add(new Expectation("y1", 0.5, 0.01));
         expectations.add(new Expectation("y2", 0.5, 0.01));
         expectations.add(new Expectation("y3", 0.5, 0.01));
-        expectations.add(new Expectation("n", 50.5, 1.0));
+        expectations.add(new Expectation("n", 50.0, 1.0));
         LogAnalyser logAnalyser = new LogAnalyser("ScaleWithIntTest.log", expectations);
 
         try {

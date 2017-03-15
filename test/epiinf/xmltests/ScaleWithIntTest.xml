@@ -2,7 +2,7 @@
 
     <run spec="MCMC" id="mcmc" chainLength="10000000">
         <state>
-            <input name='stateNode' spec='IntegerParameter' value="50" id="n" lower="1" upper="100"/>
+            <input name='stateNode' spec='IntegerParameter' value="50" id="n" lower="0" upper="100"/>
             <input name='stateNode' spec='RealParameter' dimension="2" value="0.5 0" id="x" lower="0.0" upper="1.0"/>
             <input name='stateNode' spec='RealParameter' dimension="3" value="0.5 0.5 0.5" id="y" lower="0.0" upper="1.0"/>
         </state>
@@ -29,7 +29,7 @@
 
         <operator spec="IntRandomWalkOperator" windowSize="10" parameter="@n" weight="1"/>
 
-        <operator spec="epiinf.operators.ScaleWithInt" integerParameter="@n" weight="1"> 
+        <operator spec="epiinf.operators.ScaleWithInt" integerParameter="@n" weight="1">
             <integerOperator spec="IntRandomWalkOperator" windowSize="10" parameter="@n" weight="1"/>
             <realParameter idref="x"/>
             <realParameterInverse idref="y"/>
