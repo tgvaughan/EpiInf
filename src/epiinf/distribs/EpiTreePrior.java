@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Tim Vaughan <tgvaughan@gmail.com>
+ * Copyright (C) 2017 Tim Vaughan <tgvaughan@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,12 +17,17 @@
 
 package epiinf.distribs;
 
+import beast.core.Input;
+import beast.evolution.tree.TreeDistribution;
 import epiinf.EpidemicTrajectory;
+import epiinf.models.EpidemicModel;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public interface TrajectoryRecorder {
+public abstract class EpiTreePrior extends TreeDistribution {
+    public Input<EpidemicModel> modelInput = new Input<>(
+            "model", "Epidemic model.", Input.Validate.REQUIRED);
 
-    EpidemicTrajectory getConditionedTrajectory();
+    abstract public EpidemicTrajectory getConditionedTrajectory();
 }

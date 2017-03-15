@@ -18,7 +18,7 @@
 package epiinf;
 
 import beast.core.Input;
-import epiinf.distribs.TrajectoryRecorder;
+import epiinf.distribs.EpiTreePrior;
 
 import java.io.PrintStream;
 
@@ -27,11 +27,11 @@ import java.io.PrintStream;
  */
 public class ConditionedTrajectory extends EpidemicTrajectory {
 
-    public Input<TrajectoryRecorder> treeDensityInput = new Input<>("treeDensity",
+    public Input<EpiTreePrior> treeDensityInput = new Input<>("treeDensity",
             "SMC Tree density from which to log trajectories.",
             Input.Validate.REQUIRED);
 
-    TrajectoryRecorder treeDensity;
+    EpiTreePrior treeDensity;
 
     public ConditionedTrajectory() {
     }

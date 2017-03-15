@@ -39,10 +39,7 @@ import java.util.Random;
     + "parameters.  This variant leaps over tree events.")
 @Citation("Gabriel Leventhal, Timothy Vaughan, David Welch, Alexei Drummond, Tanja Stadler,\n" +
         "\"Exact phylodynamic inference using particle filtering\", in preparation.")
-public class LeapingSMCTreeDensity extends TreeDistribution implements TrajectoryRecorder {
-
-    public Input<EpidemicModel> modelInput = new Input<>(
-            "model", "Epidemic model.", Validate.REQUIRED);
+public class LeapingSMCTreeDensity extends EpiTreePrior {
 
     public Input<Function> incidenceInput = new Input<>(
             "incidenceParameter",

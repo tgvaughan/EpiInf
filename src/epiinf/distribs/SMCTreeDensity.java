@@ -38,10 +38,7 @@ import java.util.Random;
     + "parameters.")
 @Citation("Gabriel Leventhal, Timothy Vaughan, David Welch, Alexei Drummond, Tanja Stadler,\n" +
         "\"Exact phylodynamic inference using particle filtering\", in preparation.")
-public class SMCTreeDensity extends TreeDistribution implements TrajectoryRecorder {
-
-    public Input<EpidemicModel> modelInput = new Input<>(
-            "model", "Epidemic model.", Validate.REQUIRED);
+public class SMCTreeDensity extends EpiTreePrior {
 
     public Input<Integer> nParticlesInput = new Input<>(
             "nParticles", "Number of particles to use in SMC calculation.",
