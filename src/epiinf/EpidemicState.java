@@ -27,6 +27,11 @@ public class EpidemicState {
     public double time;
     public int modelIntervalIdx, observedEventIdx;
 
+    public enum Algorithm {
+        NA, SSA, TL
+    };
+    public Algorithm algorithm;
+
     public EpidemicState() { }
     
     public EpidemicState(double S, double I, double R) {
@@ -36,6 +41,8 @@ public class EpidemicState {
         this.time = 0;
         this.modelIntervalIdx = 0;
         this.observedEventIdx = 0;
+
+        this.algorithm = Algorithm.NA;
     }
 
     /**
@@ -56,6 +63,8 @@ public class EpidemicState {
         stateCopy.modelIntervalIdx = modelIntervalIdx;
         stateCopy.observedEventIdx = observedEventIdx;
 
+        stateCopy.algorithm = algorithm;
+
         return stateCopy;
     }
 
@@ -66,6 +75,8 @@ public class EpidemicState {
         time = otherState.time;
         modelIntervalIdx = otherState.modelIntervalIdx;
         observedEventIdx = otherState.observedEventIdx;
+
+        algorithm = otherState.algorithm;
     }
 
     @Override

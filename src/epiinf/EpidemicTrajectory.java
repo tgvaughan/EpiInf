@@ -132,7 +132,7 @@ public class EpidemicTrajectory extends BEASTObject implements Loggable {
             else
                 out.print(state.time);
 
-            out.print(":" + state.S + ":" + state.I + ":" + state.R);
+            out.print(":" + state.S + ":" + state.I + ":" + state.R + ":" + state.algorithm);
         }
 
         out.print("\t");

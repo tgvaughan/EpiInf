@@ -30,4 +30,11 @@ public abstract class EpiTreePrior extends TreeDistribution {
             "model", "Epidemic model.", Input.Validate.REQUIRED);
 
     abstract public EpidemicTrajectory getConditionedTrajectory();
+
+    /**
+     * @return Epidemic model
+     */
+    public EpidemicModel getModel() {
+        return modelInput.get();
+    }
 }

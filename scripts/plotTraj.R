@@ -8,36 +8,56 @@ parseTrajectoryString <- function(trajString) {
     res$S <- rep(0, nStates)
     res$I <- rep(0, nStates)
     res$R <- rep(0, nStates)
+    res$leap <- rep(FALSE, nStates)
 
     for (i in 1:nStates) {
         res$t[i] <- as.numeric(strValues[[i]][1])
         res$S[i] <- as.numeric(strValues[[i]][2])
         res$I[i] <- as.numeric(strValues[[i]][3])
         res$R[i] <- as.numeric(strValues[[i]][4])
+        res$leap[i] <- strValues[[i]][5] == "TL"
+        res$incidence[i] <- as.numeric(strValues[[i]][6])
+        res$Re[i] <- as.numeric(strValues[[i]][7])
     }
 
     return(res)
 }
 
+capitalize <- function(string) {
+    return(paste(toupper(substring(string,1,1)), substring(string,2), sep=''))
+}
+
 plotTraj <- function(fileName=NA, dataFrame=NA, colidx=2, burninFrac=0.1,
                      col=rgb(1,0,0,0.3), add=FALSE,
+                     leapCol=col,
                      xlim=NA, ylim=NA,
                      showMean=TRUE,
                      presentTime=NA,
                      timesAreCalendarYears=FALSE,
                      maxTrajectories=NA,
-                     xlab='Age', ylab='Prevalence', main='Trajectory distribution', ...) {
+                     target='prevalence',
+                     xlab='Age', ylab=capitalize(target), main='Trajectory distribution', ...) {
 
     if (is.na(fileName) && is.na(dataFrame)) {
         cat("Either fileName or df must be specified.\n")
         return()
     }
-        
+ 
+    if (target != "prevalence" && target != "incidence" && target != "Re") {
+        cat("target must be one of 'prevalence', 'incidence' or 'Re'")
+        return()
+    }
+       
     if (!is.na(fileName)) {
         cat("Loading data...")
         dataFrame <- read.table(fileName, header=T, as.is=T)
         cat("done.\n")
     }
+
+    targetFun <- switch(target,
+           prevalence = function(t) { return(t$I) },
+           incidence = function(t) { return(t$incidence) },
+           Re = function(t) { return(t$Re) })
 
     # Remove burnin
     nRecords <- dim(dataFrame)[1]
@@ -55,17 +75,18 @@ plotTraj <- function(fileName=NA, dataFrame=NA, colidx=2, burninFrac=0.1,
     } else {
         step <- 1
     }
+
+    traj <- list()
     
     maxOccupancy <- 0
     maxHeight <- 0
-    traj <- list()
     thisRecord <- 0
     for (i in seq(1,nRecords,by=step)) {
         if (!is.na(df[[colidx]][i])) {
             thisRecord <- thisRecord + 1
             
             traj[[thisRecord]] <- parseTrajectoryString(df[[colidx]][i])
-            maxOccupancy <- max(maxOccupancy, traj[[thisRecord]]$I)
+            maxOccupancy <- max(maxOccupancy, targetFun(traj[[thisRecord]]))
             maxHeight <- max(maxHeight, traj[[thisRecord]]$t)
         }
     }
@@ -76,27 +97,27 @@ plotTraj <- function(fileName=NA, dataFrame=NA, colidx=2, burninFrac=0.1,
 
     # Compute mean prevalence
     if (showMean) {
-        cat("Computing mean prevalence...")
+        cat(paste("Computing mean", target, "..."))
         
-        meanPrevTimes <- seq(maxHeight, 0, length.out=100)
-        meanPrev <- rep(0, 100)
+        meanTargetTimes <- seq(maxHeight, 0, length.out=100)
+        meanTarget <- rep(0, 100)
 
         for (i in 1:nValidRecords) {
             if (is.null(traj[[i]]))
                 next
 
             tidx <- 1
-            for (sidx in 1:length(meanPrevTimes)) {
-                tSamp <- meanPrevTimes[sidx]
+            for (sidx in 1:length(meanTargetTimes)) {
+                tSamp <- meanTargetTimes[sidx]
                 while (tidx <= length(traj[[i]]$t) && traj[[i]]$t[tidx]>tSamp) {
                     tidx <- tidx + 1
                 }
 
-                meanPrev[sidx] <- meanPrev[sidx] + traj[[i]]$I[tidx]
+                meanTarget[sidx] <- meanTarget[sidx] + targetFun(traj[[i]])[tidx]
             }
         }
-        for (sidx in 1:length(meanPrev)) {
-            meanPrev[sidx] <- meanPrev[sidx]/nValidRecords
+        for (sidx in 1:length(meanTarget)) {
+            meanTarget[sidx] <- meanTarget[sidx]/nValidRecords
         }
 
         cat("done.\n")
@@ -135,16 +156,16 @@ plotTraj <- function(fileName=NA, dataFrame=NA, colidx=2, burninFrac=0.1,
     cat("Plotting...")
     for (i in 1:nValidRecords) {
         indices <- which(traj[[i]]$t>=0)
-        lines(getTime(traj[[i]]$t[indices]), traj[[i]]$I[indices], col=col, ...)
+        lines(getTime(traj[[i]]$t[indices]), targetFun(traj[[i]])[indices], col=col, ...)
 
         midx <- which.min(traj[[i]]$t[indices])
         mval <- traj[[i]]$t[indices][midx]
-        lines(getTime(c(0, mval)), rep(traj[[i]]$I[indices][midx],2), col=col, ...)
+        lines(getTime(c(0, mval)), rep(targetFun(traj[[i]])[indices][midx],2), col=col, ...)
     }
 
     if (showMean) {
-        lines(getTime(meanPrevTimes), meanPrev, lwd=4, col='white')
-        lines(getTime(meanPrevTimes), meanPrev, lwd=2, col='black')
+        lines(getTime(meanTargetTimes), meanTarget, lwd=4, col='white')
+        lines(getTime(meanTargetTimes), meanTarget, lwd=2, col='black')
     }
     cat("done.\n")
 }

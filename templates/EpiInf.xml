@@ -20,6 +20,7 @@
     :beast.core
     :beast.core.parameter
     :epiinf
+    :epiinf.operators
     :epiinf.models
     :epiinf.distribs">
 
@@ -40,10 +41,10 @@
                 <x idref="$(p)ChangeInterval.t:$(n)"/>
                 <distr spec="beast.math.distributions.OneOnX"/>
             </distribution>
-            <operator id='$(p)ChangeTimesScaler.t:$(n)' spec='epiinf.util.ChangeTimesOperator' scaleFactor="0.8" weight="1">
+            <operator id='$(p)ChangeTimesScaler.t:$(n)' spec='epiinf.util.ChangeTimesOperator' scaleFactor="0.8" weight="4">
                 <changeTimes id="$(p)ChangeTimes.t:$(n)" spec="beast.core.parameter.RealParameter" value="0.0" estimate="false"/>
             </operator>
-            <operator id="$(p)ChangeIntervalScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.8" parameter="@$(p)ChangeInterval.t:$(n)" weight="1"/>
+            <operator id="$(p)ChangeIntervalScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.8" parameter="@$(p)ChangeInterval.t:$(n)" weight="4"/>
             ]]>
 
             <connect srcID="$(p).t:$(n)" targetID="state" inputName="stateNode"
@@ -79,13 +80,14 @@
     <mergewith point='misc'>
         <fragment id='SATreeOperators' spec="beast.app.beauti.Fragment">
             <![CDATA[
-            <operator id='$(m)SATreeScaler.t:$(n)' spec='beast.evolution.operators.SAScaleOperator' scaleFactor=".95" weight="3" tree="@Tree.t:$(n)"/>
+            <operator id='$(m)SATreeScaler.t:$(n)' spec='beast.evolution.operators.SAScaleOperator' scaleFactor=".95" weight="20" tree="@Tree.t:$(n)"/>
             <operator id='$(m)SATreeRootScaler.t:$(n)' spec='beast.evolution.operators.SAScaleOperator' scaleFactor=".95" weight="1" tree="@Tree.t:$(n)" rootOnly='true'/>
             <operator id='$(m)SAUniformOperator.t:$(n)' spec='beast.evolution.operators.SAUniform' weight="20" tree="@Tree.t:$(n)"/>
-            <operator id='$(m)SAWilsonBalding.t:$(n)' spec='beast.evolution.operators.SAWilsonBalding' weight="10" tree="@Tree.t:$(n)"/>
-            <operator id='$(m)SAWide.t:$(n)' spec='beast.evolution.operators.SAExchange' isNarrow="false" weight="10" tree="@Tree.t:$(n)"/>
-            <operator id='$(m)SANarrow.t:$(n)' spec='beast.evolution.operators.SAExchange' weight="10" tree="@Tree.t:$(n)"/>
-            <operator id='$(m)LeafToSA.t:$(n)' spec='beast.evolution.operators.LeafToSampledAncestorJump' weight="10" tree="@Tree.t:$(n)"/>
+            <operator id='$(m)SAWilsonBalding.t:$(n)' spec='beast.evolution.operators.SAWilsonBalding' weight="20" tree="@Tree.t:$(n)"/>
+            <operator id='$(m)SAWide.t:$(n)' spec='beast.evolution.operators.SAExchange' isNarrow="false" weight="20" tree="@Tree.t:$(n)"/>
+            <operator id='$(m)SANarrow.t:$(n)' spec='beast.evolution.operators.SAExchange' weight="20" tree="@Tree.t:$(n)"/>
+            <operator id='$(m)LeafToSA.t:$(n)' spec='beast.evolution.operators.LeafToSampledAncestorJump' weight="20" tree="@Tree.t:$(n)"/>
+            <operator id='$(m)UpDown.t:$(n)' spec='beast.evolution.operators.UpDownOperator' scaleFactor=".75" weight="20" up="@Tree.t:$(n)"/>
             ]]>
 
             <connect srcID='$(m)SATreeScaler.t:$(n)'              targetID='mcmc' inputName='operator' if='inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true'/>
@@ -95,6 +97,7 @@
             <connect srcID='$(m)SAWide.t:$(n)'                    targetID='mcmc' inputName='operator' if='inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true'/>
             <connect srcID='$(m)SANarrow.t:$(n)'                  targetID='mcmc' inputName='operator' if='inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true'/>
             <connect srcID='$(m)LeafToSA.t:$(n)'                  targetID='mcmc' inputName='operator' if='inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true'/>
+            <connect srcID='$(m)UpDown.t:$(n)'                 targetID='mcmc' inputName='operator' if='inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true'/>
         </fragment>
     </mergewith>
 
@@ -138,9 +141,14 @@
             <operator id='S0Walker.t:$(n)' spec='IntRandomWalkOperator' windowSize="10" parameter="@S0.t:$(n)" weight="1"/>
             <operator id='rhoSamplingProbScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@rhoSamplingProb.t:$(n)" weight="1"/>
 
+            <operator id="S0UpDown.t:$(n)" spec='epiinf.operators.ScaleWithInt' weight="4">
+                <integerOperator spec="IntRandomWalkOperator" windowSize="10" parameter="@S0.t:$(n)" weight="1.0"/>
+                <integerParameter idref="S0.t:$(n)"/>
+            </operator>
+
             <!-- Trajectory logging -->
             <logger id="trajlog.t:$(n)" logEvery="1000" fileName="$(filebase).$(n).traj">
-                <log id="trajectory.t:$(n)" spec='epiinf.ConditionedTrajectory' treeDensity="@EpiTreePrior.t:$(n)"/>
+                <log id="trajectory.t:$(n)" spec='epiinf.TrajectoryLogger' treeDensity="@EpiTreePrior.t:$(n)"/>
             </logger>
             ]]>
 
@@ -149,6 +157,11 @@
             <plate fragment="EpiModelParameter" var="p" range="recoveryRate"/>
             <plate fragment="EpiModelParameter" var="p" range="psiSamplingVariable"/>
             <plate fragment="EpiModelParameter" var="p" range="removalProb"/>
+
+            <connect srcID="infectionRate.t:$(n)" targetID="EpiTreePriorUpDown.t:$(n)" inputName="down"
+                     if="Tree.t:$(n)/estimate=true and infectionRate.t:$(n)/estimate=true"/>
+            <connect srcID="recoveryRate.t:$(n)" targetID="EpiTreePriorUpDown.t:$(n)" inputName="down"
+                     if="Tree.t:$(n)/estimate=true and recoveryRate.t:$(n)/estimate=true"/>
 
             <connect srcID="EpiTreePrior.t:$(n)" targetID="prior" inputName="distribution"
                      if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true">

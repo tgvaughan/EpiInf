@@ -54,7 +54,7 @@ public class SMCTreeDensity extends EpiTreePrior {
 
     public Input<Integer> minLeapCountInput = new Input<>(
             "minLeapCount", "This is the minimum number of identically-sized " +
-            "tau leaps that will be performed across the tree.", 1);
+            "tau leaps that will be performed across the tree.", 100);
 
     public Input<Double> relStdThreshInput = new Input<>(
             "relStdThresh", "Threshold on relative size of standard deviation of" +
@@ -85,6 +85,7 @@ public class SMCTreeDensity extends EpiTreePrior {
     EpidemicState[] particleStates, particleStatesNew;
 
     List<EpidemicState> recordedTrajectoryStates;
+    EpidemicTrajectory storedTrajectory;
     List<List<EpidemicState>> particleTrajectories, particleTrajectoriesNew;
 
 
@@ -130,19 +131,11 @@ public class SMCTreeDensity extends EpiTreePrior {
         }
     }
 
-    @Override
     public double calculateLogP() {
-        logP = calculateLogP(false);
-        return logP;
-    }
 
-    public double calculateLogP(boolean recordTrajectory) {
+        logP = 0.0;
 
-        double thisLogP = 0.0;
-
-        if (recordTrajectory) {
-            recordedTrajectoryStates.clear();
-        }
+        recordedTrajectoryStates.clear();
 
         // Early exit if first tree event occurs before origin.
         if (observedEventsList.getEventList().get(0).time < 0) {
@@ -154,10 +147,8 @@ public class SMCTreeDensity extends EpiTreePrior {
             particleStates[p].assignFrom(model.getInitialState());
             logParticleWeights[p] = 0.0;
 
-            if (recordTrajectory) {
-                particleTrajectories.get(p).clear();
-                particleTrajectoriesNew.get(p).add(model.getInitialState());
-            }
+            particleTrajectories.get(p).clear();
+            particleTrajectoriesNew.get(p).add(model.getInitialState());
         }
 
         for (ObservedEvent observedEvent : observedEventsList.getEventList()) {
@@ -166,9 +157,7 @@ public class SMCTreeDensity extends EpiTreePrior {
             double maxLogWeight = Double.NEGATIVE_INFINITY;
             for (int p = 0; p < nParticles; p++) {
 
-                logParticleWeights[p] += recordTrajectory ?
-                        updateParticle(particleStates[p], particleTrajectories.get(p))
-                        : updateParticle(particleStates[p], null);
+                logParticleWeights[p] += updateParticle(particleStates[p], particleTrajectories.get(p));
 
                 maxLogWeight = Math.max(logParticleWeights[p], maxLogWeight);
             }
@@ -190,7 +179,7 @@ public class SMCTreeDensity extends EpiTreePrior {
             if (Neff < resampThresh*nParticles || observedEvent.isFinal) {
 
                 // Update marginal likelihood estimate
-                thisLogP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
+                logP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
 
                 // Normalize weights
                 for (int i = 0; i < nParticles; i++)
@@ -203,10 +192,8 @@ public class SMCTreeDensity extends EpiTreePrior {
                     particleStatesNew[p].assignFrom(particleStates[srcIdx]);
                     logParticleWeights[p] = 0;
 
-                    if (recordTrajectory) {
-                        particleTrajectoriesNew.get(p).clear();
-                        particleTrajectoriesNew.get(p).addAll(particleTrajectories.get(srcIdx));
-                    }
+                    particleTrajectoriesNew.get(p).clear();
+                    particleTrajectoriesNew.get(p).addAll(particleTrajectories.get(srcIdx));
                 }
 
                 // Switch particleStates and particleStatesNew
@@ -215,19 +202,16 @@ public class SMCTreeDensity extends EpiTreePrior {
                 particleStatesNew = tempStates;
 
                 // Switch particleTrajectories and particleTrajectoriesNew
-                if (recordTrajectory) {
-                    List<List<EpidemicState>> tmpTrajs = particleTrajectories;
-                    particleTrajectories = particleTrajectoriesNew;
-                    particleTrajectoriesNew = tmpTrajs;
-                }
+                List<List<EpidemicState>> tmpTrajs = particleTrajectories;
+                particleTrajectories = particleTrajectoriesNew;
+                particleTrajectoriesNew = tmpTrajs;
             }
         }
 
         // Choose arbitrary trajectory to log.
-        if (recordTrajectory)
-            recordedTrajectoryStates.addAll(particleTrajectories.get(0));
+        recordedTrajectoryStates.addAll(particleTrajectories.get(0));
 
-        return thisLogP;
+        return logP;
     }
 
     /**
@@ -280,14 +264,20 @@ public class SMCTreeDensity extends EpiTreePrior {
 
             // Determine length of proposed leap and switch back to SSA
             // if length isn't much greater than the expected SSA step size.
-            double tau = Double.POSITIVE_INFINITY;
+            double tau = maxLeapSize;
             if (isLeap) {
-                tau = model.getTau(epsilon, particleState, unobservedInfectProp, allowedRecovProp);
-                if (tau < 10.0/allowedEventProp)
-                    isLeap = false;
+                if (epsilon>0.0) {
+                    tau = Math.min(maxLeapSize,
+                            model.getTau(epsilon, particleState, unobservedInfectProp, allowedRecovProp));
+
+                }
             }
 
+            if (tau < 10.0/allowedEventProp)
+                isLeap = false;
+
             if (!isLeap) {
+                particleState.algorithm = EpidemicState.Algorithm.SSA;
 
                 // Determine size of time increment
                 double dt;
@@ -337,9 +327,9 @@ public class SMCTreeDensity extends EpiTreePrior {
                 }
 
             } else {
+                particleState.algorithm = EpidemicState.Algorithm.TL;
 
                 double trueDt = Math.min(tau, Math.min(nextModelEventTime, nextObservedEventTime) - particleState.time);
-                trueDt = Math.min(trueDt, maxLeapSize);
                 conditionalLogP += -trueDt * (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
                         + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]
                         + observedInfectProp + forbiddenRecovProp);
@@ -465,9 +455,7 @@ public class SMCTreeDensity extends EpiTreePrior {
 
     @Override
     public EpidemicTrajectory getConditionedTrajectory() {
-        calculateLogP(true);
-
-        return new EpidemicTrajectory(null, recordedTrajectoryStates, observedEventsList.getOrigin());
+        return storedTrajectory;
     }
 
     @Override
@@ -501,4 +489,11 @@ public class SMCTreeDensity extends EpiTreePrior {
         return true;
     }
 
+    @Override
+    protected void accept() {
+        super.accept();
+
+        List<EpidemicState> stateListCopy = new ArrayList<>(recordedTrajectoryStates);
+        storedTrajectory = new EpidemicTrajectory(null, stateListCopy, observedEventsList.getOrigin());
+    }
 }
