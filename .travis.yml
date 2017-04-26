@@ -9,7 +9,7 @@ before_install:
     - docker pull tgvaughan/travis
 
 script:
-    - docker run tgvaughan/travis /bin/bash -c 'cd /root; git clont http://github.com/tgvaughan/EpiInf.git; cd EpiInf; ant test'
+    - docker run tgvaughan/travis /bin/bash -c 'cd /root; git clone http://github.com/tgvaughan/EpiInf.git; cd EpiInf; ant test'
 
 notifications:
   slack: phylodyn:GAerIdZkKLaTFYnx6twCjwVi
