@@ -4,4 +4,8 @@ FROM openjdk:8
 
 RUN apt-get update && apt-get install -y git ant
 
-ADD . /root/
+WORKDIR /root
+
+ADD . ./
+
+ENTRYPOINT ant test
