@@ -1,3 +1,19 @@
+loadData <- function(fileNames, burninFrac=0.1) {
+
+    nFiles <- length(fileNames)
+    dataFrames <- list()
+    for (i in 1:nFiles) {
+        dataFrames[[i]] <- read.table(fileNames[i], header=T, as.is=T)
+    }
+
+    for (i in 1:nFiles) {
+        nRecords <- dim(dataFrames[[i]])[1]
+        dataFrames[[i]] <- dataFrames[[i]][-(1:ceiling(nRecords*burninFrac)),]
+    }
+
+    return(dataFrames);
+}
+
 parseTrajectoryString <- function(trajString) {
     strValues <- strsplit(strsplit(trajString, ",")[[1]], ":")
 
@@ -23,102 +39,107 @@ parseTrajectoryString <- function(trajString) {
     return(res)
 }
 
+parseTrajectories <- function(dataFrames, colidx=2) {
+    traj <- list()
+    nFiles <- length(dataFrames)
+    
+    thisRecord <- 0
+    for (i in 1:nFiles) {
+        for (j in 1:dim(dataFrames[[i]])[1]) {
+            if (!is.na(dataFrames[[i]][[colidx]][j])) {
+                thisRecord <- thisRecord + 1
+
+                traj[[thisRecord]] <- parseTrajectoryString(dataFrames[[i]][[colidx]][j])
+                traj[[thisRecord]]$fileNum <- i
+            }
+        }
+    }
+
+    return(traj)
+}
+
 capitalize <- function(string) {
     return(paste(toupper(substring(string,1,1)), substring(string,2), sep=''))
 }
 
-plotTraj <- function(fileName=NA, dataFrame=NA, colidx=2, burninFrac=0.1,
+plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, burninFrac=0.1,
                      col=rgb(1,0,0,0.3), add=FALSE,
                      leapCol=col,
                      xlim=NA, ylim=NA,
+                     heightLim=NA,
                      showMean=TRUE,
+                     showHPD=TRUE,
                      presentTime=NA,
                      timesAreCalendarYears=FALSE,
-                     maxTrajectories=NA,
                      target='prevalence',
+                     incidencePeriod=1,
                      xlab='Age', ylab=capitalize(target), main='Trajectory distribution', ...) {
 
-    if (is.na(fileName) && is.na(dataFrame)) {
-        cat("Either fileName or df must be specified.\n")
-        return()
-    }
- 
+
     if (target != "prevalence" && target != "incidence" && target != "Re") {
-        cat("target must be one of 'prevalence', 'incidence' or 'Re'")
+        cat("Error: target must be one of 'prevalence', 'incidence' or 'Re'")
         return()
     }
-       
-    if (!is.na(fileName)) {
+
+    # Load data
+    if (is.null(dataFrames) && is.null(traj)) {
+        if (length(fileNames) == 0) {
+            cat("Error: must specify at least one input file!")
+            return();
+        }
+
         cat("Loading data...")
-        dataFrame <- read.table(fileName, header=T, as.is=T)
+        dataFrames <- loadData(fileNames, burninFrac)
         cat("done.\n")
     }
 
+    # Parse trajectories
+    if (is.null(traj)) {
+        cat("Parsing trajectories...")
+        traj <- parseTrajectories(dataFrames, colidx)
+        cat("done.\n")
+    }
+
+    # Define target function for plotting
     targetFun <- switch(target,
            prevalence = function(t) { return(t$I) },
-           incidence = function(t) { return(t$incidence) },
+           incidence = function(t) { return(t$incidence*incidencePeriod) },
            Re = function(t) { return(t$Re) })
 
-    # Remove burnin
-    nRecords <- dim(dataFrame)[1]
-    df <- dataFrame[-(1:ceiling(nRecords*burninFrac)),]
-
-    # Update record count
-    nRecords <- dim(dataFrame)[1]
-
-    # Parse trajectories
-    cat("Parsing trajectories...")
-
-
-    if (!is.na(maxTrajectories)) {
-        step <- ceiling(nRecords/maxTrajectories)
-    } else {
-        step <- 1
-    }
-
-    traj <- list()
-    
-    maxOccupancy <- 0
+    # Identify plot boundaries
     maxHeight <- 0
-    thisRecord <- 0
-    for (i in seq(1,nRecords,by=step)) {
-        if (!is.na(df[[colidx]][i])) {
-            thisRecord <- thisRecord + 1
-            
-            traj[[thisRecord]] <- parseTrajectoryString(df[[colidx]][i])
-            maxOccupancy <- max(maxOccupancy, targetFun(traj[[thisRecord]]))
-            maxHeight <- max(maxHeight, traj[[thisRecord]]$t)
-        }
+    minValue <- +Inf
+    maxValue <- -Inf
+    for (i in 1:length(traj)) {
+        maxHeight <- max(maxHeight, traj[[i]]$t)
+        maxValue <- max(maxValue, targetFun(traj[[i]]))
+        minValue <- min(minValue, targetFun(traj[[i]]))
     }
 
-    nValidRecords <- thisRecord
-
-    cat("done.\n")
+    if (!is.na(heightLim))
+        maxHeight <- heightLim
 
     # Compute mean prevalence
-    if (showMean) {
-        cat(paste("Computing mean", target, "..."))
+    if (showMean || showHPD) {
+        cat(paste0("Computing moments ", target, "..."))
         
-        meanTargetTimes <- seq(maxHeight, 0, length.out=100)
-        meanTarget <- rep(0, 100)
+        targetTimes <- seq(maxHeight, 0, length.out=100)
+        targetValues <- matrix(NA, length(traj), 100)
 
-        for (i in 1:nValidRecords) {
-            if (is.null(traj[[i]]))
-                next
-
+        for (i in 1:length(traj)) {
             tidx <- 1
             for (sidx in 1:length(meanTargetTimes)) {
                 tSamp <- meanTargetTimes[sidx]
-                while (tidx <= length(traj[[i]]$t) && traj[[i]]$t[tidx]>tSamp) {
+                while (tidx < length(traj[[i]]$t) && traj[[i]]$t[tidx]>tSamp) {
                     tidx <- tidx + 1
                 }
 
-                meanTarget[sidx] <- meanTarget[sidx] + targetFun(traj[[i]])[tidx]
+                targetValues[i,sidx] <- targetFun(traj[[i]])[tidx]
             }
         }
-        for (sidx in 1:length(meanTarget)) {
-            meanTarget[sidx] <- meanTarget[sidx]/nValidRecords
-        }
+        meanTarget <- colMeans(targetValues)
+        hpdTargetLow <- apply(targetValues, 2, function(x) {return(quantile(x, probs=0.025))})
+        hpdTargetHigh <- apply(targetValues, 2, function(x) {return(quantile(x, probs=0.975))})
 
         cat("done.\n")
     }
@@ -137,12 +158,14 @@ plotTraj <- function(fileName=NA, dataFrame=NA, colidx=2, burninFrac=0.1,
         }
     }
 
-
-
     # Create plot if necessary
     if (!add) {
-        if (length(ylim)==1 && is.na(ylim))
-            ylim = c(0, maxOccupancy)
+        if (length(ylim)==1 && is.na(ylim)) {
+            if (target == 'Re')
+                ylim = c(minValue, maxValue)
+            else
+                ylim = c(0, maxValue)
+        }
 
         if (length(xlim)==1 && is.na(xlim))
             xlim=sort(getTime(c(0, maxHeight)))
@@ -154,18 +177,26 @@ plotTraj <- function(fileName=NA, dataFrame=NA, colidx=2, burninFrac=0.1,
     }
 
     cat("Plotting...")
-    for (i in 1:nValidRecords) {
+    for (i in 1:length(traj)) {
         indices <- which(traj[[i]]$t>=0)
-        lines(getTime(traj[[i]]$t[indices]), targetFun(traj[[i]])[indices], col=col, ...)
+        lines(getTime(traj[[i]]$t[indices]), targetFun(traj[[i]])[indices], col=col[traj[[i]]$fileNum], ...)
 
         midx <- which.min(traj[[i]]$t[indices])
         mval <- traj[[i]]$t[indices][midx]
-        lines(getTime(c(0, mval)), rep(targetFun(traj[[i]])[indices][midx],2), col=col, ...)
+        lines(getTime(c(0, mval)), rep(targetFun(traj[[i]])[indices][midx],2), col=col[traj[[i]]$fileNum], ...)
     }
 
     if (showMean) {
-        lines(getTime(meanTargetTimes), meanTarget, lwd=4, col='white')
+        lines(getTime(meanTargetTimes), meanTarget, lwd=6, col='white')
         lines(getTime(meanTargetTimes), meanTarget, lwd=2, col='black')
+    }
+
+    if (showHPD) {
+        lines(getTime(meanTargetTimes), hpdTargetLow, lwd=6, col='white')
+        lines(getTime(meanTargetTimes), hpdTargetLow, lwd=2, col='black', lty=2)
+
+        lines(getTime(meanTargetTimes), hpdTargetHigh, lwd=6, col='white')
+        lines(getTime(meanTargetTimes), hpdTargetHigh, lwd=2, col='black', lty=2)
     }
     cat("done.\n")
 }
