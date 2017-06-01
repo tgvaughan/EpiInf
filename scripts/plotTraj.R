@@ -1,4 +1,4 @@
-loadData <- function(fileNames, burninFrac=0.1) {
+loadData <- function(fileNames, burninFrac=0.1, nSamples=NA) {
 
     nFiles <- length(fileNames)
     dataFrames <- list()
@@ -6,9 +6,18 @@ loadData <- function(fileNames, burninFrac=0.1) {
         dataFrames[[i]] <- read.table(fileNames[i], header=T, as.is=T)
     }
 
+    # Remove burnin and downsample
     for (i in 1:nFiles) {
         nRecords <- dim(dataFrames[[i]])[1]
         dataFrames[[i]] <- dataFrames[[i]][-(1:ceiling(nRecords*burninFrac)),]
+
+        if (!is.na(nSamples)) {
+            nRecords <- dim(dataFrames[[i]])[1]
+            skip <- ceiling(nRecords/nSamples)
+
+            if (skip>0)
+                dataFrames[[i]] <- dataFrames[[i]][seq(1,nRecords,by=skip),]
+        }
     }
 
     return(dataFrames);
