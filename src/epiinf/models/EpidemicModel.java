@@ -126,7 +126,8 @@ public abstract class EpidemicModel extends CalculationNode {
 
     public Input<Function> originInput = new Input<>(
             "origin",
-            "Time before most recent sample that epidemic began. ");
+            "Time before end of sampling process that epidemic began.",
+            Input.Validate.REQUIRED);
 
     public Input<Double> toleranceInput = new Input<>("tolerance",
             "Maximum absolute time difference between events on tree and "
@@ -167,27 +168,7 @@ public abstract class EpidemicModel extends CalculationNode {
                                 "don't match.");
         }
 
-        if ((infectionRateShiftTimesBackwardInput.get()
-                || recoveryRateShiftTimesBackwardInput.get()
-                || psiSamplingVariableShiftTimesBackwardInput.get()
-                || rhoSamplingTimesBackwardInput.get()
-                || removalProbShiftTimesBackwardInput.get())
-            && originInput.get() == null) {
-            throw new IllegalArgumentException(
-                    "Must specify origin input if backward times are used.");
-        }
-
         ratesDirty = true;
-    }
-    
-    /**
-     * Retrieve tolerance with respect to difference between epidemic
-     * and tree event times.
-     * 
-     * @return tolerance
-     */
-    public double getTolerance() {
-        return tolerance;
     }
     
     /**
@@ -393,6 +374,7 @@ public abstract class EpidemicModel extends CalculationNode {
 
         modelEventList.clear();
 
+        // Add rho sampling events
         if (rhoSamplingProbInput.get() != null) {
             for (int i = 0; i < rhoSamplingProbInput.get().getDimension(); i++) {
                 if (rhoSamplingProbInput.get().getArrayValue(i) <= 0.0)

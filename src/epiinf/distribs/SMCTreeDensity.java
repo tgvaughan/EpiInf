@@ -97,9 +97,6 @@ public class SMCTreeDensity extends EpiTreePrior {
     @Override
     public void initAndValidate() {
         model = modelInput.get();
-        if (model.originInput.get() == null)
-            throw new IllegalArgumentException("The origin input to " +
-                    "EpidemicModel must be set when the model is used for inference.");
 
         if (treeInput.get() == null && incidenceParamInput.get() == null)
             throw new IllegalArgumentException("Must specify at least one of tree or incidence.");
@@ -152,6 +149,28 @@ public class SMCTreeDensity extends EpiTreePrior {
         }
 
         for (ObservedEvent observedEvent : observedEventsList.getEventList()) {
+            if (!propagateEnsemble(observedEvent))
+                return Double.NEGATIVE_INFINITY;
+        }
+
+        // Propagate ensemble up to end of observation period
+        if (!propagateEnsemble(null))
+            return Double.NEGATIVE_INFINITY;
+
+        // Choose arbitrary trajectory to log.
+        recordedTrajectoryStates.addAll(particleTrajectories.get(0));
+
+        return logP;
+    }
+
+    /**
+     * Propagate particle ensemble up to chosen observed event.
+     *
+     * @param observedEvent Next observed event, or null to represent end of observation period.
+     *
+     * @return true if propagation succeeds, false if it fails due to ensemble extinction
+     */
+    private boolean propagateEnsemble(ObservedEvent observedEvent) {
 
             // Update particles and record max log weight
             double maxLogWeight = Double.NEGATIVE_INFINITY;
@@ -171,13 +190,12 @@ public class SMCTreeDensity extends EpiTreePrior {
             }
 
             if (!(sumOfScaledWeights > 0.0)) {
-                return Double.NEGATIVE_INFINITY;
+                return false;
             }
 
             double Neff = sumOfScaledWeights*sumOfScaledWeights/sumOfSquaredScaledWeights;
 
-            if (Neff < resampThresh*nParticles || observedEvent.isFinal) {
-
+            if (Neff < resampThresh*nParticles || observedEvent == null) {
                 // Update marginal likelihood estimate
                 logP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
 
@@ -185,33 +203,37 @@ public class SMCTreeDensity extends EpiTreePrior {
                 for (int i = 0; i < nParticles; i++)
                     particleWeights[i] = particleWeights[i] / sumOfScaledWeights;
 
-                // Sample particle with replacement
-                ReplacementSampler replacementSampler = new ReplacementSampler(particleWeights);
-                for (int p = 0; p < nParticles; p++) {
-                    int srcIdx = replacementSampler.next();
-                    particleStatesNew[p].assignFrom(particleStates[srcIdx]);
-                    logParticleWeights[p] = 0;
-
-                    particleTrajectoriesNew.get(p).clear();
-                    particleTrajectoriesNew.get(p).addAll(particleTrajectories.get(srcIdx));
-                }
-
-                // Switch particleStates and particleStatesNew
-                EpidemicState[] tempStates = particleStates;
-                particleStates = particleStatesNew;
-                particleStatesNew = tempStates;
-
-                // Switch particleTrajectories and particleTrajectoriesNew
-                List<List<EpidemicState>> tmpTrajs = particleTrajectories;
-                particleTrajectories = particleTrajectoriesNew;
-                particleTrajectoriesNew = tmpTrajs;
+                resampleParticles();
             }
+
+            return true;
+    }
+
+    /**
+     * Resample particle states from weighted particle distribution.
+     */
+    private void resampleParticles() {
+
+        // Sample particle with replacement
+        ReplacementSampler replacementSampler = new ReplacementSampler(particleWeights);
+        for (int p = 0; p < nParticles; p++) {
+            int srcIdx = replacementSampler.next();
+            particleStatesNew[p].assignFrom(particleStates[srcIdx]);
+            logParticleWeights[p] = 0;
+
+            particleTrajectoriesNew.get(p).clear();
+            particleTrajectoriesNew.get(p).addAll(particleTrajectories.get(srcIdx));
         }
 
-        // Choose arbitrary trajectory to log.
-        recordedTrajectoryStates.addAll(particleTrajectories.get(0));
+        // Switch particleStates and particleStatesNew
+        EpidemicState[] tempStates = particleStates;
+        particleStates = particleStatesNew;
+        particleStatesNew = tempStates;
 
-        return logP;
+        // Switch particleTrajectories and particleTrajectoriesNew
+        List<List<EpidemicState>> tmpTrajs = particleTrajectories;
+        particleTrajectories = particleTrajectoriesNew;
+        particleTrajectoriesNew = tmpTrajs;
     }
 
     /**
@@ -383,10 +405,33 @@ public class SMCTreeDensity extends EpiTreePrior {
                 particleTrajectory.add(particleState.copy());
         }
 
-        particleState.time = nextObservedEvent.time;
+        // Include probability of tree event and increment state if necessary
+        if (nextObservedEvent != null) {
+            particleState.time = nextObservedEvent.time;
+            conditionalLogP += getObservedEventProbability(particleState,
+                    nextObservedEvent, nextObservedEventTime,
+                    nextModelEvent, nextModelEventTime);
+        } else
+            particleState.time = model.getOrigin();
 
-        // Include probability of tree event
-        if (nextObservedEvent.type == ObservedEvent.Type.COALESCENCE) {
+        if (particleTrajectory != null)
+            particleTrajectory.add(particleState.copy());
+
+        if (!particleState.isValid())
+            return Double.NEGATIVE_INFINITY; // Can occur due to susceptible pool depletion
+        else {
+            particleState.observedEventIdx += 1;
+            return conditionalLogP;
+        }
+    }
+
+    private double getObservedEventProbability(EpidemicState particleState,
+                                               ObservedEvent nextObservedEvent, double nextObservedEventTime,
+                                               ModelEvent nextModelEvent, double nextModelEventTime) {
+
+        double conditionalLogP = 0.0;
+
+         if (nextObservedEvent.type == ObservedEvent.Type.COALESCENCE) {
             model.calculatePropensities(particleState);
             model.incrementState(particleState, EpidemicEvent.Infection);
             conditionalLogP += Math.log(2.0 / particleState.I / (particleState.I - 1)
@@ -442,15 +487,7 @@ public class SMCTreeDensity extends EpiTreePrior {
             conditionalLogP += GammaFunction.lnGamma(1 + nextObservedEvent.multiplicity);
         }
 
-        if (particleTrajectory != null)
-            particleTrajectory.add(particleState.copy());
-
-        if (!particleState.isValid())
-            return Double.NEGATIVE_INFINITY; // Can occur due to susceptible pool depletion
-        else {
-            particleState.observedEventIdx += 1;
-            return conditionalLogP;
-        }
+        return conditionalLogP;
     }
 
     @Override
@@ -496,4 +533,5 @@ public class SMCTreeDensity extends EpiTreePrior {
         List<EpidemicState> stateListCopy = new ArrayList<>(recordedTrajectoryStates);
         storedTrajectory = new EpidemicTrajectory(null, stateListCopy, observedEventsList.getOrigin());
     }
+
 }

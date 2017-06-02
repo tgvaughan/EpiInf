@@ -35,7 +35,7 @@ import java.util.TreeSet;
 
 /**
  * State node initializer which simulates a transmission tree compatible with
- * the given epidemic trajectory.  The tree origin parameter is also initialized.
+ * the given epidemic trajectory.
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */

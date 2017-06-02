@@ -44,15 +44,6 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
     
-    public Input<Double> durationInput = new Input<>(
-            "maxDuration", "Maximum duration of epidemic to simulate. "
-                    + "Defaults to infinity.", Double.POSITIVE_INFINITY);
-
-    public Input<Function> originInput = new Input<>(
-            "origin", "Origin with respect to most recent sample in tree. " +
-            "If provided, trimes will be logged as ages before most recent " +
-            "sample.");
-
     public Input<String> fileNameInput = new Input<>(
             "fileName",
             "Optional name of file to write simulated trajectory to.");
@@ -63,14 +54,12 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
                     " approximate the stochastic integral.", 0);
     
     EpidemicModel model;
-    double duration;
     int nSteps;
     
     public SimulatedTrajectory() { }
 
     public SimulatedTrajectory(EpidemicModel model, double duration, int nSteps) {
         this.model = model;
-        this.duration = duration;
         this.nSteps = nSteps;
 
         eventList = new ArrayList<>();
@@ -95,7 +84,6 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
         super.initAndValidate();
         
         model = modelInput.get();
-        duration = durationInput.get();
         nSteps = nStepsInput.get();
 
         if (nSteps > 0)
@@ -120,10 +108,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
     public void simulate() {
 
         double endTime;
-        if (origin != null)
-            endTime = origin;
-        else
-            endTime = duration;
+        endTime = model.getOrigin();
 
         eventList.clear();
         stateList.clear();
@@ -209,10 +194,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
     public void simulateTL() {
 
         double endTime;
-        if (origin != null)
-            endTime = origin;
-        else
-            endTime = duration;
+        endTime = model.getOrigin();
 
         double dt = endTime/(nSteps-1);
 
@@ -304,8 +286,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
 
     @Override
     public void log(int nSample, PrintStream out) {
-        if (originInput.get() != null)
-            origin = originInput.get().getArrayValue();
+        origin = model.getOrigin();
 
         simulate();
 

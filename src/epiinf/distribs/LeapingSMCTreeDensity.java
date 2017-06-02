@@ -91,9 +91,6 @@ public class LeapingSMCTreeDensity extends EpiTreePrior {
     @Override
     public void initAndValidate() {
         model = modelInput.get();
-        if (model.originInput.get() == null)
-            throw new IllegalArgumentException("The treeOrigin input to " +
-                    "EpidemicModel must be set when the model is used for inference.");
 
         if (treeInput.get() == null && incidenceInput.get() == null)
             throw new IllegalArgumentException("Must specify at least one of tree or incidence.");
