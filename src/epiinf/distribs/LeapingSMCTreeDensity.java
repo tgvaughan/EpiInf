@@ -68,8 +68,6 @@ public class LeapingSMCTreeDensity extends EpiTreePrior {
                     "particles drops below this threshold.",
             0.5);
 
-    EpidemicModel model;
-    ObservedEventsList observedEventsList;
     int nParticles, nResamples;
     double epsilon, resampThresh;
 
@@ -454,34 +452,4 @@ public class LeapingSMCTreeDensity extends EpiTreePrior {
         return new EpidemicTrajectory(null, recordedEpidemicStates, observedEventsList.getOrigin());
     }
 
-    @Override
-    public List<String> getArguments() {
-        return null;
-    }
-
-    @Override
-    public List<String> getConditions() {
-        return null;
-    }
-
-    @Override
-    public void sample(State state, Random random) {
-    }
-
-    @Override
-    protected boolean requiresRecalculation() {
-        observedEventsList.makeDirty();
-        return true;
-    }
-
-    @Override
-    public void restore() {
-        observedEventsList.makeDirty();
-        super.restore();
-    }
-
-    @Override
-    public boolean isStochastic() {
-        return true;
-    }
 }

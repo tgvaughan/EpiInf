@@ -18,16 +18,25 @@
 package epiinf.distribs;
 
 import beast.core.Input;
+import beast.core.State;
 import beast.evolution.tree.TreeDistribution;
 import epiinf.EpidemicTrajectory;
+import epiinf.ObservedEventsList;
 import epiinf.models.EpidemicModel;
+
+import java.util.List;
+import java.util.Random;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public abstract class EpiTreePrior extends TreeDistribution {
+
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Input.Validate.REQUIRED);
+
+    protected EpidemicModel model;
+    protected ObservedEventsList observedEventsList;
 
     abstract public EpidemicTrajectory getConditionedTrajectory();
 
@@ -37,4 +46,36 @@ public abstract class EpiTreePrior extends TreeDistribution {
     public EpidemicModel getModel() {
         return modelInput.get();
     }
+
+    @Override
+    public List<String> getArguments() {
+        return null;
+    }
+
+    @Override
+    public List<String> getConditions() {
+        return null;
+    }
+
+    @Override
+    public void sample(State state, Random random) {
+    }
+
+    @Override
+    protected boolean requiresRecalculation() {
+        observedEventsList.makeDirty();
+        return true;
+    }
+
+    @Override
+    public void restore() {
+        observedEventsList.makeDirty();
+        super.restore();
+    }
+
+    @Override
+    public boolean isStochastic() {
+        return true;
+    }
+
 }

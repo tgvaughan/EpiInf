@@ -71,8 +71,6 @@ public class SMCTreeDensity extends EpiTreePrior {
             "incidenceParameter",
             "Times of unsequenced samples.");
 
-    EpidemicModel model;
-    ObservedEventsList observedEventsList;
     int nParticles;
     boolean useTauLeaping;
     double epsilon, resampThresh, relStdThresh;
@@ -262,7 +260,7 @@ public class SMCTreeDensity extends EpiTreePrior {
 
             model.calculatePropensities(particleState);
 
-            int lineages = nextObservedEvent.lineages;
+            int lineages = nextObservedEvent != null ? nextObservedEvent.lineages : 0;
 
             double infectionProp = model.propensities[EpidemicEvent.INFECTION];
             double unobservedInfectProp = infectionProp
@@ -493,37 +491,6 @@ public class SMCTreeDensity extends EpiTreePrior {
     @Override
     public EpidemicTrajectory getConditionedTrajectory() {
         return storedTrajectory;
-    }
-
-    @Override
-    public List<String> getArguments() {
-        return null;
-    }
-
-    @Override
-    public List<String> getConditions() {
-        return null;
-    }
-
-    @Override
-    public void sample(State state, Random random) {
-    }
-
-    @Override
-    protected boolean requiresRecalculation() {
-        observedEventsList.makeDirty();
-        return true;
-    }
-
-    @Override
-    public void restore() {
-        observedEventsList.makeDirty();
-        super.restore();
-    }
-
-    @Override
-    public boolean isStochastic() {
-        return true;
     }
 
     @Override
