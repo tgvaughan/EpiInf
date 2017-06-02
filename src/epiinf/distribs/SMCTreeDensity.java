@@ -100,7 +100,7 @@ public class SMCTreeDensity extends EpiTreePrior {
             throw new IllegalArgumentException("Must specify at least one of tree or incidence.");
 
         observedEventsList = new ObservedEventsList(treeInput.get(), incidenceParamInput.get(),
-                model.originInput.get());
+                model.originInput.get(), finalSampleOffsetInput.get());
         nParticles = nParticlesInput.get();
         useTauLeaping = useTauLeapingInput.get();
         epsilon = epsilonInput.get();
@@ -259,8 +259,9 @@ public class SMCTreeDensity extends EpiTreePrior {
             int lineages = nextObservedEvent.lineages;
 
             double infectionProp = model.propensities[EpidemicEvent.INFECTION];
-            double unobservedInfectProp = infectionProp
-                    *(1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1));
+            double unobservedInfectProp = particleState.I > 0
+                    ? infectionProp *(1.0 - lineages * (lineages - 1) / particleState.I / (particleState.I + 1))
+                    : 0.0;
             double observedInfectProp = infectionProp - unobservedInfectProp;
 
             double allowedRecovProp, forbiddenRecovProp;

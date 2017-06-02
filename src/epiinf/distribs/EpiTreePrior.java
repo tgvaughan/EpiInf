@@ -17,6 +17,7 @@
 
 package epiinf.distribs;
 
+import beast.core.Function;
 import beast.core.Input;
 import beast.core.State;
 import beast.evolution.tree.TreeDistribution;
@@ -34,6 +35,10 @@ public abstract class EpiTreePrior extends TreeDistribution {
 
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Input.Validate.REQUIRED);
+
+    public Input<Function> finalSampleOffsetInput = new Input<>(
+            "finalSampleOffset",
+            "Difference in time between final sample and end of observation process", Input.Validate.REQUIRED);
 
     protected EpidemicModel model;
     protected ObservedEventsList observedEventsList;

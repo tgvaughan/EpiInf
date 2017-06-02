@@ -34,7 +34,7 @@ public class ObservedEventsList {
 
     private TreeInterface tree;
     private Function incidenceData;
-    private Function origin;
+    private Function origin, finalSampleOffset;
     private List<ObservedEvent> eventList;
 
     /**
@@ -44,14 +44,12 @@ public class ObservedEventsList {
     
     private boolean dirty;
     
-    /**
-     * Default constructor.
-     */
     public ObservedEventsList(TreeInterface tree, Function incidenceData,
-                              Function origin) {
+                              Function origin, Function finalSampleOffset) {
         this.tree = tree;
         this.incidenceData = incidenceData;
         this.origin = origin;
+        this.finalSampleOffset = finalSampleOffset;
 
         eventList = new ArrayList<>();
 
@@ -152,7 +150,7 @@ public class ObservedEventsList {
      * @return time
      */
     public double getTimeFromHeight (double height) {
-        return origin.getArrayValue() - height;
+        return origin.getArrayValue() - (height + finalSampleOffset.getArrayValue());
     }
 
     /**

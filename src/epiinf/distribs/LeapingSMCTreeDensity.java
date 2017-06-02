@@ -94,7 +94,7 @@ public class LeapingSMCTreeDensity extends EpiTreePrior {
             throw new IllegalArgumentException("Must specify at least one of tree or incidence.");
 
         observedEventsList = new ObservedEventsList(treeInput.get(), incidenceInput.get(),
-                model.originInput.get());
+                model.originInput.get(), finalSampleOffsetInput.get());
         nParticles = nParticlesInput.get();
         nResamples = nResamplesInput.get();
         epsilon = epsilonInput.get();
