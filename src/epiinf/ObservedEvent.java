@@ -12,7 +12,7 @@ package epiinf;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class ObservedEvent extends Event {
-    public enum Type { COALESCENCE, LEAF, SAMPLED_ANCESTOR, UNSEQUENCED_SAMPLE};
+    public enum Type { COALESCENCE, LEAF, SAMPLED_ANCESTOR, UNSEQUENCED_SAMPLE, OBSERVATION_END};
 
     public Type type;
     public int multiplicity = 1;

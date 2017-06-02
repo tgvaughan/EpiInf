@@ -103,6 +103,14 @@ public class ObservedEventsList {
         // Sort events in order of absolute time
         Collections.sort(eventList);
 
+        // Include end-of-observation event
+        // (This is always the last event in the list, even when a rho sampling event occurs at
+        // exactly the same time.)
+        ObservedEvent endOfObservationEvent = new ObservedEvent();
+        endOfObservationEvent.type = ObservedEvent.Type.OBSERVATION_END;
+        endOfObservationEvent.time = origin.getArrayValue();
+        eventList.add(endOfObservationEvent);
+
         // Collate concurrent events
         int i=1;
         while (i<eventList.size()) {

@@ -151,10 +151,6 @@ public class SMCTreeDensity extends EpiTreePrior {
                 return Double.NEGATIVE_INFINITY;
         }
 
-        // Propagate ensemble up to end of observation period
-        if (!propagateEnsemble(null))
-            return Double.NEGATIVE_INFINITY;
-
         // Choose arbitrary trajectory to log.
         recordedTrajectoryStates.addAll(particleTrajectories.get(0));
 
@@ -164,7 +160,7 @@ public class SMCTreeDensity extends EpiTreePrior {
     /**
      * Propagate particle ensemble up to chosen observed event.
      *
-     * @param observedEvent Next observed event, or null to represent end of observation period.
+     * @param observedEvent Next observed event.
      *
      * @return true if propagation succeeds, false if it fails due to ensemble extinction
      */
@@ -193,7 +189,7 @@ public class SMCTreeDensity extends EpiTreePrior {
 
             double Neff = sumOfScaledWeights*sumOfScaledWeights/sumOfSquaredScaledWeights;
 
-            if (Neff < resampThresh*nParticles || observedEvent == null) {
+            if (Neff < resampThresh*nParticles || observedEvent.type == ObservedEvent.Type.OBSERVATION_END) {
                 // Update marginal likelihood estimate
                 logP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
 
@@ -260,7 +256,7 @@ public class SMCTreeDensity extends EpiTreePrior {
 
             model.calculatePropensities(particleState);
 
-            int lineages = nextObservedEvent != null ? nextObservedEvent.lineages : 0;
+            int lineages = nextObservedEvent.lineages;
 
             double infectionProp = model.propensities[EpidemicEvent.INFECTION];
             double unobservedInfectProp = infectionProp
@@ -404,7 +400,7 @@ public class SMCTreeDensity extends EpiTreePrior {
         }
 
         // Include probability of tree event and increment state if necessary
-        if (nextObservedEvent != null) {
+        if (nextObservedEvent.type != ObservedEvent.Type.OBSERVATION_END) {
             particleState.time = nextObservedEvent.time;
             conditionalLogP += getObservedEventProbability(particleState,
                     nextObservedEvent, nextObservedEventTime,
