@@ -265,8 +265,9 @@ public class LeapingSMCTreeDensity extends EpiTreePrior {
 
             // Waiting time weight contributions
 
-            double unobservedInfectProp = infectionProp
-                    *(1.0 - k0 * (k0 - 1) / particleState.I / (particleState.I + 1));
+            double unobservedInfectProp = particleState.I > 0
+                    ? infectionProp *(1.0 - k0 * (k0 - 1) / particleState.I / (particleState.I + 1))
+                    : 0.0;
             double observedInfectProp = infectionProp - unobservedInfectProp;
 
             conditionalLogP += -trueDt*(model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]

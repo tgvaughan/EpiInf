@@ -58,6 +58,7 @@ public class LeapingSMCTreeDensityTest {
         density.initByName(
                 "tree", tree,
                 "model", model,
+                "finalSampleOffset", new RealParameter("0.0"),
                 "nParticles", 500000);
 
         double logP = density.calculateLogP();
@@ -106,6 +107,7 @@ public class LeapingSMCTreeDensityTest {
         density.initByName(
                 "tree", tree,
                 "model", model,
+                "finalSampleOffset", new RealParameter("0.0"),
                 "nParticles", 1000,
                 "nResamples", 100);
 
@@ -162,6 +164,7 @@ public class LeapingSMCTreeDensityTest {
         density.initByName(
                 "tree", tree,
                 "model", model,
+                "finalSampleOffset", new RealParameter("0.0"),
                 "nParticles", 100000);
 
         double logP = density.calculateLogP();
@@ -206,6 +209,7 @@ public class LeapingSMCTreeDensityTest {
         density.initByName(
                 "tree", tree,
                 "model", model,
+                "finalSampleOffset", new RealParameter("0.0"),
                 "nParticles", 100000);
 
         double logP = density.calculateLogP();
