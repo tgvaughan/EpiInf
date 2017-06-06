@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Tim Vaughan <tgvaughan@gmail.com>
+ * Copyright (C) 2017 Tim Vaughan <tgvaughan@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,27 +25,28 @@ import java.util.List;
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class OriginFromTrajectory extends RealParameter {
+public class FinalSampleOffsetFromTrajectory extends RealParameter {
     public Input<EpidemicTrajectory> trajectoryInput = new Input<>("trajectory",
-            "Epidemic trajectory from which to compute origin.",
+            "Epidemic trajectory from which to compute final sample offset.",
             Input.Validate.REQUIRED);
 
-    public OriginFromTrajectory() {
+    public FinalSampleOffsetFromTrajectory() {
         valuesInput.setRule(Input.Validate.OPTIONAL);
     }
 
     @Override
     public void initAndValidate() {
-        List<EpidemicEvent> eventList = trajectoryInput.get().getEventList();
-        for (int i=0; i<eventList.size(); i++) {
+        EpidemicTrajectory trajectory = trajectoryInput.get();
+        List<EpidemicEvent> eventList = trajectory.getEventList();
+        for (int i=0; i<eventList.size(); i--) {
             if (eventList.get(i).isSample()) {
-                valuesInput.setValue(eventList.get(i).time, this);
+                valuesInput.setValue(trajectory.getOrigin() - eventList.get(i).time, this);
                 super.initAndValidate();
                 return;
             }
         }
 
-        throw new IllegalArgumentException("Origin undefined for epidemic " +
+        throw new IllegalArgumentException("Final sample time undefined for epidemic " +
                 "trajectories without a sampling event.");
     }
 }

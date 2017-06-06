@@ -21,7 +21,6 @@ import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
 import beast.util.TreeParser;
-import epiinf.OriginFromTrajectory;
 import epiinf.models.EpidemicModel;
 import epiinf.models.SIRModel;
 import epiinf.models.SISModel;

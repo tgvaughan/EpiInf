@@ -52,23 +52,32 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
             "nSteps",
             "If nSteps > 0, tau leaping with this many steps will be used to" +
                     " approximate the stochastic integral.", 0);
+
+    public Input<Integer> minSampleCountInput = new Input<>(
+            "minSampleCount",
+            "Minimum number of samples to accept.",
+            0);
+
     
     EpidemicModel model;
     int nSteps;
     
     public SimulatedTrajectory() { }
 
-    public SimulatedTrajectory(EpidemicModel model, double duration, int nSteps) {
+    public SimulatedTrajectory(EpidemicModel model, double origin, int nSteps) {
         this.model = model;
+        this.origin = origin;
         this.nSteps = nSteps;
 
-        eventList = new ArrayList<>();
-        stateList = new ArrayList<>();
+        do {
+            eventList = new ArrayList<>();
+            stateList = new ArrayList<>();
 
-        if (nSteps > 0)
-            simulateTL();
-        else
-            simulate();
+            if (nSteps > 0)
+                simulateTL();
+            else
+                simulate();
+        } while (eventList.stream().filter(e -> e.isSample()).count()<minSampleCountInput.get());
 
         if (fileNameInput.get() != null) {
             try (PrintStream ps = new PrintStream(fileNameInput.get())) {
@@ -84,12 +93,18 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
         super.initAndValidate();
         
         model = modelInput.get();
+        origin = modelInput.get().getOrigin();
         nSteps = nStepsInput.get();
 
-        if (nSteps > 0)
-            simulateTL();
-        else
-            simulate();
+        do {
+            eventList = new ArrayList<>();
+            stateList = new ArrayList<>();
+
+            if (nSteps > 0)
+                simulateTL();
+            else
+                simulate();
+        } while (eventList.stream().filter(e -> e.isSample()).count()<minSampleCountInput.get());
 
         if (fileNameInput.get() != null) {
             try (PrintStream ps = new PrintStream(fileNameInput.get())) {

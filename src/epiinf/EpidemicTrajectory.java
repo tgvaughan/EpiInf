@@ -103,6 +103,7 @@ public class EpidemicTrajectory extends BEASTObject implements Loggable {
                     getStateList().get(i+1).getRecord(),
                     eventList.get(i).getRecord());
         }
+        ps.println(origin + " " + getStateList().get(getStateList().size()-1).getRecord() + " END 0");
     }
 
     @Override
