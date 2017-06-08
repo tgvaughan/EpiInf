@@ -52,7 +52,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
     EpidemicModel epidemicModel;
     String[] modelNames = {"Linear birth-death", "SIS", "SIR"};
 
-    IntegerParameter S0;
+    RealParameter S0;
     RealParameter infectionRate, recoveryRate, psiSamplingVariable,
             removalProb, rhoSamplingProb, rhoSamplingTime;
     RealParameter infectionRateChangeTimes, recoveryRateChangeTimes,
@@ -504,9 +504,9 @@ public class EpiModelInputEditor extends InputEditor.Base {
                     try {
                         String S0id = "S0" + partitionID;
                         if (doc.pluginmap.containsKey(S0id))
-                            S0 = (IntegerParameter)doc.pluginmap.get(S0id);
+                            S0 = (RealParameter)doc.pluginmap.get(S0id);
                         else {
-                            S0 = new IntegerParameter("199");
+                            S0 = new RealParameter("199");
                             S0.setID(S0id);
                         }
                     } catch (Exception e) {

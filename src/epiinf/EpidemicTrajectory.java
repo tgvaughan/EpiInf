@@ -29,7 +29,7 @@ import java.util.List;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 @Description("Object representing a complete epidemic trajectory.")
-public class EpidemicTrajectory extends BEASTObject implements Loggable {
+public class EpidemicTrajectory extends BEASTObject {
 
     protected List<EpidemicEvent> eventList;
     protected List<EpidemicState> stateList;
@@ -105,41 +105,4 @@ public class EpidemicTrajectory extends BEASTObject implements Loggable {
         }
         ps.println(origin + " " + getStateList().get(getStateList().size()-1).getRecord() + " END 0");
     }
-
-    @Override
-    public void init(PrintStream out) {
-        if (getID() == null)
-            out.print("trajectory\t");
-        else
-            out.print(getID() + "\t");
-    }
-
-    @Override
-    public void log(int nSample, PrintStream out) {
-        if (stateList.isEmpty()) {
-            out.print("NA\t");
-            return;
-        }
-
-        boolean isFirst = true;
-        for (EpidemicState state : stateList) {
-            if (!isFirst)
-                out.print(",");
-            else
-                isFirst = false;
-
-            if (origin != null)
-                out.print(origin - state.time);
-            else
-                out.print(state.time);
-
-            out.print(":" + state.S + ":" + state.I + ":" + state.R + ":" + state.algorithm);
-        }
-
-        out.print("\t");
-    }
-
-    @Override
-    public void close(PrintStream out) { }
-
 }

@@ -299,15 +299,6 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
         }
     }
 
-    @Override
-    public void log(int nSample, PrintStream out) {
-        origin = model.getOrigin();
-
-        simulate();
-
-        super.log(nSample, out);
-    }
-
     /**
      * Main method for debugging.
      *

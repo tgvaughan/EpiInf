@@ -20,6 +20,7 @@ package epiinf.models;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.IntegerParameter;
+import beast.core.parameter.RealParameter;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 
@@ -30,12 +31,12 @@ import epiinf.EpidemicState;
  */
 public class SISModel extends EpidemicModel {
     
-    public Input<IntegerParameter> S0Input = new Input<>(
+    public Input<RealParameter> S0Input = new Input<>(
             "S0", "Initial size of susceptible population.", Validate.REQUIRED);
 
     @Override
     public EpidemicState getInitialState() {
-        return new EpidemicState(S0Input.get().getValue(), 1, 0);
+        return new EpidemicState(Math.round(S0Input.get().getValue()), 1, 0);
     }
 
     @Override
