@@ -17,7 +17,6 @@
 
 package epiinf.distribs;
 
-import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
 import beast.util.TreeParser;
@@ -47,7 +46,7 @@ public class LeapingSMCTreeDensityTest {
         EpidemicModel model = new SISModel();
         model.initByName(
                 "origin", new RealParameter("4.0"),
-                "S0", new IntegerParameter("99"),
+                "S0", new RealParameter("99"),
                 "infectionRate", new RealParameter("0.01"),
                 "recoveryRate", new RealParameter("0.2"),
                 "psiSamplingVariable", new RealParameter("0.0"),
@@ -98,7 +97,7 @@ public class LeapingSMCTreeDensityTest {
         EpidemicModel model = new SISModel();
         model.initByName(
                 "origin", new RealParameter("4.96590947152"),
-                "S0", new IntegerParameter("99"),
+                "S0", new RealParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
                 "psiSamplingVariable", new RealParameter("0.1"));
@@ -153,7 +152,7 @@ public class LeapingSMCTreeDensityTest {
         EpidemicModel model = new SIRModel();
         model.initByName(
                 "origin", new RealParameter("4.0"),
-                "S0", new IntegerParameter("199"),
+                "S0", new RealParameter("199"),
                 "infectionRate", new RealParameter("0.01"),
                 "recoveryRate", new RealParameter("0.2"),
                 "psiSamplingVariable", new RealParameter("0.0"),
@@ -200,7 +199,7 @@ public class LeapingSMCTreeDensityTest {
         EpidemicModel model = new SIRModel();
         model.initByName(
                 "origin", new RealParameter("4.89922758686"),
-                "S0", new IntegerParameter("99"),
+                "S0", new RealParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
                 "psiSamplingVariable", new RealParameter("0.1"));
