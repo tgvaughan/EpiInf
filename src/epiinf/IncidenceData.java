@@ -56,17 +56,27 @@ public class IncidenceData extends BEASTObject {
     @Override
     public void initAndValidate() {
 
-        String string = null;
+        StringBuilder string = null;
         if (valueInput.get() != null) {
-            string = valueInput.get();
+            string = new StringBuilder(valueInput.get());
         } else if (fileNameInput.get() != null) {
-            try (BufferedReader reader = new BufferedReader(new FileReader(fileNameInput.get()))) {
-                if (fileHasHeaderInput.get())
-                    reader.readLine();
+            string = new StringBuilder();
 
+            boolean isHeader = fileHasHeaderInput.get();
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(fileNameInput.get()))) {
                 String nextLine;
-                while ((nextLine = reader.readLine()) != null)
-                    string += " " + nextLine;
+                while ((nextLine = reader.readLine()) != null) {
+                    if (nextLine.startsWith("#"))
+                        continue;
+
+                    if (isHeader) {
+                        isHeader = false;
+                        continue;
+                    }
+
+                    string.append(" ").append(nextLine);
+                }
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -76,7 +86,7 @@ public class IncidenceData extends BEASTObject {
         if (string == null)
             throw new IllegalArgumentException("Must supply either fileName " +
                     "or value input.");
-        String[] valueStrings = string.trim().split("\\s+");
+        String[] valueStrings = string.toString().trim().split("\\s+");
 
         if (valueStrings.length % 2 != 0)
             throw new IllegalArgumentException("Error parsing");

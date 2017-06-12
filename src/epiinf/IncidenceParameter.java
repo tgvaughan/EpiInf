@@ -28,8 +28,27 @@ public class IncidenceParameter extends RealParameter {
     public Input<IncidenceData> incidenceDataInput = new Input<>(
             "incidenceData", "Incidence data.", Input.Validate.REQUIRED);
 
+    IncidenceData incidenceData;
+
+    public IncidenceParameter() {
+        valuesInput.setRule(Input.Validate.OPTIONAL);
+    }
+
     @Override
     public void initAndValidate() {
+
+        incidenceData = incidenceDataInput.get();
+
+        dimensionInput.setValue(String.valueOf(incidenceData.getAges().size()), this);
+
+        StringBuilder valueStringBuilder = new StringBuilder();
+        for (double t : incidenceData.getAges())
+            valueStringBuilder.append(" ").append(t);
+
+        valuesInput.setValue(valueStringBuilder.toString(), this);
+
         super.initAndValidate();
     }
+
+
 }
