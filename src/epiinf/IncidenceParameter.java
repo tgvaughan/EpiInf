@@ -19,6 +19,7 @@ package epiinf;
 
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
+import beast.util.Randomizer;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
@@ -42,8 +43,12 @@ public class IncidenceParameter extends RealParameter {
         dimensionInput.setValue(String.valueOf(incidenceData.getAges().size()), this);
 
         StringBuilder valueStringBuilder = new StringBuilder();
-        for (double t : incidenceData.getAges())
+        for (double t : incidenceData.getAges()) {
+            if (incidenceData.getError()>0.0)
+                t += Randomizer.nextDouble()*incidenceData.getError() - 0.5*incidenceData.getError();
+
             valueStringBuilder.append(" ").append(t);
+        }
 
         valuesInput.setValue(valueStringBuilder.toString(), this);
 
