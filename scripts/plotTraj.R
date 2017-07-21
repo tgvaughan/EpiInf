@@ -82,7 +82,7 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
                      timesAreCalendarYears=FALSE,
                      target='prevalence',
                      incidencePeriod=1,
-                     xlab='Age', ylab=capitalize(target), main='Trajectory distribution', ...) {
+                     xlab='Age', ylab="auto", main='Trajectory distribution', ...) {
 
 
     if (target != "prevalence" && target != "incidence" && target != "Re") {
@@ -169,6 +169,7 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
 
     # Create plot if necessary
     if (!add) {
+      if(ylab == "auto") capitalize(target)
         if (length(ylim)==1 && is.na(ylim)) {
             if (target == 'Re')
                 ylim = c(minValue, maxValue)
