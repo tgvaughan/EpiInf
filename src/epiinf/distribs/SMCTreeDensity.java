@@ -428,6 +428,10 @@ public class SMCTreeDensity extends EpiTreePrior {
 
          if (nextObservedEvent.type == ObservedEvent.Type.COALESCENCE) {
             model.calculatePropensities(particleState);
+
+            if (model.propensities[EpidemicEvent.INFECTION] == 0.0)
+                return Double.NEGATIVE_INFINITY;
+
             model.incrementState(particleState, EpidemicEvent.Infection);
             conditionalLogP += Math.log(2.0 / particleState.I / (particleState.I - 1)
                     * model.propensities[EpidemicEvent.INFECTION]);

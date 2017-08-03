@@ -33,8 +33,8 @@ import java.util.List;
 public class ObservedEventsList {
 
     private TreeInterface tree;
-    private Function incidenceData;
-    private Function origin, finalSampleOffset;
+    private Function incidenceTimes;
+    private Function origin, finalTreeSampleOffset;
     private List<ObservedEvent> eventList;
 
     /**
@@ -44,12 +44,12 @@ public class ObservedEventsList {
     
     private boolean dirty;
     
-    public ObservedEventsList(TreeInterface tree, Function incidenceData,
-                              Function origin, Function finalSampleOffset) {
+    public ObservedEventsList(TreeInterface tree, Function incidenceTimes,
+                              Function origin, Function finalTreeSampleOffset) {
         this.tree = tree;
-        this.incidenceData = incidenceData;
+        this.incidenceTimes = incidenceTimes;
         this.origin = origin;
-        this.finalSampleOffset = finalSampleOffset;
+        this.finalTreeSampleOffset = finalTreeSampleOffset;
 
         eventList = new ArrayList<>();
 
@@ -83,17 +83,17 @@ public class ObservedEventsList {
                     event.type = ObservedEvent.Type.COALESCENCE;
                 }
 
-                event.time = getTimeFromHeight(node.getHeight());
+                event.time = getTimeFromAge(node.getHeight() + finalTreeSampleOffset.getArrayValue());
 
                 eventList.add(event);
             }
         }
 
-        if (incidenceData != null) {
-            for (int i = 0; i < incidenceData.getDimension(); i++) {
+        if (incidenceTimes != null) {
+            for (int i = 0; i < incidenceTimes.getDimension(); i++) {
                 ObservedEvent event = new ObservedEvent();
                 event.type = ObservedEvent.Type.UNSEQUENCED_SAMPLE;
-                event.time = getTimeFromHeight(incidenceData.getArrayValue(i));
+                event.time = getTimeFromAge(incidenceTimes.getArrayValue(i));
                 eventList.add(event);
             }
         }
@@ -144,17 +144,17 @@ public class ObservedEventsList {
     }
     
     /**
-     * Obtain absolute epidemic time corresponding to height on tree.
+     * Obtain absolute epidemic time corresponding given age prior to end of observation period.
      * 
      * @param height height to convert
      * @return time
      */
-    public double getTimeFromHeight (double height) {
-        return origin.getArrayValue() - (height + finalSampleOffset.getArrayValue());
+    public double getTimeFromAge(double height) {
+        return origin.getArrayValue() - height;
     }
 
     /**
-     * @return The time before the most recent sample that the epidemic began.
+     * @return The time before the end of the observation period that the epidemic began.
      */
     public double getOrigin() {
         return origin.getArrayValue();

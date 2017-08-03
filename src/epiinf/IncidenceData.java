@@ -19,10 +19,15 @@ package epiinf;
 
 import beast.core.BEASTObject;
 import beast.core.Input;
+import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Tree;
 
 import java.io.*;
+import java.text.spi.DateFormatProvider;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.stream.Collector;
@@ -35,7 +40,7 @@ public class IncidenceData extends BEASTObject {
 
     public Input<String> valueInput = new Input<>("value",
             "String containing pairs of whitespace-delimited " +
-                    "age and incidence count pairs.");
+                    "time and incidence count pairs.");
 
     public Input<String> fileNameInput = new Input<>("fromFile",
             "Name of file containing pairs of whitespace-delimited " +
@@ -46,8 +51,14 @@ public class IncidenceData extends BEASTObject {
             "If true, discards the first line of a provided input file.",
             false);
 
+    public Input<String> dateFormatInput = new Input<>("dateFormat",
+            "Times are represented as dates with given format.");
+
     public Input<Double> errorInput = new Input<>("error",
             "Maximum error in incidence times.", 0.0);
+
+    public Input<RealParameter> finalSampleOffsetInput = new Input<>("finalSampleOffset",
+            "Difference in time between final sample and end of observation period.", Input.Validate.REQUIRED);
 
     private List<Double> ages = new ArrayList<>();
 
@@ -91,13 +102,29 @@ public class IncidenceData extends BEASTObject {
         if (valueStrings.length % 2 != 0)
             throw new IllegalArgumentException("Error parsing");
 
+        List<Double> times = new ArrayList<>();
+
         for (int i=0; i<valueStrings.length/2; i++) {
-            double age = Double.parseDouble(valueStrings[2*i]);
+            double time;
+            if (dateFormatInput.get() != null) {
+                LocalDate date = LocalDate.parse(valueStrings[2 * i], DateTimeFormatter.ofPattern(dateFormatInput.get()));
+                time = date.getYear() + (date.getDayOfYear()-1.0) / (date.isLeapYear() ? 366.0 : 365.0);
+            } else {
+                time = Double.parseDouble(valueStrings[2 * i]);
+            }
             int count = Integer.parseInt(valueStrings[2*i + 1]);
 
             for (int j=0; j<count; j++)
-                ages.add(age);
+                times.add(time);
         }
+
+        double maxTime = times.stream()
+                .mapToDouble(t -> t)
+                .max()
+                .getAsDouble();
+        ages = times.stream()
+                .map(t-> maxTime - t + finalSampleOffsetInput.get().getValue())
+                .collect(Collectors.toList());
     }
 
     public List<Double> getAges() {
