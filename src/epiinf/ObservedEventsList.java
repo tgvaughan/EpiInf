@@ -22,6 +22,7 @@ import beast.core.Function;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -202,5 +203,20 @@ public class ObservedEventsList {
      */
     public void makeDirty() {
         dirty = true;
+    }
+
+    public void dump(PrintStream ps) {
+        dump(ps, null);
+    }
+
+
+    public void dump(PrintStream ps, ObservedEvent finalEvent) {
+        updateEventList();
+
+        ps.println("time multiplicity type isFinal");
+        for (ObservedEvent event : eventList) {
+            ps.println(event.time + " " + event.multiplicity + " " + event.type
+                    + " " + (event == finalEvent));
+        }
     }
 }
