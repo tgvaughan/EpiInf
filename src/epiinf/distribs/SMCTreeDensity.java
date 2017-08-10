@@ -27,6 +27,8 @@ import epiinf.*;
 import epiinf.models.EpidemicModel;
 import epiinf.util.ReplacementSampler;
 
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -134,7 +136,8 @@ public class SMCTreeDensity extends EpiTreePrior {
 
         // Early exit if first tree event occurs before origin.
         if (observedEventsList.getEventList().get(0).time < 0) {
-            return Double.NEGATIVE_INFINITY;
+            logP = Double.NEGATIVE_INFINITY;
+            return logP;
         }
 
         // Initialize particles and trajectory storage
@@ -147,8 +150,10 @@ public class SMCTreeDensity extends EpiTreePrior {
         }
 
         for (ObservedEvent observedEvent : observedEventsList.getEventList()) {
-            if (!propagateEnsemble(observedEvent))
-                return Double.NEGATIVE_INFINITY;
+            if (!propagateEnsemble(observedEvent)) {
+                logP = Double.NEGATIVE_INFINITY;
+                return logP;
+            }
         }
 
         // Choose arbitrary trajectory to log.
