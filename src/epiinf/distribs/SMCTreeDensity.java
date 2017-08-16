@@ -321,7 +321,8 @@ public class SMCTreeDensity extends EpiTreePrior {
                 if (nextModelEventTime < nextObservedEventTime && particleState.time > nextModelEventTime) {
 
                     if (nextModelEvent.type == ModelEvent.Type.RHO_SAMPLING) {
-                        // TODO: probability that rho sampling produced no samples
+                        // Probability that rho sampling produced no samples
+                        conditionalLogP += particleState.I*Math.log(1.0-nextModelEvent.rho);
                     }
                     particleState.time = nextModelEvent.time;
                     particleState.modelIntervalIdx += 1;
@@ -387,7 +388,8 @@ public class SMCTreeDensity extends EpiTreePrior {
 
                 if (nextModelEventTime < nextObservedEvent.time && particleState.time + tau > nextModelEventTime) {
                     if (nextModelEvent.type == ModelEvent.Type.RHO_SAMPLING) {
-                        // TODO: include probability that rho sampling produces no samples
+                        // Probability that rho sampling produces no samples
+                        conditionalLogP += particleState.I*Math.log(1.0-nextModelEvent.rho);
                     }
                     particleState.time = nextModelEventTime;
                     particleState.modelIntervalIdx += 1;
