@@ -1,9 +1,12 @@
+library(plotrix) # weighted.hist used for inference counts
+library(ggplot2)
+
 loadData <- function(fileNames, burninFrac=0.1, nSamples=NA) {
 
     nFiles <- length(fileNames)
     dataFrames <- list()
     for (i in 1:nFiles) {
-        dataFrames[[i]] <- read.table(fileNames[i], header=T, as.is=T)
+        dataFrames[[i]] <- read.table(fileNames[[i]], header=T, as.is=T)
     }
 
     # Remove burnin and downsample
@@ -71,6 +74,35 @@ capitalize <- function(string) {
     return(paste(toupper(substring(string,1,1)), substring(string,2), sep=''))
 }
 
+getInterpolatedValues <- function(traj, ages, targetFun) {
+    targetValues <- matrix(NA, length(traj), 100)
+
+    for (i in 1:length(traj)) {
+        tidx <- 1
+        for (sidx in 1:length(ages)) {
+            tSamp <- ages[sidx]
+            while (tidx < length(traj[[i]]$t) && traj[[i]]$t[tidx]>tSamp) {
+                tidx <- tidx + 1
+            }
+
+            targetValues[i,sidx] <- targetFun(traj[[i]])[tidx]
+        }
+    }
+
+    return(targetValues)
+}
+
+linesBold <- function(x, y, col='black', steps=F, ...) {
+
+    if (steps)
+        style <- 's'
+    else
+        style <- 'l'
+
+    lines(x, y, col='white', lwd=6, style)
+    lines(x, y, col=col, lwd=2, style, ...)
+}
+
 plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, burninFrac=0.1,
                      col=rgb(1,0,0,0.3), add=FALSE,
                      leapCol=col,
@@ -82,7 +114,7 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
                      timesAreCalendarYears=FALSE,
                      target='prevalence',
                      incidencePeriod=1,
-                     xlab='Age', ylab="auto", main='Trajectory distribution', ...) {
+                     xlab=if (is.na(presentTime)) "Age" else "Time", ylab=capitalize(target), main='Trajectory distribution', ...) {
 
 
     if (target != "prevalence" && target != "incidence" && target != "Re") {
@@ -121,8 +153,10 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
     maxValue <- -Inf
     for (i in 1:length(traj)) {
         maxHeight <- max(maxHeight, traj[[i]]$t)
-        maxValue <- max(maxValue, targetFun(traj[[i]]))
-        minValue <- min(minValue, targetFun(traj[[i]]))
+        val <- targetFun(traj[[i]])
+        val <- val[which(is.finite(val))]
+        maxValue <- max(maxValue, val)
+        minValue <- min(minValue, val)
     }
 
     if (!is.na(heightLim))
@@ -133,22 +167,11 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
         cat(paste0("Computing moments ", target, "..."))
         
         targetTimes <- seq(maxHeight, 0, length.out=100)
-        targetValues <- matrix(NA, length(traj), 100)
+        targetValues <- getInterpolatedValues(traj, targetTimes, targetFun)
 
-        for (i in 1:length(traj)) {
-            tidx <- 1
-            for (sidx in 1:length(targetTimes)) {
-                tSamp <- targetTimes[sidx]
-                while (tidx < length(traj[[i]]$t) && traj[[i]]$t[tidx]>tSamp) {
-                    tidx <- tidx + 1
-                }
-
-                targetValues[i,sidx] <- targetFun(traj[[i]])[tidx]
-            }
-        }
         meanTarget <- colMeans(targetValues)
-        hpdTargetLow <- apply(targetValues, 2, function(x) {return(quantile(x, probs=0.025))})
-        hpdTargetHigh <- apply(targetValues, 2, function(x) {return(quantile(x, probs=0.975))})
+        hpdTargetLow <- apply(targetValues, 2, function(x) {return(quantile(x, probs=0.025, na.rm=TRUE))})
+        hpdTargetHigh <- apply(targetValues, 2, function(x) {return(quantile(x, probs=0.975, na.rm=TRUE))})
 
         cat("done.\n")
     }
@@ -169,7 +192,6 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
 
     # Create plot if necessary
     if (!add) {
-      if(ylab == "auto") capitalize(target)
         if (length(ylim)==1 && is.na(ylim)) {
             if (target == 'Re')
                 ylim = c(minValue, maxValue)
@@ -189,26 +211,83 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
     cat("Plotting...")
     for (i in 1:length(traj)) {
         indices <- which(traj[[i]]$t>=0)
-        lines(getTime(traj[[i]]$t[indices]), targetFun(traj[[i]])[indices], col=col[traj[[i]]$fileNum], ...)
+        lines(getTime(traj[[i]]$t[indices]), targetFun(traj[[i]])[indices], col=col[traj[[i]]$fileNum], 's', ...)
 
         midx <- which.min(traj[[i]]$t[indices])
         mval <- traj[[i]]$t[indices][midx]
-        lines(getTime(c(0, mval)), rep(targetFun(traj[[i]])[indices][midx],2), col=col[traj[[i]]$fileNum], ...)
+        lines(getTime(c(0, mval)), rep(targetFun(traj[[i]])[indices][midx],2), col=col[traj[[i]]$fileNum], 's', ...)
     }
 
     if (showMean) {
-        lines(getTime(targetTimes), meanTarget, lwd=6, col='white')
-        lines(getTime(targetTimes), meanTarget, lwd=2, col='black')
+        linesBold(getTime(targetTimes), meanTarget)
     }
 
     if (showHPD) {
-        lines(getTime(targetTimes), hpdTargetLow, lwd=6, col='white')
-        lines(getTime(targetTimes), hpdTargetLow, lwd=2, col='black', lty=2)
-
-        lines(getTime(targetTimes), hpdTargetHigh, lwd=6, col='white')
-        lines(getTime(targetTimes), hpdTargetHigh, lwd=2, col='black', lty=2)
+        linesBold(getTime(targetTimes), hpdTargetLow, lty=2)
+        linesBold(getTime(targetTimes), hpdTargetHigh, lty=2)
     }
     cat("done.\n")
+}
+
+weekToDate <- function(week) {
+    return(as.Date(paste(2014,week,1,sep="-"), "%Y-%U-%u"))
+}
+
+computeIncidence <- function(traj, boundaries) {
+    df <- data.frame(Trajectory=double(), Time=double(), Count=double())
+
+    h <- NULL
+    for (i in 1:length(traj)) {
+        d <- diff(traj[[i]]$I)
+        t <- traj[[i]]$t[-length(traj[[i]]$t)]
+
+        infIndices <- which(d>0)
+        d <- d[infIndices]
+        t <- t[infIndices]
+
+        h <- weighted.hist(t, d, boundaries, plot=FALSE)
+
+        df <- rbind(df,
+                    data.frame(Trajectory=rep(i,length(h$mids)),
+                               Time=h$mids,
+                               Count=h$counts))
+    }
+
+    return(df)
+}
+
+plotWeeklyIncidence <- function(fileName=NA, traj=NULL, presentTime=NA, colidx=2, burninFrac=0.1) {
+
+    if (is.null(traj)) {
+        dataFrames <- list(loadData(fileName, burninFrac))
+        traj <- parseTrajectories(dataFrames, colidx)
+    }
+
+    maxAge <- 0
+
+    for (i in 1:length(traj)) {
+        maxAge <- max(maxAge, traj[[i]]$t)
+    }
+
+    getDates <- function(ages) {
+        presentYear <- floor(presentTime)
+        return(as.Date(365*(presentTime - ages - presentYear),
+                       origin=as.Date(paste(presentYear,"-01-01", sep=""))))
+    }
+
+    incidences <- computeIncidence(traj, seq(0, maxAge, by=1/52))
+    incidences$Date <- getDates(incidences$Time)
+
+    summaryFunc <- function(yvals) {
+        return (data.frame(y=mean(yvals),
+                           ymin=quantile(yvals, 0.025),
+                           ymax=quantile(yvals, 0.975)))
+    }
+
+    p <- ggplot(data)
+    p <- p + stat_summary(aes(Date, Count), geom="bar", fun.data=summaryFunc)
+    p <- p + stat_summary(aes(Date, Count), geom="errorbar", fun.data=summaryFunc, width=2)
+    return(p)
 }
 
 simSIR <- function(origin, beta, gamma, N) {
