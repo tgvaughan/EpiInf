@@ -82,7 +82,7 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
                      timesAreCalendarYears=FALSE,
                      target='prevalence',
                      incidencePeriod=1,
-                     xlab='Age', ylab=capitalize(target), main='Trajectory distribution', ...) {
+                     xlab='Age', ylab="auto", main='Trajectory distribution', ...) {
 
 
     if (target != "prevalence" && target != "incidence" && target != "Re") {
@@ -137,8 +137,8 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
 
         for (i in 1:length(traj)) {
             tidx <- 1
-            for (sidx in 1:length(meanTargetTimes)) {
-                tSamp <- meanTargetTimes[sidx]
+            for (sidx in 1:length(targetTimes)) {
+                tSamp <- targetTimes[sidx]
                 while (tidx < length(traj[[i]]$t) && traj[[i]]$t[tidx]>tSamp) {
                     tidx <- tidx + 1
                 }
@@ -169,6 +169,7 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
 
     # Create plot if necessary
     if (!add) {
+      if(ylab == "auto") capitalize(target)
         if (length(ylim)==1 && is.na(ylim)) {
             if (target == 'Re')
                 ylim = c(minValue, maxValue)
@@ -196,16 +197,16 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
     }
 
     if (showMean) {
-        lines(getTime(meanTargetTimes), meanTarget, lwd=6, col='white')
-        lines(getTime(meanTargetTimes), meanTarget, lwd=2, col='black')
+        lines(getTime(targetTimes), meanTarget, lwd=6, col='white')
+        lines(getTime(targetTimes), meanTarget, lwd=2, col='black')
     }
 
     if (showHPD) {
-        lines(getTime(meanTargetTimes), hpdTargetLow, lwd=6, col='white')
-        lines(getTime(meanTargetTimes), hpdTargetLow, lwd=2, col='black', lty=2)
+        lines(getTime(targetTimes), hpdTargetLow, lwd=6, col='white')
+        lines(getTime(targetTimes), hpdTargetLow, lwd=2, col='black', lty=2)
 
-        lines(getTime(meanTargetTimes), hpdTargetHigh, lwd=6, col='white')
-        lines(getTime(meanTargetTimes), hpdTargetHigh, lwd=2, col='black', lty=2)
+        lines(getTime(targetTimes), hpdTargetHigh, lwd=6, col='white')
+        lines(getTime(targetTimes), hpdTargetHigh, lwd=2, col='black', lty=2)
     }
     cat("done.\n")
 }
