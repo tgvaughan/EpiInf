@@ -47,7 +47,7 @@ public class IncidenceParameter extends RealParameter {
             if (incidenceData.getError()>0.0)
                 t += Randomizer.nextDouble()*incidenceData.getError() - 0.5*incidenceData.getError();
 
-            t = Math.max(t, 0.0); // Samples times can't be earlier than the start ot he sampling period
+            t = Math.max(t, 0.0); // Samples times can't be earlier than the start of the sampling period
 
             valueStringBuilder.append(" ").append(t);
         }

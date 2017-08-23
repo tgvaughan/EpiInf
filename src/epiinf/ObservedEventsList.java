@@ -145,13 +145,13 @@ public class ObservedEventsList {
     }
     
     /**
-     * Obtain absolute epidemic time corresponding given age prior to end of observation period.
+     * Obtain absolute epidemic time corresponding to given age prior to end of observation period.
      * 
-     * @param height height to convert
+     * @param age age to convert
      * @return time
      */
-    public double getTimeFromAge(double height) {
-        return origin.getArrayValue() - height;
+    public double getTimeFromAge(double age) {
+        return origin.getArrayValue() - age;
     }
 
     /**
