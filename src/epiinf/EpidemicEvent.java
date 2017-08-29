@@ -87,7 +87,8 @@ public class EpidemicEvent extends Event {
     public static final EpidemicEvent RhoSample = new EpidemicEvent(-1, RHO_SAMPLE, 1);
     public static final EpidemicEvent PsiSampleRemove = new EpidemicEvent(-1, PSI_SAMPLE_REMOVE, 1);
     public static final EpidemicEvent PsiSampleNoRemove = new EpidemicEvent(-1, PSI_SAMPLE_NOREMOVE, 1);
-    public static final EpidemicEvent OtherSample = new EpidemicEvent(-1, PSI_SAMPLE_REMOVE, 1);
+    public static final EpidemicEvent OtherSampleRemove = new EpidemicEvent(-1, PSI_SAMPLE_REMOVE, 1);
+    public static final EpidemicEvent OtherSampleNoRemove = new EpidemicEvent(-1, PSI_SAMPLE_NOREMOVE, 1);
 
     public static EpidemicEvent MultipleInfections(int multiplicity) {
         return new EpidemicEvent(-1, INFECTION, multiplicity);
@@ -104,9 +105,5 @@ public class EpidemicEvent extends Event {
 
     public static EpidemicEvent MultipleRhoSamples(int multiplicity) {
         return new EpidemicEvent(-1, RHO_SAMPLE, multiplicity);
-    }
-
-    public static EpidemicEvent MultipleOtherSamples(int multiplicity) {
-        return new EpidemicEvent(-1, OTHER_SAMPLE, multiplicity);
     }
 }

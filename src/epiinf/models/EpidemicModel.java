@@ -70,8 +70,7 @@ public abstract class EpidemicModel extends CalculationNode {
             "Represents either the rate of psi-sampling or the " +
                     "proportion of individuals that generate at least " +
                     "one psi-sample while infectious, depending on " +
-                    "the value of useSamplingProportion.",
-            Input.Validate.REQUIRED);
+                    "the value of useSamplingProportion.");
 
     public Input<Function> psiSamplingVariableShiftTimesInput = new Input<>(
             "psiSamplingVariableShiftTimes",
@@ -94,7 +93,7 @@ public abstract class EpidemicModel extends CalculationNode {
 
     public Input<Function> removalProbInput = new Input<>(
             "removalProb",
-            "Probability that sample individual is removed from population.",
+            "Probability that sampled individual is removed from population.",
             Input.Validate.REQUIRED);
 
     public Input<Function> removalProbShiftTimesInput = new Input<>(
@@ -138,11 +137,13 @@ public abstract class EpidemicModel extends CalculationNode {
     protected List<EpidemicState> stateList = new ArrayList<>();
     protected List<ModelEvent> modelEventList = new ArrayList<>();
     protected List<Double[]> rateCache = new ArrayList<>();
+    protected double[] removalProbCache = null;
 
     protected boolean ratesDirty;
     protected double tolerance;
 
     public double[] propensities = new double[EpidemicEvent.nTypes];
+    public double currentRemovalProb;
 
     EpidemicModel() { }
     
@@ -182,6 +183,7 @@ public abstract class EpidemicModel extends CalculationNode {
         propensities[EpidemicEvent.INFECTION] = calculateInfectionPropensity(state);
         propensities[EpidemicEvent.PSI_SAMPLE_REMOVE] = calculatePsiSamplingRemovePropensity(state);
         propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE] = calculatePsiSamplingNoRemovePropensity(state);
+        currentRemovalProb = calculateCurrentRemovalProb(state);
     }
 
     /**
@@ -284,6 +286,10 @@ public abstract class EpidemicModel extends CalculationNode {
     protected abstract double calculateRecoveryPropensity(EpidemicState state);
     protected abstract double calculateInfectionPropensity(EpidemicState state);
 
+    protected double calculateCurrentRemovalProb(EpidemicState state) {
+        return removalProbCache[state.modelIntervalIdx];
+    }
+
     /**
      * Increment state according to reaction of chosen type.
      *
@@ -315,9 +321,13 @@ public abstract class EpidemicModel extends CalculationNode {
 
         updateModelEventList();
 
-        if (rateCache.size() == 0) {
-            for (int i=0; i< modelEventList.size()+1; i++)
+        if (rateCache.isEmpty()) {
+            for (int i=0; i < modelEventList.size()+1; i++)
                 rateCache.add(new Double[EpidemicEvent.nTypes]);
+        }
+
+        if (removalProbCache == null) {
+            removalProbCache = new double[modelEventList.size()+1];
         }
 
         for (int i=0; i< modelEventList.size()+1; i++) {
@@ -361,6 +371,7 @@ public abstract class EpidemicModel extends CalculationNode {
 
             rateCache.get(i)[EpidemicEvent.PSI_SAMPLE_REMOVE] = psiSamplingRate*removalProb;
             rateCache.get(i)[EpidemicEvent.PSI_SAMPLE_NOREMOVE] = psiSamplingRate*(1.0 - removalProb);
+            removalProbCache[i] = removalProb;
         }
 
         ratesDirty = false;

@@ -485,8 +485,28 @@ public class SMCTreeDensity extends EpiTreePrior {
 
                 } else {
                     // No explicit sampling process
-                    model.incrementState(particleState,
-                            EpidemicEvent.MultipleOtherSamples(nextObservedEvent.multiplicity));
+
+                    // Note that we always need to condition on whether a sampling event was
+                    // a removal or not.  Since this information is not provided in
+                    // the data, we need to model at least this part of the sampling
+                    // process.
+
+                    for (int i=0; i<nextObservedEvent.multiplicity; i++) {
+                        model.calculatePropensities(particleState);
+
+                        if (nextObservedEvent.type == ObservedEvent.Type.SAMPLED_ANCESTOR) {
+                            conditionalLogP += Math.log(1.0 / particleState.I);
+                        } else {
+                            boolean isRemoval = Randomizer.nextDouble() < model.currentRemovalProb;
+
+                            if (isRemoval) {
+                                model.incrementState(particleState, EpidemicEvent.OtherSampleRemove);
+                            } else {
+                                if (nextObservedEvent.type == ObservedEvent.Type.LEAF)
+                                    conditionalLogP += Math.log(1.0 - (nextObservedEvent.lineages - 1)/particleState.I);
+                            }
+                        }
+                    }
                 }
             }
 
