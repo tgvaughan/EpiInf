@@ -16,3 +16,4 @@
 
 # Misc
 /.localrc*
+.DS_Store
