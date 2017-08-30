@@ -38,8 +38,8 @@ import java.util.Random;
  */
 @Description("Use SMC to estimate density of tree conditional on model "
     + "parameters.")
-@Citation("Gabriel Leventhal, Timothy Vaughan, David Welch, Alexei Drummond, Tanja Stadler,\n" +
-        "\"Exact phylodynamic inference using particle filtering\", in preparation.")
+@Citation("Timothy Vaughan, Gabriel Leventhal, David Welch, Alexei Drummond, Tanja Stadler,\n" +
+        "\"Directly estimating epidemic curves from genomic data\", preprint DOI:10.1101/142570")
 public class SMCTreeDensity extends EpiTreePrior {
 
     public Input<Integer> nParticlesInput = new Input<>(
