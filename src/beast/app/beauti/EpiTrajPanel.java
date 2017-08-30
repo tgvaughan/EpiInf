@@ -50,7 +50,7 @@ public class EpiTrajPanel extends JPanel {
 
         ChartBuilder_XY builder = new ChartBuilder_XY();
         builder.title("Example prevalence trajectories (tau leaping approx.)");
-        builder.xAxisTitle("Time before most recent sample");
+        builder.xAxisTitle("Time before present");
         builder.yAxisTitle("Prevalence");
         builder.height(getFontMetrics(getFont()).getHeight()*20);
         builder.width(getFontMetrics(getFont()).getHeight()*40);

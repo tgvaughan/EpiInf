@@ -110,7 +110,7 @@
             <![CDATA[
             <distribution id="EpiTreePrior.t:$(n)" spec="epiinf.distribs.SMCTreeDensity" nParticles="100">
                 <tree idref="Tree.t:$(n)"/>
-                <finalSampleOffset spec="RealParameter" value="0.0" estimate="false"/>
+                <finalSampleOffset id="finalSampleOffset.t:$(n)" spec="beast.core.parameter.RealParameter" value="0.0" estimate="false"/>
                 <model id="model.t:$(n)" spec="epiinf.models.SISModel" rhoSamplingTime="0.0" rhoSamplingTimesBackward="true">
                     <S0 id="S0.t:$(n)" spec="beast.core.parameter.RealParameter" value="199" lower="0" estimate="true"/>
                     <infectionRate id="infectionRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.01" estimate="true"/>
@@ -127,6 +127,11 @@
                 <distr spec="beast.math.distributions.OneOnX"/>
             </distribution>
 
+            <distribution id="finalSampleOffsetPrior.t:$(n)" spec="beast.math.distributions.Prior">
+                <x idref="finalSampleOffset.t:$(n)"/>
+                <distr spec="beast.math.distributions.OneOnX"/>
+            </distribution>
+
             <distribution id="S0Prior.t:$(n)" spec="beast.math.distributions.Prior">
                 <x idref="S0.t:$(n)"/>
                 <distr spec="beast.math.distributions.OneOnX"/>
@@ -138,12 +143,14 @@
             </distribution>
 
             <operator id='epiOriginScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@epiOrigin.t:$(n)" weight="1"/>
-
+            <operator id='finalSampleOffsetScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@finalSampleOffset.t:$(n)" weight="1"/>
             <operator id='S0Scaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@S0.t:$(n)" weight="1"/>
             <operator id='rhoSamplingProbScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@rhoSamplingProb.t:$(n)" weight="1"/>
 
-            <operator id="ParamUpDown.t:$(n)" spec='beast.evolution.operators.UpDownOperator' weight="4">
+            <operator id="ParamUpDown.t:$(n)" spec="UpDownOperator" scaleFactor="0.8" weight="4">
+                <up idref="infectionRate.t:$(n)"/>
             </operator>
+
 
             <!-- Trajectory logging -->
             <logger id="trajlog.t:$(n)" logEvery="1000" fileName="$(filebase).$(n).traj">
@@ -154,24 +161,33 @@
             <plate fragment="SATreeOperators" var="m" range="EpiTreePrior"/>
             <plate fragment="EpiModelParameter" var="p" range="infectionRate,recoveryRate,psiSamplingVariable,removalProb"/>
 
-            <connect srcID="infectionRate.t:$(n)" targetID="ParamUpDown.t:$(n)" inputName="up"
-                     if="inposterior(EpiTreePrior.t:$(n)) and infectionRate.t:$(n)/estimate=true"/>
+            <connect srcID="ParamUpDown.t:$(n)" targetID="mcmc" inputName="operator"
+                     if="Tree.t:$(n)/estimate=true and infectionRate.t:$(n)/estimate=true"/>
             <connect srcID="recoveryRate.t:$(n)" targetID="ParamUpDown.t:$(n)" inputName="up"
-                     if="inposterior(EpiTreePrior.t:$(n)) and recoveryRate.t:$(n)/estimate=true"/>
+                     if="Tree.t:$(n)/estimate=true and recoveryRate.t:$(n)/estimate=true"/>
             <connect srcID="psiSamplingVariable.t:$(n)" targetID="ParamUpDown.t:$(n)" inputName="down"
-                     if="inposterior(EpiTreePrior.t:$(n)) and psiSamplingVariable.t:$(n)/estimate=true"/>
+                     if="Tree.t:$(n)/estimate=true and psiSamplingVariable.t:$(n)/estimate=true"/>
 
             <connect srcID="infectionRate.t:$(n)" targetID="EpiTreePriorUpDown.t:$(n)" inputName="up"
                      if="Tree.t:$(n)/estimate=true and infectionRate.t:$(n)/estimate=true"/>
             <connect srcID="recoveryRate.t:$(n)" targetID="EpiTreePriorUpDown.t:$(n)" inputName="up"
                      if="Tree.t:$(n)/estimate=true and recoveryRate.t:$(n)/estimate=true"/>
-            <connect srcID="psiSamplingVariable.t:$(n)" targetID="ParamUpDown.t:$(n)" inputName="down"
+            <connect srcID="psiSamplingVariable.t:$(n)" targetID="EpiTreeUpDown.t:$(n)" inputName="down"
                      if="Tree.t:$(n)/estimate=true and psiSamplingVariable.t:$(n)/estimate=true"/>
 
             <connect srcID="EpiTreePrior.t:$(n)" targetID="prior" inputName="distribution"
                      if="inposterior(EpiTreePrior.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true">
                 Epidemic tree prior on tree t:$(n)
             </connect>
+
+            <connect srcID="finalSampleOffset.t:$(n)" targetID="state" inputName="stateNode"
+                     if="inposterior(EpiTreePrior.t:$(n)) and finalSampleOffset.t:$(n)/estimate=true"/>
+            <connect srcID="finalSampleOffsetPrior.t:$(n)" targetID="prior" inputName="distribution"
+                     if="inposterior(EpiTreePrior.t:$(n)) and finalSampleOffset.t:$(n)/estimate=true"/>
+            <connect srcID="finalSampleOffsetScaler.t:$(n)" targetID="mcmc" inputName="operator"
+                     if="inposterior(EpiTreePrior.t:$(n)) and finalSampleOffset.t:$(n)/estimate=true"/>
+            <connect srcID="finalSampleOffset.t:$(n)" targetID="tracelog" inputName="log"
+                     if="inposterior(EpiTreePrior.t:$(n)) and finalSampleOffset.t:$(n)/estimate=true"/>
 
             <connect srcID="epiOrigin.t:$(n)" targetID="state" inputName="stateNode"
                      if="inposterior(EpiTreePrior.t:$(n)) and epiOrigin.t:$(n)/estimate=true"/>
