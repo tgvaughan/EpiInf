@@ -284,7 +284,7 @@ plotWeeklyIncidence <- function(fileName=NA, traj=NULL, presentTime=NA, colidx=2
                            ymax=quantile(yvals, 0.975)))
     }
 
-    p <- ggplot(data)
+    p <- ggplot(incidences)
     p <- p + stat_summary(aes(Date, Count), geom="bar", fun.data=summaryFunc)
     p <- p + stat_summary(aes(Date, Count), geom="errorbar", fun.data=summaryFunc, width=2)
     return(p)
