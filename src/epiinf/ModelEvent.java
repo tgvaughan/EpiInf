@@ -25,6 +25,11 @@ package epiinf;
  */
 public class ModelEvent extends Event {
     public enum Type { RHO_SAMPLING, RATE_CHANGE};
-    public double rho;
     public Type type;
+
+    public enum RateVariableType { INFECTION_RATE, RECOVERY_RATE, PSI_SAMPLING_VARIABLE, REMOVAL_PROB}
+    public RateVariableType rateVariableType;
+
+    public double newRateVariableValue;
+    public double rho;
 }

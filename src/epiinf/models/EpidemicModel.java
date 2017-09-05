@@ -26,9 +26,7 @@ import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.ModelEvent;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Class representing an epidemic model.  Contains all the bits and bobs
@@ -220,6 +218,24 @@ public abstract class EpidemicModel extends CalculationNode {
     }
 
     /**
+     * Obtain ith element of rate parameter where the index i counts the elements
+     * forward in time.  If the rate parameter is expressed in the backward direction,
+     * this means that the order of elements in the parameter will be reversed,
+     * so that earlier time intervals come before later intervals.
+     *
+     * @param rateParam rate parameter
+     * @param i index into parameter
+     * @param isReversed if true, order is reversed
+     * @return ith element, with order reversal in the case that isReversed is true
+     */
+    protected double getRateInInterval(Function rateParam, int i, boolean isReversed) {
+        if (isReversed)
+            return rateParam.getArrayValue(rateParam.getDimension()-i-1);
+        else
+            return rateParam.getArrayValue();
+    }
+
+    /**
      * Retrieve rate at given time.
      *
      * @param rateParam parameter defining rate
@@ -229,8 +245,8 @@ public abstract class EpidemicModel extends CalculationNode {
      *
      * @return rate effective at given time
      */
-    protected double getCurrentRate(Function rateParam, Function rateShiftTimeParam,
-                                    boolean paramTimesBackwards, double time) {
+    protected double getRateAtTime(Function rateParam, Function rateShiftTimeParam,
+                                   boolean paramTimesBackwards, double time) {
         if (rateParam != null) {
             if (rateShiftTimeParam != null) {
                 return rateParam.getArrayValue(
@@ -313,6 +329,37 @@ public abstract class EpidemicModel extends CalculationNode {
                                   double infectProp, double recovProp);
 
     /**
+     * Transform various inference parameterizations into a uniform
+     * simulation parameterization.
+     *
+     * @param transformedRates Array where simulation parameters are recorded.
+     * @param currentRates Map where inference parameters are recorded.
+     */
+    protected void transformRates(Double[] transformedRates, Map<ModelEvent.RateVariableType, Double> currentRates) {
+
+        transformedRates[EpidemicEvent.INFECTION] = currentRates.get(ModelEvent.RateVariableType.INFECTION_RATE);
+        transformedRates[EpidemicEvent.RECOVERY] = currentRates.get(ModelEvent.RateVariableType.RECOVERY_RATE);
+
+        double psiSamplingVariable, psiSamplingRate, removalProb;
+        psiSamplingVariable = currentRates.get(ModelEvent.RateVariableType.PSI_SAMPLING_VARIABLE);
+        if (usePsiSamplingProportionInput.get()) {
+            if (psiSamplingVariable > 0.0) {
+                psiSamplingRate = currentRates.get(ModelEvent.RateVariableType.RECOVERY_RATE)
+                        / (1.0 / psiSamplingVariable - 1.0);
+            } else {
+                psiSamplingRate = 0.0;
+            }
+        } else {
+            psiSamplingRate = psiSamplingVariable;
+        }
+
+        removalProb = currentRates.get(ModelEvent.RateVariableType.REMOVAL_PROB);
+
+        transformedRates[EpidemicEvent.PSI_SAMPLE_REMOVE] = psiSamplingRate*removalProb;
+        transformedRates[EpidemicEvent.PSI_SAMPLE_NOREMOVE] = psiSamplingRate*(1.0-removalProb);
+    }
+
+    /**
      * Update model event list and reaction rate caches.
      */
     public void update() {
@@ -320,6 +367,34 @@ public abstract class EpidemicModel extends CalculationNode {
             return;
 
         updateModelEventList();
+
+        // Map to store untransformed rates as we iterate over model events
+
+        Map<ModelEvent.RateVariableType,Double> currentRates = new EnumMap<>(ModelEvent.RateVariableType.class);
+
+        // Fill currentRates with rates at start of epidemic process
+        // (Note that the epidemic process may start _after_ a model event!)
+
+        currentRates.put(ModelEvent.RateVariableType.INFECTION_RATE,
+                getRateAtTime(infectionRateInput.get(),
+                              infectionRateShiftTimesInput.get(),
+                              infectionRateShiftTimesBackwardInput.get(), 0.0));
+        currentRates.put(ModelEvent.RateVariableType.RECOVERY_RATE,
+                getRateAtTime(recoveryRateInput.get(),
+                              recoveryRateShiftTimesInput.get(),
+                              recoveryRateShiftTimesBackwardInput.get(), 0.0));
+        currentRates.put(ModelEvent.RateVariableType.PSI_SAMPLING_VARIABLE,
+                psiSamplingVariableInput.get() != null
+                        ? getRateAtTime(psiSamplingVariableInput.get(),
+                                        psiSamplingVariableShiftTimesInput.get(),
+                                        psiSamplingVariableShiftTimesBackwardInput.get(), 0.0)
+                        : 0.0);
+        currentRates.put(ModelEvent.RateVariableType.REMOVAL_PROB,
+                getRateAtTime(removalProbInput.get(),
+                              removalProbShiftTimesInput.get(),
+                              removalProbShiftTimesBackwardInput.get(), 0.0));
+
+        // Initialize transformed rate caches
 
         if (rateCache.isEmpty()) {
             for (int i=0; i < modelEventList.size()+1; i++)
@@ -330,48 +405,24 @@ public abstract class EpidemicModel extends CalculationNode {
             removalProbCache = new double[modelEventList.size()+1];
         }
 
-        for (int i=0; i< modelEventList.size()+1; i++) {
-            double t = i>0 ? modelEventList.get(i-1).time : 0.0;
+        // Store initial transformed rates
 
+        transformRates(rateCache.get(0), currentRates);
+        removalProbCache[0] = currentRates.get(ModelEvent.RateVariableType.REMOVAL_PROB);
 
-            double infectionRate = getCurrentRate(
-                    infectionRateInput.get(), infectionRateShiftTimesInput.get(),
-                    infectionRateShiftTimesBackwardInput.get(), t);
-            rateCache.get(i)[EpidemicEvent.INFECTION] = infectionRate;
+        // Iterate over model events, caching transformed rates along the way
 
-            double recoveryRate = getCurrentRate(
-                    recoveryRateInput.get(), recoveryRateShiftTimesInput.get(),
-                    recoveryRateShiftTimesBackwardInput.get(), t);
-            rateCache.get(i)[EpidemicEvent.RECOVERY] = recoveryRate;
+        for (int i=0; i<modelEventList.size(); i++) {
+            ModelEvent modelEvent = modelEventList.get(i);
 
-            double psiSamplingVariable, psiSamplingRate, removalProb;
+            if (modelEvent.time < 0.0)
+                continue; // Skip events prior to origin
 
-            if (psiSamplingVariableInput.get() != null)
-                psiSamplingVariable = getCurrentRate(
-                        psiSamplingVariableInput.get(), psiSamplingVariableShiftTimesInput.get(),
-                        psiSamplingVariableShiftTimesBackwardInput.get(), t);
-            else
-                psiSamplingVariable = 0.0;
+            if (modelEvent.type == ModelEvent.Type.RATE_CHANGE)
+                currentRates.put(modelEvent.rateVariableType, modelEvent.newRateVariableValue);
 
-            if (usePsiSamplingProportionInput.get()) {
-                if (psiSamplingVariable > 0)
-                    psiSamplingRate = recoveryRate / (1.0 / psiSamplingVariable - 1);
-                else
-                    psiSamplingRate = 0;
-            } else {
-                psiSamplingRate = psiSamplingVariable;
-            }
-
-            if (removalProbInput.get() != null)
-                removalProb = getCurrentRate(
-                        removalProbInput.get(), removalProbShiftTimesInput.get(),
-                        removalProbShiftTimesBackwardInput.get(), t);
-            else
-                removalProb = 1.0;
-
-            rateCache.get(i)[EpidemicEvent.PSI_SAMPLE_REMOVE] = psiSamplingRate*removalProb;
-            rateCache.get(i)[EpidemicEvent.PSI_SAMPLE_NOREMOVE] = psiSamplingRate*(1.0 - removalProb);
-            removalProbCache[i] = removalProb;
+            transformRates(rateCache.get(i+1), currentRates);
+            removalProbCache[i+1] = currentRates.get(ModelEvent.RateVariableType.REMOVAL_PROB);
         }
 
         ratesDirty = false;
@@ -400,21 +451,41 @@ public abstract class EpidemicModel extends CalculationNode {
             }
         }
 
-        addRateShiftEvents(psiSamplingVariableShiftTimesInput.get(), psiSamplingVariableShiftTimesBackwardInput.get());
-        addRateShiftEvents(removalProbShiftTimesInput.get(), removalProbShiftTimesBackwardInput.get());
-        addRateShiftEvents(infectionRateShiftTimesInput.get(), infectionRateShiftTimesBackwardInput.get());
-        addRateShiftEvents(recoveryRateShiftTimesInput.get(), recoveryRateShiftTimesBackwardInput.get());
+        addRateShiftEvents(infectionRateInput.get(),
+                infectionRateShiftTimesInput.get(),
+                infectionRateShiftTimesBackwardInput.get(),
+                ModelEvent.RateVariableType.INFECTION_RATE);
+
+        addRateShiftEvents(recoveryRateInput.get(),
+                recoveryRateShiftTimesInput.get(),
+                recoveryRateShiftTimesBackwardInput.get(),
+                ModelEvent.RateVariableType.RECOVERY_RATE);
+
+        addRateShiftEvents(psiSamplingVariableInput.get(),
+                psiSamplingVariableShiftTimesInput.get(),
+                psiSamplingVariableShiftTimesBackwardInput.get(),
+                ModelEvent.RateVariableType.PSI_SAMPLING_VARIABLE);
+
+        addRateShiftEvents(removalProbInput.get(),
+                removalProbShiftTimesInput.get(),
+                removalProbShiftTimesBackwardInput.get(),
+                ModelEvent.RateVariableType.REMOVAL_PROB);
 
         Collections.sort(modelEventList);
     }
 
-    public void addRateShiftEvents(Function rateShiftTimesParam, boolean rateShiftTimesBackward) {
+    public void addRateShiftEvents(Function rateShiftParam,
+                                   Function rateShiftTimesParam,
+                                   boolean rateShiftTimesBackward,
+                                   ModelEvent.RateVariableType rateVariableType) {
 
         if (rateShiftTimesParam != null) {
             for (int i=0; i<rateShiftTimesParam.getDimension(); i++) {
                 ModelEvent event = new ModelEvent();
                 event.type = ModelEvent.Type.RATE_CHANGE;
+                event.rateVariableType = rateVariableType;
                 event.time = getForwardTime(rateShiftTimesParam, i, rateShiftTimesBackward);
+                event.newRateVariableValue = getRateInInterval(rateShiftParam, i+1, rateShiftTimesBackward);
                 modelEventList.add(event);
             }
         }
@@ -518,7 +589,7 @@ public abstract class EpidemicModel extends CalculationNode {
         System.out.println("t\trate");
         for (int i=0; i<nSteps; i++) {
             double t = i*dt;
-            System.out.println(t +  "\t" + model.getCurrentRate(rateParam, shiftTimesParam, true, t));
+            System.out.println(t +  "\t" + model.getRateAtTime(rateParam, shiftTimesParam, true, t));
         }
 
     }
