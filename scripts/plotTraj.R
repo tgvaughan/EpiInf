@@ -209,6 +209,7 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
     }
 
     cat("Plotting...")
+    col <- rep(col, length.out=length(traj))
     for (i in 1:length(traj)) {
         indices <- which(traj[[i]]$t>=0)
         lines(getTime(traj[[i]]$t[indices]), targetFun(traj[[i]])[indices], col=col[traj[[i]]$fileNum], 's', ...)
@@ -413,4 +414,51 @@ simBD <- function(origin, lambda, mu) {
     return(data.frame(t=t, I=I))
 }
 
+loadParamData <- function(fileNames, burninFrac=0.1, nSamples=NA) {
 
+    nFiles <- length(fileNames)
+    dataFrames <- list()
+    for (i in 1:nFiles) {
+        dataFrames[[i]] <- read.table(fileNames[[i]], header=T)
+    }
+
+    # remove burnin and downsample
+    for (i in 1:nFiles) {
+        nRecords <- dim(dataFrames[[i]])[1]
+        dataFrames[[i]] <- dataFrames[[i]][-(1:ceiling(nRecords*burninFrac)),]
+
+        if (!is.na(nSamples)) {
+            nRecords <- dim(dataFrames[[i]])[1]
+            skip <- ceiling(nRecords/nSamples)
+
+            if (skip>0)
+                dataFrames[[i]] <- dataFrames[[i]][seq(1,nRecords,by=skip),]
+        }
+    }
+
+    return(dataFrames);
+}
+
+simTrajectories <- function(dataFrames,
+                            simulationFunction=function(record) {
+                                origin=record[which(startsWith(names(record), "epiOrigin"))]
+                                beta=record[which(startsWith(names(record), "infectionRate"))]
+                                gamma=record[which(startsWith(names(record), "recoveryRate"))]
+                                N=1+record[which(startsWith(names(record), "S0"))]
+                                return(simSIR(origin, beta, gamma, N))
+                            }) {
+    traj <- list()
+    nFiles <- length(dataFrames)
+    
+    thisRecord <- 0
+    for (i in 1:nFiles) {
+        for (j in 1:dim(dataFrames[[i]])[1]) {
+            thisRecord <- thisRecord + 1
+
+            traj[[thisRecord]] <- simulationFunction(dataFrames[[i]][j,])
+            traj[[thisRecord]]$fileNum <- i
+        }
+    }
+
+    return(traj)
+}
