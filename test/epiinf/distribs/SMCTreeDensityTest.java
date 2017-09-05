@@ -100,7 +100,8 @@ public class SMCTreeDensityTest {
                 "S0", new RealParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
-                "psiSamplingVariable", new RealParameter("0.1"));
+                "psiSamplingVariable", new RealParameter("0.1"),
+                "removalProb", new RealParameter("1.0"));
 
         SMCTreeDensity density = new SMCTreeDensity();
         density.initByName(
@@ -149,7 +150,8 @@ public class SMCTreeDensityTest {
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
                 "origin", new RealParameter("4.96590947152"),
-                "psiSamplingVariable", new RealParameter("0.1"));
+                "psiSamplingVariable", new RealParameter("0.1"),
+                "removalProb", new RealParameter("1.0"));
 
         SMCTreeDensity density = new SMCTreeDensity();
         density.initByName(
@@ -250,7 +252,8 @@ public class SMCTreeDensityTest {
                 "S0", new RealParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
-                "psiSamplingVariable", new RealParameter("0.1"));
+                "psiSamplingVariable", new RealParameter("0.1"),
+                "removalProb", new RealParameter("1.0"));
 
         SMCTreeDensity density = new SMCTreeDensity();
         density.initByName(
@@ -295,7 +298,8 @@ public class SMCTreeDensityTest {
                 "S0", new RealParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
-                "psiSamplingVariable", new RealParameter("0.1"));
+                "psiSamplingVariable", new RealParameter("0.1"),
+                "removalProb", new RealParameter("1.0"));
 
         SMCTreeDensity density = new SMCTreeDensity();
         density.initByName(

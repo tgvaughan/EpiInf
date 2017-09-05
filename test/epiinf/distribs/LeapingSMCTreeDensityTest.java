@@ -100,7 +100,8 @@ public class LeapingSMCTreeDensityTest {
                 "S0", new RealParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
-                "psiSamplingVariable", new RealParameter("0.1"));
+                "psiSamplingVariable", new RealParameter("0.1"),
+                "removalProb", new RealParameter("1.0"));
 
         LeapingSMCTreeDensity density = new LeapingSMCTreeDensity();
         density.initByName(
@@ -202,7 +203,8 @@ public class LeapingSMCTreeDensityTest {
                 "S0", new RealParameter("99"),
                 "infectionRate", new RealParameter("0.02"),
                 "recoveryRate", new RealParameter("0.1"),
-                "psiSamplingVariable", new RealParameter("0.1"));
+                "psiSamplingVariable", new RealParameter("0.1"),
+                "removalProb", new RealParameter("1.0"));
 
         LeapingSMCTreeDensity density = new LeapingSMCTreeDensity();
         density.initByName(
