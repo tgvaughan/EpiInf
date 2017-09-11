@@ -50,6 +50,8 @@ public class LeapingSMCTreeDensityTest {
                 "infectionRate", new RealParameter("0.01"),
                 "recoveryRate", new RealParameter("0.2"),
                 "psiSamplingVariable", new RealParameter("0.0"),
+                "removalProb", new RealParameter("1.0"),
+
                 "rhoSamplingProb", new RealParameter("0.3"),
                 "rhoSamplingTime", new RealParameter("4.0"));
 
@@ -157,6 +159,7 @@ public class LeapingSMCTreeDensityTest {
                 "infectionRate", new RealParameter("0.01"),
                 "recoveryRate", new RealParameter("0.2"),
                 "psiSamplingVariable", new RealParameter("0.0"),
+                "removalProb", new RealParameter("1.0"),
                 "rhoSamplingProb", new RealParameter("0.3"),
                 "rhoSamplingTime", new RealParameter("4.0"));
 
