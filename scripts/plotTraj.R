@@ -92,7 +92,7 @@ getInterpolatedValues <- function(traj, ages, targetFun) {
     return(targetValues)
 }
 
-linesBold <- function(x, y, col='black', steps=F, ...) {
+linesBold <- function(x, y, col='black', steps=F, widthOuter=6, widthInner=2,...) {
 
     if (steps)
         style <- 's'
@@ -110,6 +110,8 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
                      heightLim=NA,
                      showMean=TRUE,
                      showHPD=TRUE,
+                     widthOuter=6,
+                     widthInner=2,
                      presentTime=NA,
                      timesAreCalendarYears=FALSE,
                      target='prevalence',
@@ -220,12 +222,15 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
     }
 
     if (showMean) {
-        linesBold(getTime(targetTimes), meanTarget)
+        linesBold(getTime(targetTimes), meanTarget,
+                  widthOuter=widthOuter, widthInner=widthInner)
     }
 
     if (showHPD) {
-        linesBold(getTime(targetTimes), hpdTargetLow, lty=2)
-        linesBold(getTime(targetTimes), hpdTargetHigh, lty=2)
+        linesBold(getTime(targetTimes), hpdTargetLow, lty=2,
+                  widthOuter=widthOuter, widthInner=widthInner)
+        linesBold(getTime(targetTimes), hpdTargetHigh, lty=2,
+                  widthOuter=widthOuter, widthInner=widthInner)
     }
     cat("done.\n")
 }
@@ -291,7 +296,7 @@ plotWeeklyIncidence <- function(fileName=NA, traj=NULL, presentTime=NA, colidx=2
     return(p)
 }
 
-simSIR <- function(origin, beta, gamma, N) {
+simSIR <- function(origin, beta, gamma, N, useTL=FALSE, nLeaps=500) {
     S <- N - 1
     I <- 1
     R <- 0
@@ -299,30 +304,52 @@ simSIR <- function(origin, beta, gamma, N) {
     tidx <- 1
     t <- origin
 
+    if (useTL)
+        tau <- origin/nLeaps
+
     while (TRUE) {
 
         a_infect <- beta*S[tidx]*I[tidx]
         a_recov <- gamma*I[tidx]
         a_tot <- a_infect + a_recov
 
-        if (a_tot > 0)
-            t[tidx+1] <- t[tidx] - rexp(1, a_tot)
-        else
-            t[tidx+1] <- -Inf
+        if (useTL) {
 
-        if (t[tidx+1]<0)
-            break
+            t[tidx+1] <- t[tidx] - tau
 
-        if (runif(1, min=0, max=a_tot) < a_infect) {
-            # Infection
-            S[tidx+1] = S[tidx] - 1
-            I[tidx+1] = I[tidx] + 1
-            R[tidx+1] = R[tidx]
+            if (t[tidx+1] < 0)
+                break
+
+            nInfect <- rpois(1, a_infect*tau)
+            nRecov <- rpois(1, a_recov*tau)
+
+            S[tidx+1] = max(S[tidx] - nInfect, 0)
+            I[tidx+1] = max(I[tidx] + nInfect - nRecov, 0)
+            R[tidx+1] = max(R[tidx] + nRecov, 0)
+
+
         } else {
-            # Recovery
-            S[tidx+1] = S[tidx]
-            I[tidx+1] = I[tidx] - 1
-            R[tidx+1] = R[tidx] + 1
+
+            if (a_tot > 0)
+                t[tidx+1] <- t[tidx] - rexp(1, a_tot)
+            else
+                t[tidx+1] <- -Inf
+
+            if (t[tidx+1]<0)
+                break
+
+            if (runif(1, min=0, max=a_tot) < a_infect) {
+                                        # Infection
+                S[tidx+1] = S[tidx] - 1
+                I[tidx+1] = I[tidx] + 1
+                R[tidx+1] = R[tidx]
+            } else {
+                                        # Recovery
+                S[tidx+1] = S[tidx]
+                I[tidx+1] = I[tidx] - 1
+                R[tidx+1] = R[tidx] + 1
+            }
+
         }
 
         tidx <- tidx + 1
@@ -333,7 +360,7 @@ simSIR <- function(origin, beta, gamma, N) {
     I[tidx+1] = I[tidx]
     R[tidx+1] = R[tidx]
 
-    return(data.frame(t=t, S=S, I=I, R=R))
+    return(data.frame(t=t, S=S, I=I, R=R, Re=beta*S/gamma))
 }
 
 simSIS <- function(origin, beta, gamma, N) {
@@ -374,7 +401,7 @@ simSIS <- function(origin, beta, gamma, N) {
     S[tidx+1] = S[tidx]
     I[tidx+1] = I[tidx]
 
-    return(data.frame(t=t, S=S, I=I))
+    return(data.frame(t=t, S=S, I=I, Re=beta*S/gamma))
 }
 
 simBD <- function(origin, lambda, mu) {
