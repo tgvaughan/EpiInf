@@ -152,7 +152,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
             EpidemicEvent nextEvent = new EpidemicEvent();
 
             double nextModelEventTime = model.getNextModelEventTime(thisState);
-            if (nextModelEventTime < endTime && thisState.time > nextModelEventTime) {
+            if (nextModelEventTime <= endTime && thisState.time > nextModelEventTime) {
                 ModelEvent event = model.getNextModelEvent(thisState);
 
                 if (event.type == ModelEvent.Type.RHO_SAMPLING) {

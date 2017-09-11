@@ -76,8 +76,11 @@ public class SimulatedTransmissionTree extends Tree {
             throw new IllegalArgumentException("Must provide incidenceParam " +
                     "if sequencingFraction below 1.0.");
 
-        TreeSet<EpidemicEvent> sequencedSamples = new TreeSet<>();
-        TreeSet<EpidemicEvent> unsequencedSamples = new TreeSet<>();
+        TreeSet<EpidemicEvent> sequencedSamplingEvents = new TreeSet<>();
+        TreeSet<EpidemicEvent> unsequencedSamplingEvents = new TreeSet<>();
+
+
+        int nSequencedSamples = 0;
 
         for (EpidemicEvent event : traj.getEventList()) {
             if (event.isSample()) {
@@ -85,25 +88,26 @@ public class SimulatedTransmissionTree extends Tree {
                 if (event.type == EpidemicEvent.RHO_SAMPLE
                         || event.type == EpidemicEvent.OTHER_SAMPLE
                         || seqFrac == 1.0 || Randomizer.nextDouble()<seqFrac) {
-                    sequencedSamples.add(event);
+                    sequencedSamplingEvents.add(event);
+                    nSequencedSamples += event.multiplicity;
                 } else {
-                    unsequencedSamples.add(event);
+                    unsequencedSamplingEvents.add(event);
                 }
             }
         }
 
-        if (sequencedSamples.isEmpty() && unsequencedSamples.isEmpty())
+        if (sequencedSamplingEvents.isEmpty() && unsequencedSamplingEvents.isEmpty())
             throw new NoSamplesException();
 
-        double youngestSequencedSampTime = !sequencedSamples.isEmpty()
-                ? sequencedSamples.last().time
-                : unsequencedSamples.last().time;
+        double youngestSequencedSampTime = !sequencedSamplingEvents.isEmpty()
+                ? sequencedSamplingEvents.last().time
+                : unsequencedSamplingEvents.last().time;
 
         // Store times of unsequenced samples to incidence parameter
         if (incidenceParamInput.get() != null && seqFrac < 1.0) {
-            Double[] incidenceTimes = new Double[unsequencedSamples.size()];
+            Double[] incidenceTimes = new Double[unsequencedSamplingEvents.size()];
             int idx = 0;
-            for (EpidemicEvent event : unsequencedSamples)
+            for (EpidemicEvent event : unsequencedSamplingEvents)
                 incidenceTimes[idx++] = youngestSequencedSampTime - event.time;
 
             incidenceParamInput.get().assignFromWithoutID(new RealParameter(incidenceTimes));
@@ -112,8 +116,8 @@ public class SimulatedTransmissionTree extends Tree {
         // Simulate tree
 
         int nextLeafNr = 0;
-        int nextInternalID = sequencedSamples.size();
-        
+        int nextInternalID = nSequencedSamples;
+
         List<Node> activeNodes = new ArrayList<>();
 
         List<EpidemicEvent> revEventList = traj.getEventList();
@@ -122,11 +126,14 @@ public class SimulatedTransmissionTree extends Tree {
         List<EpidemicState> revStateList = traj.getStateList();
         Collections.reverse(revStateList);
         
-        int sequencedSamplesSeen = 0;
+        int nSequencedSamplingEventsSeen = 0;
         for (int eidx=0; eidx<revEventList.size(); eidx++) {
             
             EpidemicEvent epidemicEvent = revEventList.get(eidx);
             EpidemicState epidemicState = revStateList.get(eidx);
+
+            if (sequencedSamplingEvents.contains(epidemicEvent))
+                nSequencedSamplingEventsSeen += 1;
 
             int k = activeNodes.size();
             double N = epidemicState.I;
@@ -159,7 +166,7 @@ public class SimulatedTransmissionTree extends Tree {
 
                     case EpidemicEvent.RHO_SAMPLE:
                     case EpidemicEvent.PSI_SAMPLE_REMOVE:
-                        if (!sequencedSamples.contains(epidemicEvent))
+                        if (!sequencedSamplingEvents.contains(epidemicEvent))
                             break;
 
                         leaf = new Node();
@@ -168,12 +175,10 @@ public class SimulatedTransmissionTree extends Tree {
                         leaf.setID("t" + nextLeafNr);
                         nextLeafNr += 1;
                         activeNodes.add(leaf);
-
-                        sequencedSamplesSeen += 1;
                         break;
 
                     case EpidemicEvent.PSI_SAMPLE_NOREMOVE:
-                        if (!sequencedSamples.contains(epidemicEvent))
+                        if (!sequencedSamplingEvents.contains(epidemicEvent))
                             break;
 
                         leaf = new Node();
@@ -195,8 +200,6 @@ public class SimulatedTransmissionTree extends Tree {
                         } else {
                             activeNodes.add(leaf);
                         }
-
-                        sequencedSamplesSeen += 1;
                         break;
 
                     default:
@@ -204,7 +207,7 @@ public class SimulatedTransmissionTree extends Tree {
             }
 
             // Stop when we reach the MRCA of all sampled events.
-            if (sequencedSamplesSeen==sequencedSamples.size() && activeNodes.size() == 1)
+            if (nSequencedSamplingEventsSeen==sequencedSamplingEvents.size() && activeNodes.size() == 1)
                 break;
         }
         
@@ -217,12 +220,12 @@ public class SimulatedTransmissionTree extends Tree {
         }
 
         // Initialise state nodes
-        if (!sequencedSamples.isEmpty())
+        if (!sequencedSamplingEvents.isEmpty())
             assignFromWithoutID(new Tree(activeNodes.get(0)));
         
         // Write tree to disk if requested:
 
-        if (!sequencedSamples.isEmpty() && fileNameInput.get() != null) {
+        if (!sequencedSamplingEvents.isEmpty() && fileNameInput.get() != null) {
             try (PrintStream ps = new PrintStream(fileNameInput.get())) {
                 String newick = root.toNewick().concat(";");
                 ps.println(newick.replace(":0.0;", ":" + (youngestSequencedSampTime-root.getHeight()) + ";"));
@@ -233,10 +236,10 @@ public class SimulatedTransmissionTree extends Tree {
         }
 
         // Write incidence times to disk if requested
-        if (incidenceFileNameInput.get() != null && !unsequencedSamples.isEmpty()) {
+        if (incidenceFileNameInput.get() != null && !unsequencedSamplingEvents.isEmpty()) {
             try (PrintStream ps = new PrintStream(incidenceFileNameInput.get())) {
                 ps.println("time age");
-                for (EpidemicEvent event : unsequencedSamples) {
+                for (EpidemicEvent event : unsequencedSamplingEvents) {
                     ps.println(event.time + " " + (youngestSequencedSampTime - event.time));
                 }
             } catch (FileNotFoundException e) {
