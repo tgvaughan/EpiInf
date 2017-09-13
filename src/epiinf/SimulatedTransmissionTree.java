@@ -96,7 +96,7 @@ public class SimulatedTransmissionTree extends Tree {
             }
         }
 
-        if (sequencedSamplingEvents.isEmpty() && unsequencedSamplingEvents.isEmpty())
+        if (nSequencedSamples == 0 && unsequencedSamplingEvents.isEmpty())
             throw new NoSamplesException();
 
         double youngestSequencedSampTime = !sequencedSamplingEvents.isEmpty()
