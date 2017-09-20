@@ -24,23 +24,26 @@
     :feast.mapping">
 
     <tree spec="SimulatedTransmissionTree" id="tree" fileName="$(filebase).tree.newick">
-        <epidemicTrajectory spec="SimulatedTrajectory" id="trajectory" maxDuration="7.0">
+        <epidemicTrajectory spec="SimulatedTrajectory" id="trajectory">
             <model spec="BirthDeathModel" usePsiSamplingProportion="false">
                 <infectionRate spec="RealParameter" value="1.2"/>
                 <recoveryRate spec="RealParameter" value="0.2"/>
                 <psiSamplingVariable spec="RealParameter" value="0.2"/>
                 <removalProb spec="RealParameter" value="0.5"/>
+                <origin spec="RealParameter" value="7.0" id="origin"/>
             </model>
         </epidemicTrajectory>
     </tree>
 
     <run spec="DensityMapper">
         <distribution spec="SMCTreeDensity" id="density" tree="@tree" nParticles="10000">
+            <!-- This FSO is actually wrong, but need this for consistency with SA parameterization. -->
+            <finalSampleOffset spec="RealParameter" value="0.0"/>
             <model spec="BirthDeathModel" usePsiSamplingProportion="false">
-                <origin spec="OriginFromTrajectory" id="origin" trajectory="@trajectory"/>
                 <infectionRate spec="RealParameter" id="infectionRate" value="1.2"/>
                 <recoveryRate spec="RealParameter" id="recoveryRate" value="0.2"/>
                 <psiSamplingVariable idref="psi"/>
+                <origin idref="origin"/>
                 <removalProb idref="r"/>
             </model>
         </distribution>
@@ -56,9 +59,11 @@
 
         <realParam spec="RealParameter" id="psi" value="0.2" lower="0.05" upper="0.5"/>
         <steps spec="IntegerParameter" value="1"/>
+        <logScale spec="BooleanParameter" value="false"/>
 
         <realParam spec="RealParameter" id="r" value="0.5" lower="0.05" upper="0.95"/>
         <steps spec="IntegerParameter" value="19"/>
+        <logScale spec="BooleanParameter" value="false"/>
 
         <logger spec="Logger" logEvery="1">
             <log idref="psi"/>

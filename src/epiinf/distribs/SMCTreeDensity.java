@@ -506,6 +506,12 @@ public class SMCTreeDensity extends EpiTreePrior {
                                     conditionalLogP += Math.log(1.0 - (nextObservedEvent.lineages - 1)/particleState.I);
                             }
                         }
+
+                        // Must explicitly check for validity of post-sampled state
+                        // because there is no sampling rate/probability to prevent
+                        // sampling when there are no lineages to sample.
+                        if (!particleState.isValid())
+                            return Double.NEGATIVE_INFINITY;
                     }
                 }
             }
