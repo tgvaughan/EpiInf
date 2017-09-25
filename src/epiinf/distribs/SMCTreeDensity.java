@@ -454,6 +454,8 @@ public class SMCTreeDensity extends EpiTreePrior {
                         + k*Math.log(nextModelEvent.rho)
                         + (I-k)*Math.log(1.0 - nextModelEvent.rho);
 
+                conditionalLogP += GammaFunction.lnGamma(1 + k);
+
                 model.incrementState(particleState,
                         EpidemicEvent.MultipleRhoSamples(nextObservedEvent.multiplicity));
 
@@ -516,7 +518,6 @@ public class SMCTreeDensity extends EpiTreePrior {
                 }
             }
 
-            conditionalLogP += GammaFunction.lnGamma(1 + nextObservedEvent.multiplicity);
         }
 
         return conditionalLogP;
