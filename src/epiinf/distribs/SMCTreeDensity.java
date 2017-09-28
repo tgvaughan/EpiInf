@@ -17,21 +17,19 @@
 
 package epiinf.distribs;
 
-import beast.core.*;
+import beast.core.Citation;
+import beast.core.Description;
+import beast.core.Function;
+import beast.core.Input;
 import beast.core.Input.Validate;
-import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
 import beast.util.Randomizer;
 import epiinf.*;
-import epiinf.models.EpidemicModel;
 import epiinf.util.ReplacementSampler;
 
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
