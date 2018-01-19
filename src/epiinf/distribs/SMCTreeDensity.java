@@ -173,7 +173,8 @@ public class SMCTreeDensity extends EpiTreePrior {
             double maxLogWeight = Double.NEGATIVE_INFINITY;
             for (int p = 0; p < nParticles; p++) {
 
-                logParticleWeights[p] += updateParticle(particleStates[p], particleTrajectories.get(p));
+                if (logParticleWeights[p] > Double.NEGATIVE_INFINITY)
+                    logParticleWeights[p] += updateParticle(particleStates[p], particleTrajectories.get(p));
 
                 maxLogWeight = Math.max(logParticleWeights[p], maxLogWeight);
             }
@@ -475,11 +476,23 @@ public class SMCTreeDensity extends EpiTreePrior {
                                     < model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
 
                             if (isRemoval) {
+                                if (nextObservedEvent.type == ObservedEvent.Type.UNSEQUENCED_SAMPLE)
+                                    conditionalLogP += Math.log(1.0 - nextObservedEvent.lineages/particleState.I);
+
                                 model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
                             } else {
                                 if (nextObservedEvent.type == ObservedEvent.Type.LEAF)
                                     conditionalLogP += Math.log(1.0 - (nextObservedEvent.lineages - 1) / particleState.I);
                             }
+                        }
+
+                        // Account for probability of sequencing (if non-null)
+                        if (model.sequencingProbInput.get() != null) {
+                            double seqProb = model.sequencingProbInput.get().getArrayValue();
+                            if (nextObservedEvent.type == ObservedEvent.Type.UNSEQUENCED_SAMPLE)
+                                conditionalLogP += Math.log(1.0 - seqProb);
+                            else
+                                conditionalLogP += Math.log(seqProb);
                         }
                     }
 
@@ -517,6 +530,8 @@ public class SMCTreeDensity extends EpiTreePrior {
             }
 
         }
+
+
 
         return conditionalLogP;
     }

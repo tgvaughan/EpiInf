@@ -104,6 +104,9 @@ public abstract class EpidemicModel extends CalculationNode {
                     " as times before most recent sample.",
             false);
 
+    public Input<Function> sequencingProbInput = new Input<>(
+            "sequencingProb",
+            "Probability that a sample is sequenced.");
 
     public Input<Function> rhoSamplingProbInput = new Input<>(
             "rhoSamplingProb",

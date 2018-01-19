@@ -34,7 +34,7 @@ import java.util.List;
 public class ObservedEventsList {
 
     private TreeInterface tree;
-    private Function incidenceTimes;
+    private Function incidenceAges;
     private Function origin, finalTreeSampleOffset;
     private List<ObservedEvent> eventList;
 
@@ -45,10 +45,10 @@ public class ObservedEventsList {
     
     private boolean dirty;
     
-    public ObservedEventsList(TreeInterface tree, Function incidenceTimes,
+    public ObservedEventsList(TreeInterface tree, Function incidenceAges,
                               Function origin, Function finalTreeSampleOffset) {
         this.tree = tree;
-        this.incidenceTimes = incidenceTimes;
+        this.incidenceAges = incidenceAges;
         this.origin = origin;
         this.finalTreeSampleOffset = finalTreeSampleOffset;
 
@@ -90,11 +90,11 @@ public class ObservedEventsList {
             }
         }
 
-        if (incidenceTimes != null) {
-            for (int i = 0; i < incidenceTimes.getDimension(); i++) {
+        if (incidenceAges != null) {
+            for (int i = 0; i < incidenceAges.getDimension(); i++) {
                 ObservedEvent event = new ObservedEvent();
                 event.type = ObservedEvent.Type.UNSEQUENCED_SAMPLE;
-                event.time = getTimeFromAge(incidenceTimes.getArrayValue(i));
+                event.time = getTimeFromAge(incidenceAges.getArrayValue(i));
                 eventList.add(event);
             }
         }

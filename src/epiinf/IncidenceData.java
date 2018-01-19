@@ -60,6 +60,11 @@ public class IncidenceData extends BEASTObject {
     public Input<RealParameter> finalSampleOffsetInput = new Input<>("finalSampleOffset",
             "Difference in time between final sample and end of observation period.", Input.Validate.REQUIRED);
 
+    public Input<Boolean> valuesAreAgesInput = new Input<>("valuesAreAges",
+            "If true, numeric values are treated as ages (before end of " +
+                    "sampling period). Default is false.",
+            false);
+
     private List<Double> ages = new ArrayList<>();
 
     public IncidenceData() { }
@@ -118,13 +123,17 @@ public class IncidenceData extends BEASTObject {
                 times.add(time);
         }
 
-        double maxTime = times.stream()
-                .mapToDouble(t -> t)
-                .max()
-                .getAsDouble();
-        ages = times.stream()
-                .map(t-> maxTime - t + finalSampleOffsetInput.get().getValue())
-                .collect(Collectors.toList());
+        if (valuesAreAgesInput.get()) {
+            ages = times;
+        } else {
+            double maxTime = times.stream()
+                    .mapToDouble(t -> t)
+                    .max()
+                    .getAsDouble();
+            ages = times.stream()
+                    .map(t -> maxTime - t + finalSampleOffsetInput.get().getValue())
+                    .collect(Collectors.toList());
+        }
     }
 
     public List<Double> getAges() {
