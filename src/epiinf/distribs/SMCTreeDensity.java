@@ -163,21 +163,23 @@ public class SMCTreeDensity extends EpiTreePrior {
     /**
      * Propagate particle ensemble up to chosen observed event.
      *
-     * @param observedEvent Next observed event.
+     * @param nextObservedEvent Next observed event.
      *
      * @return true if propagation succeeds, false if it fails due to ensemble extinction
      */
-    private boolean propagateEnsemble(ObservedEvent observedEvent) {
+    private boolean propagateEnsemble(ObservedEvent nextObservedEvent) {
 
             // Update particles and record max log weight
             double maxLogWeight = Double.NEGATIVE_INFINITY;
             for (int p = 0; p < nParticles; p++) {
 
                 if (logParticleWeights[p] > Double.NEGATIVE_INFINITY)
-                    logParticleWeights[p] += updateParticle(particleStates[p], particleTrajectories.get(p));
+                    logParticleWeights[p] += updateParticle(particleStates[p], particleTrajectories.get(p),
+                            nextObservedEvent);
 
                 maxLogWeight = Math.max(logParticleWeights[p], maxLogWeight);
             }
+
 
             // Compute mean of weights scaled relative to max log weight
             double sumOfScaledWeights = 0, sumOfSquaredScaledWeights = 0;
@@ -193,7 +195,7 @@ public class SMCTreeDensity extends EpiTreePrior {
 
             double Neff = sumOfScaledWeights*sumOfScaledWeights/sumOfSquaredScaledWeights;
 
-            if (Neff < resampThresh*nParticles || observedEvent.type == ObservedEvent.Type.OBSERVATION_END) {
+            if (Neff < resampThresh*nParticles || nextObservedEvent.type == ObservedEvent.Type.OBSERVATION_END) {
                 // Update marginal likelihood estimate
                 logP += Math.log(sumOfScaledWeights / nParticles) + maxLogWeight;
 
@@ -240,21 +242,21 @@ public class SMCTreeDensity extends EpiTreePrior {
      *
      * @param particleState State of particle
      * @param particleTrajectory if non-null, add particle states to this trajectory
+     * @param nextObservedEvent next observed event - termination of particle sim
      *
      * @return log conditional prob of tree interval under trajectory
      */
     private double updateParticle(EpidemicState particleState,
-                                  List<EpidemicState> particleTrajectory) {
+                                  List<EpidemicState> particleTrajectory,
+                                  ObservedEvent nextObservedEvent) {
         double conditionalLogP = 0;
-        ObservedEvent nextObservedEvent;
         ModelEvent nextModelEvent;
-        double nextObservedEventTime, nextModelEventTime;
+        double nextModelEventTime;
+        double nextObservedEventTime = nextObservedEvent.time;
 
         double maxLeapSize = model.getOrigin()/minLeapCount;
 
         while (true) {
-            nextObservedEvent = observedEventsList.getNextObservedEvent(particleState);
-            nextObservedEventTime = observedEventsList.getNextObservedEventTime(particleState);
             nextModelEvent = model.getNextModelEvent(particleState);
             nextModelEventTime = model.getNextModelEventTime(particleState);
 

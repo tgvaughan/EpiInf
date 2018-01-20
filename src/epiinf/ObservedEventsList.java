@@ -171,24 +171,6 @@ public class ObservedEventsList {
         return eventList;
     }
 
-    public ObservedEvent getNextObservedEvent(EpidemicState state) {
-        updateEventList();
-
-        if (state.observedEventIdx<eventList.size())
-            return eventList.get(state.observedEventIdx);
-        else
-            return null;
-    }
-
-    public double getNextObservedEventTime(EpidemicState state) {
-        updateEventList();
-
-        if (state.observedEventIdx<eventList.size())
-            return eventList.get(state.observedEventIdx).time;
-        else
-            return Double.POSITIVE_INFINITY;
-    }
-
     public int getCurrentLineageCount(EpidemicState state) {
         updateEventList();
 
