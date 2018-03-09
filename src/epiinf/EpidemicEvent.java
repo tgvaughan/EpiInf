@@ -17,6 +17,8 @@
 
 package epiinf;
 
+import java.util.Arrays;
+
 /**
  * Class representing events during an epidemic.
  *
@@ -41,7 +43,7 @@ public class EpidemicEvent extends Event {
     };
 
     public int type;
-    public double multiplicity;
+    public int multiplicity;
 
     public EpidemicEvent() {
         multiplicity = 1;
@@ -81,7 +83,51 @@ public class EpidemicEvent extends Event {
     public String getTypeName() {
         return typeNames[type];
     }
-    
+
+    /**
+     * Set type of event.
+     *
+     * @param type new type
+     * @return object reference for method chaining.
+     */
+    public EpidemicEvent setType(int type) {
+        this.type = type;
+        return this;
+    }
+
+    /**
+     * Set type of event corresponding to type name.
+     *
+     * @param typeName name of type
+     * @return object reference for method chaining.
+     */
+    public EpidemicEvent setType(String typeName) {
+        type = Arrays.asList(typeNames).indexOf(typeName);
+        return this;
+    }
+
+    /**
+     * Set time of event.
+     *
+     * @param time new time
+     * @return object reference for method chaining.
+     */
+    public EpidemicEvent setTime(double time) {
+        this.time = time;
+        return this;
+    }
+
+    /**
+     * Set multiplicity of event.
+     *
+     * @param multiplicity new multiplicity
+     * @return object reference for method chaining.
+     */
+    public EpidemicEvent setMultiplicity(int multiplicity) {
+        this.multiplicity = multiplicity;
+        return this;
+    }
+
     public static final EpidemicEvent Infection = new EpidemicEvent(-1, INFECTION, 1);
     public static final EpidemicEvent Recovery = new EpidemicEvent(-1, RECOVERY, 1);
     public static final EpidemicEvent RhoSample = new EpidemicEvent(-1, RHO_SAMPLE, 1);

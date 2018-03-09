@@ -15,10 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package epiinf;
+package epiinf.util;
 
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
+import epiinf.EpidemicEvent;
+import epiinf.EpidemicTrajectory;
 
 import java.util.List;
 

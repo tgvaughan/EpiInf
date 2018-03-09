@@ -1,0 +1,23 @@
+<beast version="2.0" namespace="beast.core
+    :beast.core.parameter
+    :beast.core.util
+    :beast.evolution.likelihood
+    :beast.evolution.operators
+    :epiinf
+    :epiinf.models
+    :epiinf.distribs
+    :epiinf.util
+    :feast.expressions
+    :feast.simulation">
+
+
+    <run spec="TrajectorySimulator" fileName="simulated.traj">
+        <model spec="BirthDeathModel" usePsiSamplingProportion="false">
+            <infectionRate spec="RealParameter" value="1.5"/>
+            <recoveryRate spec="RealParameter" value="0.5"/>
+            <psiSamplingVariable spec="RealParameter" value="0.5"/>
+            <removalProb spec="RealParameter" value="0.0"/>
+            <origin spec="RealParameter" value="5.0"/>
+        </model>
+    </run>
+</beast>

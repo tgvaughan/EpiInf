@@ -48,7 +48,6 @@ public class TrajectorySimulator extends beast.core.Runnable {
         SimulatedTrajectory traj = new SimulatedTrajectory();
         traj.initByName(
                 "model", modelInput.get(),
-                "maxDuration", durationInput.get(),
                 "fileName", fileNameInput.get());
     }
 }
