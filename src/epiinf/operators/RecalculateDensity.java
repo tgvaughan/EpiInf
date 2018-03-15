@@ -56,7 +56,7 @@ public class RecalculateDensity extends TreeOperator implements Loggable {
     }
 
     @Override
-    public void log(int sample, PrintStream out) {
+    public void log(long sample, PrintStream out) {
         stillOn = sample < iterationsInput.get();
     }
 

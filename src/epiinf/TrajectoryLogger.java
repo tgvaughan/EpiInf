@@ -54,7 +54,7 @@ public class TrajectoryLogger extends BEASTObject implements Loggable{
     }
 
     @Override
-    public void log(int nSample, PrintStream out) {
+    public void log(long nSample, PrintStream out) {
         EpidemicTrajectory traj = treeDensity.getConditionedTrajectory();
 
         if (traj.getStateList().isEmpty()) {
