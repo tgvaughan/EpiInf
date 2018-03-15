@@ -59,7 +59,8 @@ public class SimulatedTransmissionTree extends Tree {
             "(The rest are simply used as incidence data.)", 1.0);
 
     public Input<RealParameter> incidenceParamInput = new Input<>(
-            "incidenceParam", "Incidence times parameter");
+            "incidenceParam", "Parameter containing incidence event ages" +
+            " prior to end of observation period.");
 
     public Input<String> incidenceFileNameInput = new Input<>(
             "incidenceFileName", "Name of file to write incidence times to.");
@@ -99,21 +100,23 @@ public class SimulatedTransmissionTree extends Tree {
         if (nSequencedSamples == 0 && unsequencedSamplingEvents.isEmpty())
             throw new NoSamplesException();
 
-        double youngestSequencedSampTime = !sequencedSamplingEvents.isEmpty()
-                ? sequencedSamplingEvents.last().time
-                : unsequencedSamplingEvents.last().time;
 
-        // Store times of unsequenced samples to incidence parameter
+        // Store ages (relative to end of process) of unsequenced samples
+        // to incidence parameter
         if (incidenceParamInput.get() != null && seqFrac < 1.0) {
             Double[] incidenceTimes = new Double[unsequencedSamplingEvents.size()];
             int idx = 0;
             for (EpidemicEvent event : unsequencedSamplingEvents)
-                incidenceTimes[idx++] = youngestSequencedSampTime - event.time;
+                incidenceTimes[idx++] = traj.origin - event.time;
 
             incidenceParamInput.get().assignFromWithoutID(new RealParameter(incidenceTimes));
         }
 
         // Simulate tree
+
+        double youngestSequencedSampTime = !sequencedSamplingEvents.isEmpty()
+                ? sequencedSamplingEvents.last().time
+                : Double.NaN;
 
         int nextLeafNr = 0;
         int nextInternalID = nSequencedSamples;
