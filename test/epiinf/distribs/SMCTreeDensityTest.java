@@ -58,7 +58,7 @@ public class SMCTreeDensityTest {
         density.initByName(
                 "tree", tree,
                 "model", model,
-                "finalSampleOffset", new RealParameter("0.0"),
+                "finalTreeSampleOffset", new RealParameter("0.0"),
                 "nParticles", 500000);
 
         double logP = density.calculateLogP();
@@ -108,7 +108,7 @@ public class SMCTreeDensityTest {
         density.initByName(
                 "tree", tree,
                 "model", model,
-                "finalSampleOffset", new RealParameter("0.0"),
+                "finalTreeSampleOffset", new RealParameter("0.0"),
                 "nParticles", 100000);
 
         double logP = density.calculateLogP();
@@ -158,7 +158,7 @@ public class SMCTreeDensityTest {
         density.initByName(
                 "tree", tree,
                 "model", model,
-                "finalSampleOffset", new RealParameter("0.0"),
+                "finalTreeSampleOffset", new RealParameter("0.0"),
                 "nParticles", 100000,
                 "useTauLeaping", true);
 
@@ -215,7 +215,7 @@ public class SMCTreeDensityTest {
         density.initByName(
                 "tree", tree,
                 "model", model,
-                "finalSampleOffset", new RealParameter("0.0"),
+                "finalTreeSampleOffset", new RealParameter("0.0"),
                 "nParticles", 100000);
 
         double logP = density.calculateLogP();
@@ -261,7 +261,7 @@ public class SMCTreeDensityTest {
         density.initByName(
                 "tree", tree,
                 "model", model,
-                "finalSampleOffset", new RealParameter("0.0"),
+                "finalTreeSampleOffset", new RealParameter("0.0"),
                 "nParticles", 100000);
 
         double logP = density.calculateLogP();
@@ -307,7 +307,7 @@ public class SMCTreeDensityTest {
         density.initByName(
                 "tree", tree,
                 "model", model,
-                "finalSampleOffset", new RealParameter("0.0"),
+                "finalTreeSampleOffset", new RealParameter("0.0"),
                 "nParticles", 100000,
                 "useTauLeaping", true);
 
