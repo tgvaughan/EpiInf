@@ -15,8 +15,7 @@
 
         <state>
             <stateNode id="tree" spec="SimulatedTransmissionTree"
-                       leafSampleFrac="$(leaf_frac)"
-                       deterministicLeafSampleSelection="true"
+                       leafSampleFrac="1.0"
                        fileName="$(filebase).$(leaf_frac).initial.tree">
                 <finalTreeSampleOffsetParam id="finalTreeSampleOffset" spec="RealParameter" value="0"/>
                 <incidenceParam id="incidenceParam" spec="RealParameter" value="0"/>
@@ -27,17 +26,14 @@
         </state>
 
         <distribution id="posterior" spec="CompoundDistribution">
-            <distribution spec="SMCTreeDensity" id="treePrior" tree="@tree"
-                          nParticles="100"
-                          useTauLeaping="true">
-                <finalTreeSampleOffset idref="finalTreeSampleOffset"/>
-                <model id="model" spec="BirthDeathModel" usePsiSamplingProportion="false">
-                    <infectionRate idref="beta"/>
-                    <recoveryRate spec="RealParameter" value="0.5"/>
-                    <psiSamplingVariable spec="RealParameter" value="0.5"/>
-                    <removalProb spec="RealParameter" value="0.0"/>
-                    <origin id="origin" spec="OriginFromTrajectory" trajectory="@true_traj"/>
-                </model>
+
+            <distribution spec="beast.evolution.speciation.SABirthDeathModel" id="treePrior">
+                <tree idref="tree"/>
+                <origin id="origin" spec="OriginFromTrajectory" trajectory="@true_traj"/>
+                <birthRate idref="beta"/>
+                <deathRate spec="RealParameter" value="0.5"/>
+                <samplingRate spec="RealParameter" value="0.5"/>
+                <removalProbability spec="RealParameter" value="0.0"/>
             </distribution>
 
             <distribution spec="CompoundDistribution" id="paramPriors">
@@ -69,15 +65,11 @@
             <log idref="beta"/>
         </logger>
 
-        <logger logEvery="10000" fileName="$(filebase).$(leaf_frac).trees">
+        <logger logEvery="10000" fileName="$(filebase).1.0.trees">
             <log idref="tree"/>
         </logger>
 
-        <logger logEvery="10000" fileName="$(filebase).$(leaf_frac).traj">
-            <log id="trajConditioned" spec='TrajectoryLogger' treeDensity="@treePrior" />
-        </logger>
-
-        <logger id="filelog" spec="Logger" logEvery="100" fileName="$(filebase).$(leaf_frac).log">
+        <logger id="filelog" spec="Logger" logEvery="100" fileName="$(filebase).1.0.log">
             <log idref="posterior"/>
             <log idref="treePrior"/>
             <log idref="beta"/>
