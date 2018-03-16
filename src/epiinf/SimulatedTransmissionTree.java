@@ -48,22 +48,37 @@ public class SimulatedTransmissionTree extends Tree {
             Validate.REQUIRED);
     
     public Input<String> fileNameInput = new Input<>(
-            "fileName", "Name of file to save Newick representation of tree to.");
+            "fileName",
+            "Name of file to save Newick representation of tree to.");
     
     public Input<Boolean> truncateTrajectoryInput = new Input<>(
             "truncateTrajectory",
-            "Truncate trajectory at most recent sample. (Default true.)", true);
+            "Truncate trajectory at most recent sample. (Default true.)",
+            false);
 
-    public Input<Double> sequencingFractionInput = new Input<>(
-            "sequencingFraction", "Fraction of samples that are sequenced. " +
+    public Input<RealParameter> finalTreeSampleOffsetInput = new Input<>(
+            "finalTreeSampleOffsetParam",
+            "Parameter in which to store final tree sample offset.",
+            Validate.REQUIRED);
+
+    public Input<Double> leafSampleFracInput = new Input<>(
+            "leafSampleFrac",
+            "Fraction of samples that correspond to tree leaves. " +
             "(The rest are simply used as incidence data.)", 1.0);
 
+    public Input<Boolean> deterministicLeafSampleSelectionInput = new Input<>(
+            "deterministicLeafSampleSelection",
+            "Deterministically select which samples to associate with " +
+                    "tree leaves, instead of probabilistically.", false);
+
     public Input<RealParameter> incidenceParamInput = new Input<>(
-            "incidenceParam", "Parameter containing incidence event ages" +
-            " prior to end of observation period.");
+            "incidenceParam",
+            "Parameter containing incidence event ages prior to end " +
+                    "of observation period.");
 
     public Input<String> incidenceFileNameInput = new Input<>(
-            "incidenceFileName", "Name of file to write incidence times to.");
+            "incidenceFileName",
+            "Name of file to write incidence times to.");
 
     public SimulatedTransmissionTree() { }
     
@@ -71,39 +86,44 @@ public class SimulatedTransmissionTree extends Tree {
     public void initAndValidate() {
         EpidemicTrajectory traj = trajInput.get();
         boolean truncateTrajectory = truncateTrajectoryInput.get();
-        double seqFrac = sequencingFractionInput.get();
+        double leafFrac = leafSampleFracInput.get();
+        boolean useDetLeafSel = deterministicLeafSampleSelectionInput.get();
 
-        if (seqFrac<1.0 && incidenceParamInput.get() == null)
+        if (leafFrac<1.0 && incidenceParamInput.get() == null)
             throw new IllegalArgumentException("Must provide incidenceParam " +
-                    "if sequencingFraction below 1.0.");
+                    "if leafSampleFrac below 1.0.");
 
         TreeSet<EpidemicEvent> sequencedSamplingEvents = new TreeSet<>();
         TreeSet<EpidemicEvent> unsequencedSamplingEvents = new TreeSet<>();
 
-
-        int nSequencedSamples = 0;
+        int nLeafSamples = 0, nNonleafSamples = 0;
+        double cumulativeLeafFrac = 0;
 
         for (EpidemicEvent event : traj.getEventList()) {
             if (event.isSample()) {
 
                 if (event.type == EpidemicEvent.RHO_SAMPLE
                         || event.type == EpidemicEvent.OTHER_SAMPLE
-                        || seqFrac == 1.0 || Randomizer.nextDouble()<seqFrac) {
+                        || leafFrac == 1.0
+                        || (useDetLeafSel && cumulativeLeafFrac < leafFrac)
+                        || Randomizer.nextDouble()<leafFrac) {
                     sequencedSamplingEvents.add(event);
-                    nSequencedSamples += event.multiplicity;
+                    nLeafSamples += event.multiplicity;
                 } else {
                     unsequencedSamplingEvents.add(event);
+                    nNonleafSamples += event.multiplicity;
                 }
+                cumulativeLeafFrac = nLeafSamples/(float)(nLeafSamples + nNonleafSamples);
             }
         }
 
-        if (nSequencedSamples == 0 && unsequencedSamplingEvents.isEmpty())
+        if (nLeafSamples + nNonleafSamples == 0)
             throw new NoSamplesException();
 
 
         // Store ages (relative to end of process) of unsequenced samples
         // to incidence parameter
-        if (incidenceParamInput.get() != null && seqFrac < 1.0) {
+        if (incidenceParamInput.get() != null && leafFrac < 1.0) {
             Double[] incidenceTimes = new Double[unsequencedSamplingEvents.size()];
             int idx = 0;
             for (EpidemicEvent event : unsequencedSamplingEvents)
@@ -119,7 +139,7 @@ public class SimulatedTransmissionTree extends Tree {
                 : Double.NaN;
 
         int nextLeafNr = 0;
-        int nextInternalID = nSequencedSamples;
+        int nextInternalID = nLeafSamples;
 
         List<Node> activeNodes = new ArrayList<>();
 
@@ -213,7 +233,14 @@ public class SimulatedTransmissionTree extends Tree {
             if (nSequencedSamplingEventsSeen==sequencedSamplingEvents.size() && activeNodes.size() == 1)
                 break;
         }
-        
+
+        // Record final tree sample offset
+        double offset = traj.origin - revEventList.get(0).time;
+        if (nLeafSamples>0) {
+            finalTreeSampleOffsetInput.get().assignFromWithoutID(
+                    new RealParameter(String.valueOf(offset)));
+        }
+
         // Truncate trajectory at most recent sample if requested:
         if (truncateTrajectory) {
             while (revEventList.get(0).time>youngestSequencedSampTime) {

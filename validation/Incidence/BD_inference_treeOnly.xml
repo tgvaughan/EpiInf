@@ -28,7 +28,6 @@
 
         <distribution id="posterior" spec="CompoundDistribution">
             <distribution spec="SMCTreeDensity" id="treePrior" tree="@tree"
-                          incidenceParameter="@incidenceParam"
                           nParticles="100"
                           useTauLeaping="true">
                 <finalTreeSampleOffset idref="finalTreeSampleOffset"/>

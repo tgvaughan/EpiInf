@@ -19,18 +19,15 @@ package epiinf.distribs;
 
 import beast.core.*;
 import beast.core.Input.Validate;
-import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
 import beast.util.Randomizer;
 import epiinf.*;
-import epiinf.models.EpidemicModel;
 import epiinf.util.EpiInfUtilityMethods;
 import epiinf.util.ReplacementSampler;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
@@ -94,7 +91,7 @@ public class LeapingSMCTreeDensity extends EpiTreePrior {
             throw new IllegalArgumentException("Must specify at least one of tree or incidence.");
 
         observedEventsList = new ObservedEventsList(treeInput.get(), incidenceInput.get(),
-                model.originInput.get(), finalSampleOffsetInput.get());
+                model.originInput.get(), finalTreeSampleOffsetInput.get());
         nParticles = nParticlesInput.get();
         nResamples = nResamplesInput.get();
         epsilon = epsilonInput.get();
