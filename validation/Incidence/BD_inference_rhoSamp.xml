@@ -1,0 +1,87 @@
+<beast version="2.0" namespace="beast.core
+    :beast.core.parameter
+    :beast.core.util
+    :beast.evolution.likelihood
+    :beast.evolution.operators
+    :epiinf
+    :epiinf.models
+    :epiinf.distribs
+    :epiinf.util
+    :feast.expressions
+    :feast.mapping">
+
+
+    <run spec="MCMC" id="mcmc" chainLength="1000000000">
+
+        <state>
+            <stateNode id="tree" spec="SimulatedTransmissionTree"
+                       leafSampleFrac="$(leaf_frac)"
+                       deterministicLeafSampleSelection="true"
+                       fileName="$(filebase).$(leaf_frac).initial.tree">
+                <finalTreeSampleOffsetParam id="finalTreeSampleOffset" spec="RealParameter" value="0"/>
+                <incidenceParam id="incidenceParam" spec="RealParameter" value="0"/>
+                <epidemicTrajectory id="true_traj" spec="TrajectoryFromFile" fileName="simulated_rhoSamp.traj"/>
+            </stateNode>
+
+            <stateNode id="beta" spec="RealParameter" value="1.0"/>
+        </state>
+
+        <distribution id="posterior" spec="CompoundDistribution">
+            <distribution spec="SMCTreeDensity" id="treePrior" tree="@tree"
+                          incidenceParameter="@incidenceParam"
+                          nParticles="100"
+                          useTauLeaping="true">
+                <finalTreeSampleOffset idref="finalTreeSampleOffset"/>
+                <model id="model" spec="BirthDeathModel" usePsiSamplingProportion="false">
+                    <infectionRate idref="beta"/>
+                    <recoveryRate spec="RealParameter" value="0.5"/>
+                    <psiSamplingVariable spec="RealParameter" value="0.5"/>
+                    <removalProb spec="RealParameter" value="0.0"/>
+                    <origin id="origin" spec="OriginFromTrajectory" trajectory="@true_traj"/>
+                </model>
+            </distribution>
+
+            <distribution spec="CompoundDistribution" id="paramPriors">
+                <distribution spec="beast.math.distributions.Prior" x="@beta">
+                    <distr spec="beast.math.distributions.OneOnX"/>
+                </distribution>
+            </distribution>
+        </distribution>
+
+        <!-- Parameter operators -->
+
+        <operator id='betaScaler' spec='ScaleOperator' scaleFactor="0.8" weight="1">
+            <parameter idref="beta"/>
+        </operator>
+
+        <!-- Tree operators -->
+
+        <operator spec="SAScaleOperator" scaleFactor="0.5" tree="@tree" weight="20.0"/>
+        <operator spec="SAScaleOperator" rootOnly="true" scaleFactor="0.95" tree="@tree" weight="20.0"/>
+        <operator spec="SAUniform" tree="@tree" weight="20.0"/>
+        <operator spec="SAWilsonBalding" tree="@tree" weight="20.0"/>
+        <operator spec="SAExchange" isNarrow="false" tree="@tree" weight="20.0"/>
+        <operator spec="SAExchange" tree="@tree" weight="20.0"/>
+        <operator spec="LeafToSampledAncestorJump" tree="@tree" weight="20.0"/>
+
+        <logger id="screenlog" spec="Logger" logEvery="1000">
+            <log idref="posterior"/>
+            <log idref="treePrior"/>
+            <log idref="beta"/>
+        </logger>
+
+        <logger logEvery="10000" fileName="$(filebase).$(leaf_frac).trees">
+            <log idref="tree"/>
+        </logger>
+
+        <logger logEvery="10000" fileName="$(filebase).$(leaf_frac).traj">
+            <log id="trajConditioned" spec='TrajectoryLogger' treeDensity="@treePrior" />
+        </logger>
+
+        <logger id="filelog" spec="Logger" logEvery="100" fileName="$(filebase).$(leaf_frac).log">
+            <log idref="posterior"/>
+            <log idref="treePrior"/>
+            <log idref="beta"/>
+        </logger>
+    </run>
+</beast>

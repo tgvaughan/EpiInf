@@ -12,12 +12,13 @@
 
 
     <run spec="TrajectorySimulator" fileName="simulated_rhoSamp.traj">
-        <model spec="BirthDeathModel" usePsiSamplingProportion="false">
+        <model spec="BirthDeathModel" usePsiSamplingProportion="false" rhoSamplingTimesBackward="true">
             <infectionRate spec="RealParameter" value="1.5"/>
             <recoveryRate spec="RealParameter" value="0.5"/>
             <psiSamplingVariable spec="RealParameter" value="0.5"/>
             <removalProb spec="RealParameter" value="0.0"/>
             <rhoSamplingProb spec="RealParameter" value="0.1"/>
+            <rhoSamplingTime spec="RealParameter" value="0.0"/>
             <origin spec="RealParameter" value="5.0"/>
         </model>
     </run>
