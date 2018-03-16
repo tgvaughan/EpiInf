@@ -71,6 +71,18 @@ public class SimulatedTransmissionTree extends Tree {
             "Deterministically select which samples to associate with " +
                     "tree leaves, instead of probabilistically.", false);
 
+    public Input<Boolean> ensureFinalSampleIsLeafInput = new Input<>(
+            "ensureFinalSampleIsLeaf",
+            "Ensure the final sample is a tree leaf, even when " +
+                    "leafSampleFrac=0.", false);
+
+    public Input<Boolean> measureOriginFromFinalSampleInput = new Input<>(
+            "measureOriginFromFinalSample",
+            "Adjusts trajectory origin so that age of final sample " +
+                    "is zero.  This is for comparing with other likelihoods " +
+                    "that do not allow for final sample age to be random.",
+            false);
+
     public Input<RealParameter> incidenceParamInput = new Input<>(
             "incidenceParam",
             "Parameter containing incidence event ages prior to end " +
@@ -88,6 +100,7 @@ public class SimulatedTransmissionTree extends Tree {
         boolean truncateTrajectory = truncateTrajectoryInput.get();
         double leafFrac = leafSampleFracInput.get();
         boolean useDetLeafSel = deterministicLeafSampleSelectionInput.get();
+        boolean measureOriginFromFinalSample = measureOriginFromFinalSampleInput.get();
 
         if (leafFrac<1.0 && incidenceParamInput.get() == null)
             throw new IllegalArgumentException("Must provide incidenceParam " +
@@ -117,8 +130,45 @@ public class SimulatedTransmissionTree extends Tree {
             }
         }
 
+        if (ensureFinalSampleIsLeafInput.get() && nNonleafSamples>0) {
+            if (nLeafSamples == 0) {
+                EpidemicEvent lastUnseqEvent = unsequencedSamplingEvents.last();
+                unsequencedSamplingEvents.remove(lastUnseqEvent);
+                sequencedSamplingEvents.add(lastUnseqEvent);
+                nNonleafSamples -= lastUnseqEvent.multiplicity;
+                nLeafSamples += lastUnseqEvent.multiplicity;
+
+            } else {
+
+                if (sequencedSamplingEvents.last().time < unsequencedSamplingEvents.last().time) {
+                    EpidemicEvent lastSeqEvent = sequencedSamplingEvents.last();
+                    EpidemicEvent lastUnseqEvent = unsequencedSamplingEvents.last();
+
+                    sequencedSamplingEvents.remove(lastSeqEvent);
+                    unsequencedSamplingEvents.remove(lastUnseqEvent);
+                    sequencedSamplingEvents.add(lastUnseqEvent);
+                    unsequencedSamplingEvents.add(lastSeqEvent);
+
+                    int leafCountDelta = lastUnseqEvent.multiplicity - lastSeqEvent.multiplicity;
+                    nLeafSamples += leafCountDelta;
+                    nNonleafSamples -= leafCountDelta;
+                }
+            }
+        }
+
         if (nLeafSamples + nNonleafSamples == 0)
             throw new NoSamplesException();
+
+        // Adjust origin if requested
+        if (measureOriginFromFinalSample) {
+            double finalSampleTime = 0;
+            if (nLeafSamples > 0)
+                finalSampleTime = Math.max(finalSampleTime, sequencedSamplingEvents.last().time);
+            if (nNonleafSamples > 0)
+                finalSampleTime = Math.max(finalSampleTime, unsequencedSamplingEvents.last().time);
+
+            traj.origin = finalSampleTime;
+        }
 
 
         // Store ages (relative to end of process) of unsequenced samples
