@@ -1,31 +1,9 @@
 <packages>
-    <package name='EpiInf' version='3.2.1'
-           url="https://github.com/tgvaughan/EpiInf/releases/download/v3.2.1/EpiInf.v3.2.1.zip"
-           description="Inference of epidemic trajectories" >
-        <depends on='BEAST' atleast='2.3.2' atmost='2.3.3'/>
+    <package name="EpiInf" version="7.0.0"
+           url="https://github.com/tgvaughan/EpiInf/releases/download/v7.0.0/EpiInf.v7.0.0.zip"
+           description="Inference of epidemic trajectories"
+           projectURL="http://tgvaughan.github.io/EpiInf" >
+      <depends on="BEAST" atleast="2.5.0" atmost="2.5.9"/>
+      <depends on="SA" atleast="2.0.0"/>
     </package>
-
-    <package name='EpiInf' version='4.0.1'
-           url="https://github.com/tgvaughan/EpiInf/releases/download/v4.0.1/EpiInf.v4.0.1.zip"
-           description="Inference of epidemic trajectories"
-           projectURL="http://tgvaughan.github.io/EpiInf" >
-        <depends on='BEAST' atleast='2.4.0'/>
-    </package>
-
-
-    <addon name="EpiInf" version="5.0.0"
-           url="https://github.com/tgvaughan/EpiInf/releases/download/v5.0.0/EpiInf.v5.0.0.zip"
-           description="Inference of epidemic trajectories"
-           projectURL="http://tgvaughan.github.io/EpiInf" >
-      <depends on="BEAST" atleast="2.4.0"/>
-      <depends on="SA" atleast="1.1.5"/>
-    </addon>
-
-    <addon name="EpiInf" version="5.0.1"
-           url="https://github.com/tgvaughan/EpiInf/releases/download/v5.0.1/EpiInf.v5.0.1.zip"
-           description="Inference of epidemic trajectories"
-           projectURL="http://tgvaughan.github.io/EpiInf" >
-      <depends on="BEAST" atleast="2.4.0"/>
-      <depends on="SA" atleast="1.1.5"/>
-    </addon>
 </packages>
