@@ -12,13 +12,15 @@
 
 
     <tree spec="SimulatedTransmissionTree" id="simulated_tree" fileName="$(filebase)_truth.tree">
-        <epidemicTrajectory spec="SimulatedTrajectory" maxDuration="7.0" fileName="$(filebase)_truth.traj">
+        <finalTreeSampleOffsetParam id="ftso" spec="RealParameter" value="0"/>
+        <epidemicTrajectory spec="SimulatedTrajectory" fileName="$(filebase)_truth.traj">
             <model spec="SIRModel" usePsiSamplingProportion="true">
-                <S0 spec="IntegerParameter" value="199" upper="400"/>
+                <S0 spec="RealParameter" value="199" upper="400"/>
                 <infectionRate spec="RealParameter" value="0.02"/>
                 <recoveryRate spec="RealParameter" value="0.2"/>
                 <psiSamplingVariable spec="RealParameter" value="0.5"/>
                 <removalProb spec="RealParameter" value="1.0"/>
+                <origin spec="RealParameter" value="7.0"/>
             </model>
         </epidemicTrajectory>
     </tree>
@@ -42,7 +44,7 @@
             <stateNode id="removalRate" spec="RealParameter" value="0.1"/>
             <stateNode id="samplingProp" spec="RealParameter" value="0.5" lower="0.0" upper="1.0"/>
             <stateNode id="origin" spec="RealParameter" value="10.0"/>
-            <stateNode id="S0" spec="IntegerParameter" value="150" lower="1"/>
+            <stateNode id="S0" spec="RealParameter" value="150" lower="1"/>
         </state>
 
         <distribution id="posterior" spec="CompoundDistribution">
@@ -54,6 +56,7 @@
 
             <distribution spec="SMCTreeDensity" id="treePrior"
                           tree="@tree" nParticles="1" useTauLeaping="true" tauLeapingEpsilon="1.0" relStdThresh="1.0" minLeapCount="100">
+                <finalTreeSampleOffset idref="ftso"/>
                 <model id="model" spec="SIRModel" usePsiSamplingProportion="true">
                     <origin idref="origin"/>
                     <S0 idref="S0"/>
@@ -101,7 +104,7 @@
             <parameter idref="origin"/>
         </operator>
 
-        <operator id="S0walker" spec="IntRandomWalkOperator" windowSize="10" weight="1">
+        <operator id="S0scaler" spec="ScaleOperator" scaleFactor="0.8" weight="1">
             <parameter idref="S0"/>
         </operator>
 
@@ -151,9 +154,7 @@
         </logger>
 
         <logger logEvery="10000" fileName="$(filebase).traj">
-            <log id="trajConditioned" spec='ConditionedTrajectory' treeDensity="@treePrior" />
-            <log id="trajUnconditioned" spec="SimulatedTrajectory"
-                 origin="@origin" model="@model" maxDuration="15.0"/>
+            <log id="trajConditioned" spec='TrajectoryLogger' treeDensity="@treePrior" />
         </logger>
 
         <logger id="filelog" spec="Logger" logEvery="10000" fileName="$(filebase).log">
