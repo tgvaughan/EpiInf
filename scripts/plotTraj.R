@@ -1,12 +1,13 @@
 library(plotrix) # weighted.hist used for inference counts
 library(ggplot2)
+library(readr)
 
 loadData <- function(fileNames, burninFrac=0.1, nSamples=NA) {
 
     nFiles <- length(fileNames)
     dataFrames <- list()
     for (i in 1:nFiles) {
-        dataFrames[[i]] <- read.table(fileNames[[i]], header=T, as.is=T)
+        dataFrames[[i]] <- read_tsv(fileNames[[i]], col_types = "ic")
     }
 
     # Remove burnin and downsample
@@ -26,29 +27,19 @@ loadData <- function(fileNames, burninFrac=0.1, nSamples=NA) {
     return(dataFrames);
 }
 
+
 parseTrajectoryString <- function(trajString) {
-    strValues <- strsplit(strsplit(trajString, ",")[[1]], ":")
+  strValues <- str_split(str_split(trajString, ",")[[1]], ":", simplify = TRUE)
+  
+  res <- list(t =  as.numeric(strValues[,1]),
+              S = as.numeric(strValues[,2]),
+              I = as.numeric(strValues[,3]),
+              R = as.numeric(strValues[,4]),
+              leap = strValues[,5] == "TL",
+              incidence = as.numeric(strValues[,6]),
+              Re = as.numeric(strValues[,7]))
 
-    nStates <- length(strValues)
-
-    res <- list()
-    res$t <- rep(0, nStates)
-    res$S <- rep(0, nStates)
-    res$I <- rep(0, nStates)
-    res$R <- rep(0, nStates)
-    res$leap <- rep(FALSE, nStates)
-
-    for (i in 1:nStates) {
-        res$t[i] <- as.numeric(strValues[[i]][1])
-        res$S[i] <- as.numeric(strValues[[i]][2])
-        res$I[i] <- as.numeric(strValues[[i]][3])
-        res$R[i] <- as.numeric(strValues[[i]][4])
-        res$leap[i] <- strValues[[i]][5] == "TL"
-        res$incidence[i] <- as.numeric(strValues[[i]][6])
-        res$Re[i] <- as.numeric(strValues[[i]][7])
-    }
-
-    return(res)
+  return(res)
 }
 
 parseTrajectories <- function(dataFrames, colidx=2) {
