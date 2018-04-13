@@ -62,13 +62,17 @@ parseTrajectories <- function(dataFrames, colidx=2) {
 }
 
 capitalize <- function(string) {
-    return(paste(toupper(substring(string,1,1)), substring(string,2), sep=''))
+    words <- strsplit(string, '_')
+    heads <- toupper(substring(words, 1, 1))
+    tails <- tolower(substring(words, 2))
+
+    return(paste(paste0(heads,tails), collapse=' '))
 }
 
-getInterpolatedValues <- function(traj, ages, targetFun) {
+getInterpolatedValues <- function(traj, ages, targetFun, subSample) {
     targetValues <- matrix(NA, length(traj), 100)
 
-    for (i in 1:length(traj)) {
+    for (i in seq(1,length(traj),length.out=subSample)) {
         tidx <- 1
         for (sidx in 1:length(ages)) {
             tSamp <- ages[sidx]
@@ -106,12 +110,13 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
                      presentTime=NA,
                      timesAreCalendarYears=FALSE,
                      target='prevalence',
+                     subSample=NA,
                      incidencePeriod=1,
                      xlab=if (is.na(presentTime)) "Age" else "Time", ylab=capitalize(target), main='Trajectory distribution', ...) {
 
 
-    if (target != "prevalence" && target != "incidence" && target != "Re") {
-        cat("Error: target must be one of 'prevalence', 'incidence' or 'Re'")
+    if (!(tolower(target) %in% c("prevalence", "scaled_prevalence", "incidence", "Re"))) {
+        cat("Error: target must be one of 'prevalence', 'scaled_prevalence', 'incidence' or 'Re'")
         return()
     }
 
@@ -134,9 +139,13 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
         cat("done.\n")
     }
 
+    if (is.na(subSample))
+        subSample <- length(traj)
+
     # Define target function for plotting
     targetFun <- switch(target,
            prevalence = function(t) { return(t$I) },
+           scaled_prevalence = function(t) { return(t$I/t$S[1]*1e5) },
            incidence = function(t) { return(t$incidence*incidencePeriod) },
            Re = function(t) { return(t$Re) })
 
@@ -144,7 +153,7 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
     maxHeight <- 0
     minValue <- +Inf
     maxValue <- -Inf
-    for (i in 1:length(traj)) {
+    for (i in seq(1,length(traj),length.out=subSample)) {
         maxHeight <- max(maxHeight, traj[[i]]$t)
         val <- targetFun(traj[[i]])
         val <- val[which(is.finite(val))]
@@ -160,7 +169,7 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
         cat(paste0("Computing moments ", target, "..."))
         
         targetTimes <- seq(maxHeight, 0, length.out=100)
-        targetValues <- getInterpolatedValues(traj, targetTimes, targetFun)
+        targetValues <- getInterpolatedValues(traj, targetTimes, targetFun, subSample)
 
         meanTarget <- colMeans(targetValues)
         hpdTargetLow <- apply(targetValues, 2, function(x) {return(quantile(x, probs=0.025, na.rm=TRUE))})
@@ -196,14 +205,14 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
             xlim=sort(getTime(c(0, maxHeight)))
 
 
-        plot(getTime(traj[[1]]$t), traj[[1]]$I,
+        plot(getTime(traj[[1]]$t), targetFun(traj[[1]]),
              col=NA, xlim=xlim, ylim=ylim,
              xlab=xlab, ylab=ylab, main=main, ...)
     }
 
     cat("Plotting...")
     col <- rep(col, length.out=length(traj))
-    for (i in 1:length(traj)) {
+    for (i in seq(1,length(traj),length.out=subSample)) {
         indices <- which(traj[[i]]$t>=0)
         lines(getTime(traj[[i]]$t[indices]), targetFun(traj[[i]])[indices], col=col[traj[[i]]$fileNum], 's', ...)
 
@@ -230,11 +239,11 @@ weekToDate <- function(week) {
     return(as.Date(paste(2014,week,1,sep="-"), "%Y-%U-%u"))
 }
 
-computeIncidence <- function(traj, boundaries) {
+computeIncidence <- function(traj, boundaries, subSample) {
     df <- data.frame(Trajectory=double(), Time=double(), Count=double())
 
     h <- NULL
-    for (i in 1:length(traj)) {
+    for (i in seq(1, length(traj), length.out=subSample)) {
         d <- diff(traj[[i]]$I)
         t <- traj[[i]]$t[-length(traj[[i]]$t)]
 
@@ -253,16 +262,33 @@ computeIncidence <- function(traj, boundaries) {
     return(df)
 }
 
-plotWeeklyIncidence <- function(fileName=NA, traj=NULL, presentTime=NA, colidx=2, burninFrac=0.1) {
+plotWeeklyIncidence <- function(fileNames=list(), dataFrames=NULL, traj=NULL, presentTime, colidx=2, burninFrac=0.1, subSample=NA) {
 
+    # Load data
+    if (is.null(dataFrames) && is.null(traj)) {
+        if (length(fileNames) == 0) {
+            cat("Error: must specify at least one input file!")
+            return();
+        }
+
+        cat("Loading data...")
+        dataFrames <- loadData(fileNames, burninFrac)
+        cat("done.\n")
+    }
+
+    # Parse trajectories
     if (is.null(traj)) {
-        dataFrames <- list(loadData(fileName, burninFrac))
+        cat("Parsing trajectories...")
         traj <- parseTrajectories(dataFrames, colidx)
+        cat("done.\n")
     }
 
     maxAge <- 0
 
-    for (i in 1:length(traj)) {
+    if (is.na(subSample))
+        subSample <- length(traj)
+
+    for (i in seq(1,length(traj),length.out=subSample)) {
         maxAge <- max(maxAge, traj[[i]]$t)
     }
 
@@ -272,7 +298,7 @@ plotWeeklyIncidence <- function(fileName=NA, traj=NULL, presentTime=NA, colidx=2
                        origin=as.Date(paste(presentYear,"-01-01", sep=""))))
     }
 
-    incidences <- computeIncidence(traj, seq(0, maxAge, by=1/52))
+    incidences <- computeIncidence(traj, seq(0, maxAge, by=1/52), subSample=subSample)
     incidences$Date <- getDates(incidences$Time)
 
     summaryFunc <- function(yvals) {
