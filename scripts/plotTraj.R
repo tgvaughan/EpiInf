@@ -1,6 +1,7 @@
 library(plotrix) # weighted.hist used for inference counts
 library(ggplot2)
 library(readr)
+library(stringr)
 
 loadData <- function(fileNames, burninFrac=0.1, nSamples=NA) {
 
@@ -115,7 +116,7 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
                      xlab=if (is.na(presentTime)) "Age" else "Time", ylab=capitalize(target), main='Trajectory distribution', ...) {
 
 
-    if (!(tolower(target) %in% c("prevalence", "scaled_prevalence", "incidence", "Re"))) {
+    if (!(tolower(target) %in% c("prevalence", "scaled_prevalence", "incidence", "re"))) {
         cat("Error: target must be one of 'prevalence', 'scaled_prevalence', 'incidence' or 'Re'")
         return()
     }
@@ -233,84 +234,6 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
                   widthOuter=widthOuter, widthInner=widthInner)
     }
     cat("done.\n")
-}
-
-weekToDate <- function(week) {
-    return(as.Date(paste(2014,week,1,sep="-"), "%Y-%U-%u"))
-}
-
-computeIncidence <- function(traj, boundaries, subSample) {
-    df <- data.frame(Trajectory=double(), Time=double(), Count=double())
-
-    h <- NULL
-    for (i in seq(1, length(traj), length.out=subSample)) {
-        d <- diff(traj[[i]]$I)
-        t <- traj[[i]]$t[-length(traj[[i]]$t)]
-
-        infIndices <- which(d>0)
-        d <- d[infIndices]
-        t <- t[infIndices]
-
-        h <- weighted.hist(t, d, boundaries, plot=FALSE)
-
-        df <- rbind(df,
-                    data.frame(Trajectory=rep(i,length(h$mids)),
-                               Time=h$mids,
-                               Count=h$counts))
-    }
-
-    return(df)
-}
-
-plotWeeklyIncidence <- function(fileNames=list(), dataFrames=NULL, traj=NULL, presentTime, colidx=2, burninFrac=0.1, subSample=NA) {
-
-    # Load data
-    if (is.null(dataFrames) && is.null(traj)) {
-        if (length(fileNames) == 0) {
-            cat("Error: must specify at least one input file!")
-            return();
-        }
-
-        cat("Loading data...")
-        dataFrames <- loadData(fileNames, burninFrac)
-        cat("done.\n")
-    }
-
-    # Parse trajectories
-    if (is.null(traj)) {
-        cat("Parsing trajectories...")
-        traj <- parseTrajectories(dataFrames, colidx)
-        cat("done.\n")
-    }
-
-    maxAge <- 0
-
-    if (is.na(subSample))
-        subSample <- length(traj)
-
-    for (i in seq(1,length(traj),length.out=subSample)) {
-        maxAge <- max(maxAge, traj[[i]]$t)
-    }
-
-    getDates <- function(ages) {
-        presentYear <- floor(presentTime)
-        return(as.Date(365*(presentTime - ages - presentYear),
-                       origin=as.Date(paste(presentYear,"-01-01", sep=""))))
-    }
-
-    incidences <- computeIncidence(traj, seq(0, maxAge, by=1/52), subSample=subSample)
-    incidences$Date <- getDates(incidences$Time)
-
-    summaryFunc <- function(yvals) {
-        return (data.frame(y=mean(yvals),
-                           ymin=quantile(yvals, 0.025),
-                           ymax=quantile(yvals, 0.975)))
-    }
-
-    p <- ggplot(incidences)
-    p <- p + stat_summary(aes(Date, Count), geom="bar", fun.data=summaryFunc)
-    p <- p + stat_summary(aes(Date, Count), geom="errorbar", fun.data=summaryFunc, width=2)
-    return(p)
 }
 
 simSIR <- function(origin, beta, gamma, N, useTL=FALSE, nLeaps=500) {
