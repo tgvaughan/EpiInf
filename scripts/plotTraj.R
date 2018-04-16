@@ -147,7 +147,7 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
     targetFun <- switch(target,
            prevalence = function(t) { return(t$I) },
            scaled_prevalence = function(t) { return(t$I/t$S[1]*1e5) },
-           incidence = function(t) { return(t$incidence*incidencePeriod) },
+           incidence = function(t) { return(t$incidence/t$S*incidencePeriod) },
            Re = function(t) { return(t$Re) })
 
     # Identify plot boundaries
