@@ -5,14 +5,12 @@
 /META-INF
 
 # Logs and tree files
-*.txt
 *.log
 *.expotree
 *.newick
 *.tree*
 *.traj
 *.state
-*.nexus
 
 # Misc
 /.localrc*
