@@ -14,6 +14,6 @@ directly samples epidemic prevalence and incidence trajectories.
 The documentation for EpiInf currently consists of:
 
 1. the [installation instructions](installation.html), and
-2. a [basic tutorial](basic_tutorial.html).
+2. a [basic tutorial](tutorial.html).
 
 Please complete the tutorial before attempting to analyze your own data.
