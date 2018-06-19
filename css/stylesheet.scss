@@ -1,0 +1,91 @@
+---
+---
+
+$grey: #666;
+$brand-primary: blue;
+
+@import "bootstrap";
+
+.jumbotron {
+    text-align: center;
+    background-color: transparent;
+    color: $brand-primary;
+    font-size: 21px;
+
+    margin-bottom: 0px;
+    padding-bottom: 20px;
+}
+
+.jumbotron a {
+    margin-top: 20px;
+}
+
+.jumbotron h1 .img-responsive {
+    margin: 0 auto;
+}
+
+.jumbotron a {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.titlebuttons > .btn {
+    display: inline-block;
+    background-image: none;
+    font-weight: normal;
+}
+
+.titlebuttons > .btn-primary {
+    color: $brand-primary;
+    background-color: white;
+    border: 1px solid $brand-primary;
+    transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+}
+
+.titlebuttons > .btn-primary:hover {
+    color: white;
+    background-color: $brand-primary;
+    border: 1px solid $brand-primary;
+}
+
+@media (max-width: 767px) {
+    .btn-responsive {
+        display: inline-block;
+        width: 100%;
+    }
+}
+
+p,ol,ul {
+    color: $grey;
+}
+
+p .lead {
+    font-size: 20px;
+}
+
+hr.short-rule {
+    width: 200px;
+}
+
+.doc-container {
+    padding-top: 10px;
+}
+
+// Sidebar
+
+#sidebar.sidebar-fixed {
+    position: fixed;
+    top: 20px;
+}
+
+#sidebar li {
+    padding-bottom: 5px;
+}
+
+#sidebar .date {
+    font-style: italic;
+}
+
+#sidebar .title {
+    font-weight: bold;
+}
