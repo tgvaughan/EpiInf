@@ -30,15 +30,21 @@ public class TrajectorySimulator extends beast.core.Runnable {
 
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);
-    
-    public Input<Double> durationInput = new Input<>(
-            "maxDuration", "Maximum duration of epidemic to simulate. "
-                    + "Defaults to infinity.", Double.POSITIVE_INFINITY);
-    
+
     public Input<String> fileNameInput = new Input<>(
             "fileName",
             "Name of file to write simulated trajectory to.", Validate.REQUIRED);
-    
+
+    public Input<Integer> nStepsInput = new Input<>(
+            "nSteps",
+            "If nSteps > 0, tau leaping with this many steps will be used to" +
+                    " approximate the stochastic integral.", 0);
+
+    public Input<Integer> minSampleCountInput = new Input<>(
+            "minSampleCount",
+            "Minimum number of samples to accept.",
+            0);
+
     @Override
     public void initAndValidate() { }
     
@@ -48,6 +54,8 @@ public class TrajectorySimulator extends beast.core.Runnable {
         SimulatedTrajectory traj = new SimulatedTrajectory();
         traj.initByName(
                 "model", modelInput.get(),
-                "fileName", fileNameInput.get());
+                "fileName", fileNameInput.get(),
+                "nSteps", nStepsInput.get(),
+                "minSampleCount", minSampleCountInput.get());
     }
 }

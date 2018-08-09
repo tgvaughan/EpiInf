@@ -40,7 +40,7 @@ public class FinalSampleOffsetFromTrajectory extends RealParameter {
     public void initAndValidate() {
         EpidemicTrajectory trajectory = trajectoryInput.get();
         List<EpidemicEvent> eventList = trajectory.getEventList();
-        for (int i=0; i<eventList.size(); i--) {
+        for (int i=eventList.size()-1; i<eventList.size(); i--) {
             if (eventList.get(i).isSample()) {
                 valuesInput.setValue(trajectory.getOrigin() - eventList.get(i).time, this);
                 super.initAndValidate();
