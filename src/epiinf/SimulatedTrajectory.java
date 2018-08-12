@@ -18,7 +18,6 @@
 package epiinf;
 
 import beast.core.Description;
-import beast.core.Function;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.IntegerParameter;
@@ -61,7 +60,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
     
     EpidemicModel model;
     int nSteps;
-    
+
     public SimulatedTrajectory() { }
 
     public SimulatedTrajectory(EpidemicModel model, double origin, int nSteps) {
@@ -77,7 +76,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
                 simulateTL();
             else
                 simulate();
-        } while (eventList.stream().filter(e -> e.isSample()).count()<minSampleCountInput.get());
+        } while (eventList.stream().filter(EpidemicEvent::isSample).count()<minSampleCountInput.get());
 
         if (fileNameInput.get() != null) {
             try (PrintStream ps = new PrintStream(fileNameInput.get())) {
@@ -104,7 +103,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
                 simulateTL();
             else
                 simulate();
-        } while (eventList.stream().filter(e -> e.isSample()).count()<minSampleCountInput.get());
+        } while (eventList.stream().filter(EpidemicEvent::isSample).count()<minSampleCountInput.get());
 
         if (fileNameInput.get() != null) {
             try (PrintStream ps = new PrintStream(fileNameInput.get())) {
@@ -223,18 +222,13 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
 
         for (int tidx = 1; tidx<nSteps; tidx++) {
             model.calculatePropensities(thisState);
-//
-//            double totalPropensity = model.propensities[EpidemicEvent.INFECTION]
-//                    + model.propensities[EpidemicEvent.RECOVERY]
-//                    + model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
-//                    + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE];
 
             double nextModelEventTime = model.getNextModelEventTime(thisState);
             double trueDt = Math.min(dt, nextModelEventTime - thisState.time);
 
             EpidemicEvent infectEvent = new EpidemicEvent();
             infectEvent.type = EpidemicEvent.INFECTION;
-            infectEvent.multiplicity = (int)Math.round(
+            infectEvent.multiplicity = Math.round(
                     Randomizer.nextPoisson(trueDt*model.propensities[EpidemicEvent.INFECTION]));
             model.incrementState(thisState, infectEvent);
             infectEvent.time = thisState.time + trueDt;
@@ -242,7 +236,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
 
             EpidemicEvent recovEvent = new EpidemicEvent();
             recovEvent.type = EpidemicEvent.RECOVERY;
-            recovEvent.multiplicity = (int)Math.round(
+            recovEvent.multiplicity = Math.round(
                     Randomizer.nextPoisson(trueDt*model.propensities[EpidemicEvent.RECOVERY]));
             model.incrementState(thisState, recovEvent);
             recovEvent.time = thisState.time + trueDt;
@@ -250,7 +244,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
 
             EpidemicEvent psiSampRemoveEvent = new EpidemicEvent();
             psiSampRemoveEvent.type = EpidemicEvent.PSI_SAMPLE_REMOVE;
-            psiSampRemoveEvent.multiplicity = (int)Math.round(
+            psiSampRemoveEvent.multiplicity = Math.round(
                     Randomizer.nextPoisson(trueDt*model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]));
             model.incrementState(thisState, psiSampRemoveEvent);
             psiSampRemoveEvent.time = thisState.time + trueDt;
@@ -258,7 +252,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
 
             EpidemicEvent psiSampNoRemoveEvent = new EpidemicEvent();
             psiSampNoRemoveEvent.type = EpidemicEvent.PSI_SAMPLE_NOREMOVE;
-            psiSampNoRemoveEvent.multiplicity = (int)Math.round(
+            psiSampNoRemoveEvent.multiplicity = Math.round(
                     Randomizer.nextPoisson(trueDt*model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]));
             psiSampNoRemoveEvent.time = thisState.time + trueDt;
             eventList.add(psiSampNoRemoveEvent);
