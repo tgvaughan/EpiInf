@@ -69,7 +69,7 @@ public class SMCTreeDensity extends EpiTreePrior {
 
     public Input<Function> incidenceParamInput = new Input<>(
             "incidenceParameter",
-            "Times of unsequenced samples.");
+            "Ages of unsequenced samples.");
 
     int nParticles;
     boolean useTauLeaping;
