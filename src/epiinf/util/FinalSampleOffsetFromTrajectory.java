@@ -44,6 +44,8 @@ public class FinalSampleOffsetFromTrajectory extends RealParameter {
             if (eventList.get(i).isSample()) {
                 valuesInput.setValue(trajectory.getOrigin() - eventList.get(i).time, this);
                 super.initAndValidate();
+
+                System.out.println("FinalSampleOffset of " + getValue() + " read from trajectory");
                 return;
             }
         }
