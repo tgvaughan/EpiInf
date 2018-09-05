@@ -28,6 +28,8 @@ import beast.util.Randomizer;
 import epiinf.*;
 import epiinf.util.ReplacementSampler;
 
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -478,9 +480,6 @@ public class SMCTreeDensity extends EpiTreePrior {
                                     < model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
 
                             if (isRemoval) {
-                                if (nextObservedEvent.type == ObservedEvent.Type.UNSEQUENCED_SAMPLE)
-                                    conditionalLogP += Math.log(1.0 - nextObservedEvent.lineages/particleState.I);
-
                                 model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
                             } else {
                                 if (nextObservedEvent.type == ObservedEvent.Type.LEAF)
