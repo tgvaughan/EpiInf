@@ -22,6 +22,7 @@ import beast.core.Description;
 import beast.core.Function;
 import beast.core.Input;
 import beast.core.Input.Validate;
+import beast.core.parameter.RealParameter;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
 import beast.util.Randomizer;
@@ -69,7 +70,7 @@ public class SMCTreeDensity extends EpiTreePrior {
                     "particles drops below this threshold.",
             0.3);
 
-    public Input<Function> incidenceParamInput = new Input<>(
+    public Input<RealParameter> incidenceParamInput = new Input<>(
             "incidenceParameter",
             "Ages of unsequenced samples.");
 

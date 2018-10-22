@@ -106,7 +106,7 @@
         <subtemplate id="EpiTreePrior" class="epiinf.distribs.SMCTreeDensity" mainid="EpiTreePrior.t:$(n)"
                      suppressInputs="epiinf.distribs.SMCTreeDensity.tree,
                      epiinf.distribs.SMCTreeDensity.treeIntervals,
-                     epiinf.models.SISModel.tolerance">
+                     epiinf.distribs.SMCTreeDensity.incidenceParameter">
             <![CDATA[
             <distribution id="EpiTreePrior.t:$(n)" spec="epiinf.distribs.SMCTreeDensity" nParticles="100">
                 <tree idref="Tree.t:$(n)"/>
@@ -231,7 +231,19 @@
 
         </subtemplate>
 
+<!--        <subtemplate id='IncidenceParameter' class='beast.core.parameter.RealParameter' mainid='incidenceParam.t:$(n)'>
+            <![CDATA[
+                <incidenceParameter id="incidenceParam.t:$(n)" spec="beast.core.parameter.RealParameter" value="0.0" estimate="true"/>
+            ]]>
+
+            <connect srcID="incidenceParam.t:$(n)" targetID="EpiTreePrior.t:$(n)" inputName="incidenceParameter"
+                     if="inposterior(EpiTreePrior.t:$(n))"/>
+        </subtemplate>
+        -->
 
     </mergewith>
+
+
+
 
 </beast>
