@@ -21,11 +21,13 @@ import beast.core.Description;
 import beast.core.Function;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
+import epiinf.models.EpidemicModel;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
@@ -35,8 +37,10 @@ public class ObservedEventsList {
 
     private TreeInterface tree;
     private Function incidenceAges;
-    private Function origin, finalTreeSampleOffset;
-    private List<ObservedEvent> eventList;
+    private Function finalTreeSampleOffset;
+    private List<ObservedEvent> eventList, rhoEventsToAdd;
+
+    private EpidemicModel model;
 
     /**
      * Tolerance for deviation between tree node ages and trajectory events.
@@ -46,13 +50,15 @@ public class ObservedEventsList {
     private boolean dirty;
     
     public ObservedEventsList(TreeInterface tree, Function incidenceAges,
-                              Function origin, Function finalTreeSampleOffset) {
+                              EpidemicModel model,
+                              Function finalTreeSampleOffset) {
         this.tree = tree;
         this.incidenceAges = incidenceAges;
-        this.origin = origin;
+        this.model = model;
         this.finalTreeSampleOffset = finalTreeSampleOffset;
 
         eventList = new ArrayList<>();
+        rhoEventsToAdd = new ArrayList<>();
 
         dirty = true;
     }
@@ -63,6 +69,11 @@ public class ObservedEventsList {
     public void updateEventList() {
         if (!dirty)
             return;
+
+        List<Double> rhoEventTimes = model.getModelEventList().stream()
+                .filter(e -> e.type == ModelEvent.Type.RHO_SAMPLING)
+                .map(e -> e.time)
+                .collect(Collectors.toList());
 
         eventList.clear();
 
@@ -102,12 +113,51 @@ public class ObservedEventsList {
         // Sort events in order of absolute time
         Collections.sort(eventList);
 
+
+        if (!rhoEventTimes.isEmpty()) {
+
+            // Add dummy events corresponding to rho events that produced no
+            // samples.
+
+            rhoEventsToAdd.clear();
+
+            int eventIdx = 0;
+            ObservedEvent event = eventList.get(eventIdx);
+
+            for (double nextRhoEventTime : rhoEventTimes) {
+
+                boolean seenLeafAtRhoTime = false;
+
+                if (eventIdx<eventList.size()) {
+                    do {
+
+                        if (event.time == nextRhoEventTime && event.type == ObservedEvent.Type.LEAF)
+                            seenLeafAtRhoTime = true;
+
+                        eventIdx += 1;
+                    } while (eventIdx < eventList.size() && event.time <= nextRhoEventTime);
+                }
+
+                if (!seenLeafAtRhoTime) {
+                    ObservedEvent leafEvent = new ObservedEvent();
+                    leafEvent.type = ObservedEvent.Type.LEAF;
+                    leafEvent.time = nextRhoEventTime;
+                    leafEvent.multiplicity = 0;
+                    rhoEventsToAdd.add(leafEvent);
+                }
+            }
+
+            eventList.addAll(rhoEventsToAdd);
+            Collections.sort(eventList);
+        }
+
+
         // Include end-of-observation event
         // (This is always the last event in the list, even when a rho sampling event occurs at
         // exactly the same time.)
         ObservedEvent endOfObservationEvent = new ObservedEvent();
         endOfObservationEvent.type = ObservedEvent.Type.OBSERVATION_END;
-        endOfObservationEvent.time = origin.getArrayValue();
+        endOfObservationEvent.time = model.getOrigin();
         eventList.add(endOfObservationEvent);
 
         // Collate concurrent events
@@ -151,14 +201,14 @@ public class ObservedEventsList {
      * @return time
      */
     public double getTimeFromAge(double age) {
-        return origin.getArrayValue() - age;
+        return model.getOrigin() - age;
     }
 
     /**
      * @return The time before the end of the observation period that the epidemic began.
      */
     public double getOrigin() {
-        return origin.getArrayValue();
+        return model.getOrigin();
     }
     
     /**

@@ -33,6 +33,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
@@ -102,8 +103,8 @@ public class SMCTreeDensity extends EpiTreePrior {
         if (treeInput.get() == null && incidenceParamInput.get() == null)
             throw new IllegalArgumentException("Must specify at least one of tree or incidence.");
 
-        observedEventsList = new ObservedEventsList(treeInput.get(), incidenceParamInput.get(),
-                model.originInput.get(), finalTreeSampleOffsetInput.get());
+        observedEventsList = new ObservedEventsList(treeInput.get(),
+                incidenceParamInput.get(), model, finalTreeSampleOffsetInput.get());
         nParticles = nParticlesInput.get();
         useTauLeaping = useTauLeapingInput.get();
         epsilon = epsilonInput.get();
