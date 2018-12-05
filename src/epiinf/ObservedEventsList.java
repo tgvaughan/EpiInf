@@ -70,11 +70,6 @@ public class ObservedEventsList {
         if (!dirty)
             return;
 
-        List<Double> rhoEventTimes = model.getModelEventList().stream()
-                .filter(e -> e.type == ModelEvent.Type.RHO_SAMPLING)
-                .map(e -> e.time)
-                .collect(Collectors.toList());
-
         eventList.clear();
 
         // Assemble event list
@@ -113,44 +108,20 @@ public class ObservedEventsList {
         // Sort events in order of absolute time
         Collections.sort(eventList);
 
+        // Add multiplicity 0 LEAF events for each rho sampling time.
+        // Required to ensure a lack of samples resulting from a rho sampling
+        // event is still considered an observation.
+        eventList.addAll(model.getModelEventList().stream()
+                .filter(e -> e.type == ModelEvent.Type.RHO_SAMPLING)
+                .map(e -> {
+                    ObservedEvent event = new ObservedEvent();
+                    event.time = e.time;
+                    event.type = ObservedEvent.Type.LEAF;
+                    event.multiplicity = 0;
 
-        if (!rhoEventTimes.isEmpty()) {
-
-            // Add dummy events corresponding to rho events that produced no
-            // samples.
-
-            rhoEventsToAdd.clear();
-
-            int eventIdx = 0;
-            ObservedEvent event = eventList.get(eventIdx);
-
-            for (double nextRhoEventTime : rhoEventTimes) {
-
-                boolean seenLeafAtRhoTime = false;
-
-                if (eventIdx<eventList.size()) {
-                    do {
-
-                        if (event.time == nextRhoEventTime && event.type == ObservedEvent.Type.LEAF)
-                            seenLeafAtRhoTime = true;
-
-                        eventIdx += 1;
-                    } while (eventIdx < eventList.size() && event.time <= nextRhoEventTime);
-                }
-
-                if (!seenLeafAtRhoTime) {
-                    ObservedEvent leafEvent = new ObservedEvent();
-                    leafEvent.type = ObservedEvent.Type.LEAF;
-                    leafEvent.time = nextRhoEventTime;
-                    leafEvent.multiplicity = 0;
-                    rhoEventsToAdd.add(leafEvent);
-                }
-            }
-
-            eventList.addAll(rhoEventsToAdd);
-            Collections.sort(eventList);
-        }
-
+                    return event;
+                })
+                .collect(Collectors.toList()));
 
         // Include end-of-observation event
         // (This is always the last event in the list, even when a rho sampling event occurs at
@@ -165,7 +136,7 @@ public class ObservedEventsList {
         while (i<eventList.size()) {
             if (Math.abs(eventList.get(i).time-eventList.get(i-1).time)<tolerance
                     && eventList.get(i).type == eventList.get(i-1).type) {
-                eventList.get(i-1).multiplicity += 1;
+                eventList.get(i-1).multiplicity += eventList.get(i).multiplicity;
                 eventList.remove(i);
             } else
                 i += 1;
@@ -193,7 +164,7 @@ public class ObservedEventsList {
 
         dirty = false;
     }
-    
+
     /**
      * Obtain absolute epidemic time corresponding to given age prior to end of observation period.
      * 
