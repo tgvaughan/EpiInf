@@ -4,7 +4,7 @@ EpiInf
 [![Build Status](https://travis-ci.org/tgvaughan/EpiInf.svg?branch=master)](https://travis-ci.org/tgvaughan/EpiInf)
 [![CodeFactor](https://www.codefactor.io/repository/github/tgvaughan/epiinf/badge)](https://www.codefactor.io/repository/github/tgvaughan/epiinf)
 
-EpiInf (working title) is a [BEAST 2](http://www.beast2.org/) package for
+EpiInf is a [BEAST 2](http://www.beast2.org/) package for
 performing inference of compartmental epidemiological model parameters using
 particle filtering to compute the prior probability density of a transmission
 tree.
