@@ -111,6 +111,7 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
                      presentTime=NA,
                      timesAreCalendarYears=FALSE,
                      target='prevalence',
+                     targetFun=NULL,
                      subSample=NA,
                      incidencePeriod=1,
                      xlab=if (is.na(presentTime)) "Age" else "Time", ylab=capitalize(target), main='Trajectory distribution', ...) {
@@ -144,11 +145,13 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
         subSample <- length(traj)
 
     # Define target function for plotting
-    targetFun <- switch(target,
-           prevalence = function(t) { return(t$I) },
-           scaled_prevalence = function(t) { return(t$I/t$S[1]*1e5) },
-           incidence = function(t) { return(t$incidence/t$S*incidencePeriod) },
-           Re = function(t) { return(t$Re) })
+    if (is.null(targetFun)) {
+        targetFun <- switch(target,
+                            prevalence = function(t) { return(t$I) },
+                            scaled_prevalence = function(t) { return(t$I/t$S[1]*1e5) },
+                            incidence = function(t) { return(t$incidence/t$S*incidencePeriod) },
+                            Re = function(t) { return(t$Re) })
+    }
 
     # Identify plot boundaries
     maxHeight <- 0
