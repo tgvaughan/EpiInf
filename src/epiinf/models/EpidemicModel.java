@@ -171,6 +171,7 @@ public abstract class EpidemicModel extends CalculationNode {
         }
 
         ratesDirty = true;
+        update();
     }
     
     /**
