@@ -116,7 +116,6 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
                      incidencePeriod=1,
                      xlab=if (is.na(presentTime)) "Age" else "Time", ylab=capitalize(target), main='Trajectory distribution', ...) {
 
-
     if (!(tolower(target) %in% c("prevalence", "scaled_prevalence", "incidence", "re"))) {
         cat("Error: target must be one of 'prevalence', 'scaled_prevalence', 'incidence' or 'Re'")
         return()
@@ -214,15 +213,27 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
              xlab=xlab, ylab=ylab, main=main, ...)
     }
 
+    ## Filter out arguments incompatible with lines()
+    lineArgs = list(...)
+    lineArgs <- lineArgs[names(lineArgs) != "log"]
+
     cat("Plotting...")
     col <- rep(col, length.out=length(traj))
     for (i in seq(1,length(traj),length.out=subSample)) {
         indices <- which(traj[[i]]$t>=0)
-        lines(getTime(traj[[i]]$t[indices]), targetFun(traj[[i]])[indices], col=col[traj[[i]]$fileNum], 's', ...)
+        do.call("lines", c(list(getTime(traj[[i]]$t[indices]),
+                                targetFun(traj[[i]])[indices],
+                                col=col[traj[[i]]$fileNum],
+                                's'),
+                           lineArgs))
 
         midx <- which.min(traj[[i]]$t[indices])
         mval <- traj[[i]]$t[indices][midx]
-        lines(getTime(c(0, mval)), rep(targetFun(traj[[i]])[indices][midx],2), col=col[traj[[i]]$fileNum], 's', ...)
+
+        do.call("lines", c(list(getTime(c(0, mval)),
+                                rep(targetFun(traj[[i]])[indices][midx],2),
+                                col=col[traj[[i]]$fileNum], 's'),
+                           lineArgs))
     }
 
     if (showMean) {
