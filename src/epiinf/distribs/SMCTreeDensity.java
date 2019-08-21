@@ -128,10 +128,19 @@ public class SMCTreeDensity extends EpiTreePrior {
                 incidenceParamInput.get(), model, finalTreeSampleOffsetInput.get());
 
         nParticles = nParticlesInput.get();
-        nParticlesMax = nParticlesMaxInput.get();
-        nParticlesMin = nParticles;
-        targetLogLiklihoodVar = targetLogLikelihoodVarInput.get();
-        particleCountTuningInterval = particleCountTuningIntervalInput.get();
+
+        if (useAdaptiveParticleCountInput.get()) {
+            nParticlesMax = nParticlesMaxInput.get();
+            nParticlesMin = nParticles;
+
+            if (nParticlesMax <= nParticlesMin)
+                throw new IllegalArgumentException("Error in SMC adaptive particle count algorithm: nParticlesMax must exceed nParticles.");
+
+            targetLogLiklihoodVar = targetLogLikelihoodVarInput.get();
+            particleCountTuningInterval = particleCountTuningIntervalInput.get();
+        } else {
+            nParticlesMax = nParticles;
+        }
 
         if (useAdaptiveParticleCountInput.get())
             System.out.println("Using EXPERIMENTAL adaptive particle count algorithm with\n "
