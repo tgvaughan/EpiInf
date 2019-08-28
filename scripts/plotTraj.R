@@ -71,17 +71,19 @@ capitalize <- function(string) {
 }
 
 getInterpolatedValues <- function(traj, ages, targetFun, subSample) {
-    targetValues <- matrix(NA, length(traj), 100)
+    targetValues <- matrix(NA, subSample, length(ages))
+    trajIndices <- seq(1, length(traj), length.out=subSample)
 
-    for (i in seq(1,length(traj),length.out=subSample)) {
+    for (i in 1:subSample) {
+        trajIdx <- trajIndices[i]
         tidx <- 1
         for (sidx in 1:length(ages)) {
             tSamp <- ages[sidx]
-            while (tidx < length(traj[[i]]$t) && traj[[i]]$t[tidx]>tSamp) {
+            while (tidx < length(traj[[trajIdx]]$t) && traj[[trajIdx]]$t[tidx]>tSamp) {
                 tidx <- tidx + 1
             }
 
-            targetValues[i,sidx] <- targetFun(traj[[i]])[tidx]
+            targetValues[i,sidx] <- targetFun(traj[[trajIdx]])[tidx]
         }
     }
 
