@@ -302,6 +302,8 @@ public class SimulatedTransmissionTree extends Tree {
         // Initialise state nodes
         if (!sequencedSamplingEvents.isEmpty())
             assignFromWithoutID(new Tree(activeNodes.get(0)));
+
+        initArrays();
         
         // Write tree to disk if requested:
 

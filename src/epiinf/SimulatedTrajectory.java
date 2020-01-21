@@ -29,6 +29,7 @@ import epiinf.models.SISModel;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -57,9 +58,14 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
             "Minimum number of samples to accept.",
             0);
 
+    public Input<RealParameter> conditionedSamplingTimesInput = new Input<>(
+            "conditionedSamplingTimes",
+            "Times at which to force psi-sampling events");
+
     
     EpidemicModel model;
     int nSteps;
+    RealParameter conditionedSamplingTimes;
 
     public SimulatedTrajectory() { }
 
@@ -73,9 +79,10 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
             stateList = new ArrayList<>();
 
             if (nSteps > 0)
-                simulateTL();
+                while (!simulateTL());
             else
-                simulate();
+                while (!simulate());
+
         } while (eventList.stream().filter(EpidemicEvent::isSample).count()<minSampleCountInput.get());
 
         if (fileNameInput.get() != null) {
@@ -94,6 +101,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
         model = modelInput.get();
         origin = modelInput.get().getOrigin();
         nSteps = nStepsInput.get();
+        conditionedSamplingTimes = conditionedSamplingTimesInput.get();
 
         do {
             eventList = new ArrayList<>();
@@ -119,7 +127,13 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
      * Simulate an epidemic using the provided model.
      *
      */
-    public void simulate() {
+    public boolean simulate() {
+
+        List<Double> remainingConditionedSamplingTimes = new ArrayList<>();
+        if (conditionedSamplingTimes != null) {
+            for (double sampTime : conditionedSamplingTimes.getDoubleValues())
+                remainingConditionedSamplingTimes.add(sampTime);
+        }
 
         double endTime;
         endTime = model.getOrigin();
@@ -151,29 +165,54 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
             EpidemicEvent nextEvent = new EpidemicEvent();
 
             double nextModelEventTime = model.getNextModelEventTime(thisState);
-            if (nextModelEventTime <= endTime && thisState.time > nextModelEventTime) {
-                ModelEvent event = model.getNextModelEvent(thisState);
+            double nextConditionedSamplingTime = remainingConditionedSamplingTimes.isEmpty()
+                    ? Double.POSITIVE_INFINITY
+                    : remainingConditionedSamplingTimes.get(0);
+            double nextModelEventOrSamplingTime = Math.min(nextModelEventTime, nextConditionedSamplingTime);
 
-                if (event.type == ModelEvent.Type.RHO_SAMPLING) {
-                    nextEvent.type = EpidemicEvent.RHO_SAMPLE;
+            if (nextModelEventOrSamplingTime <= endTime && thisState.time > nextModelEventOrSamplingTime) {
+                if (nextModelEventOrSamplingTime == nextConditionedSamplingTime) {
+                    if (Randomizer.nextDouble() < model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                            / (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                               + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]))
+                        nextEvent.type = EpidemicEvent.PSI_SAMPLE_REMOVE;
+                    else
+                        nextEvent.type = EpidemicEvent.PSI_SAMPLE_NOREMOVE;
 
-                    // Got to be a better way of sampling from a binomial distribution
-                    nextEvent.multiplicity = 0;
-                    for (int i = 0; i < thisState.I; i++) {
-                        if (Randomizer.nextDouble() < event.rho)
-                            nextEvent.multiplicity += 1;
-                    }
-
-
-                    nextEvent.time = event.time;
-                    thisState.time = event.time;
-
+                    nextEvent.time = nextConditionedSamplingTime;
                     model.incrementState(thisState, nextEvent);
                     eventList.add(nextEvent);
                     stateList.add(thisState.copy());
-                }
 
-                thisState.modelIntervalIdx += 1;
+                    if (!thisState.isValid())
+                        return false;
+
+                    remainingConditionedSamplingTimes.remove(0);
+
+                } else {
+                    ModelEvent event = model.getNextModelEvent(thisState);
+
+                    if (event.type == ModelEvent.Type.RHO_SAMPLING) {
+                        nextEvent.type = EpidemicEvent.RHO_SAMPLE;
+
+                        // Got to be a better way of sampling from a binomial distribution
+                        nextEvent.multiplicity = 0;
+                        for (int i = 0; i < thisState.I; i++) {
+                            if (Randomizer.nextDouble() < event.rho)
+                                nextEvent.multiplicity += 1;
+                        }
+
+
+                        nextEvent.time = event.time;
+                        thisState.time = event.time;
+
+                        model.incrementState(thisState, nextEvent);
+                        eventList.add(nextEvent);
+                        stateList.add(thisState.copy());
+                    }
+
+                    thisState.modelIntervalIdx += 1;
+                }
 
                 continue;
             }
@@ -199,13 +238,15 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
             eventList.add(nextEvent);
             stateList.add(thisState.copy());
         }
+
+        return true;
     }
 
     /**
      * Simulate an epidemic using the provided model with tau leaping.
      *
      */
-    public void simulateTL() {
+    public boolean simulateTL() {
 
         double endTime;
         endTime = model.getOrigin();
@@ -291,6 +332,8 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
 
             stateList.add(thisState.copy());
         }
+
+        return true;
     }
 
     /**

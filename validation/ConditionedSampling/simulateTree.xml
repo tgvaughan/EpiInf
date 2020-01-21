@@ -1,0 +1,32 @@
+<beast version="2.0" namespace="beast.core
+                                :beast.core.parameter
+                                :beast.evolution.sitemodel
+                                :beast.evolution.substitutionmodel
+                                :epiinf
+                                :epiinf.models
+                                :epiinf.util
+                                :feast.simulation">
+
+  <run spec="GPSimulator" nSims="1">
+
+    <simulationObject id="tree" spec="SimulatedTransmissionTree">
+      <finalTreeSampleOffsetParam id="ftsop" spec="RealParameter" value="0.0"/>
+      <epidemicTrajectory spec="SimulatedTrajectory">
+        <conditionedSamplingTimes spec="RealParameter">
+          1.0 2.0 3.0 4.0 5.0
+        </conditionedSamplingTimes>
+        <model spec="BirthDeathModel">
+          <infectionRate spec="RealParameter" value="1.2"/>
+          <recoveryRate spec="RealParameter" value="1.0"/>
+          <removalProb spec="RealParameter" value="1.0"/>
+          <origin spec="RealParameter" value="5.0"/>
+        </model>
+      </epidemicTrajectory>
+    </simulationObject>
+
+    <logger spec="Logger" logEvery="1" fileName="$(filebase).trees">
+      <log idref="tree"/>
+    </logger>
+
+  </run>
+</beast>
