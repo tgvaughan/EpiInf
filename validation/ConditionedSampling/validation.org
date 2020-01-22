@@ -83,7 +83,9 @@ sampled trees.
 
 #+BEGIN_SRC R :session :results none
   df_directSA <- read.table("directSimulationSA.log", header=T, sep="\t")
-  df_mcmcSA <- read.table("mcmcSA.log", header=T, sep="\t")[-(1:100),]
+  df_mcmcSA <- read.table("mcmcSA.log", header=T, sep="\t")
+  nsamp <- dim(df_mcmcSA)[1]
+  df_mcmcSA <- df_mcmcSA[-(1:ceiling(0.1*nsamp)),]
 #+END_SRC
 
 Again with both the tree height and tree length distributions we see
@@ -93,10 +95,10 @@ agreement between the two sampling approaches.
    
 
 #+BEGIN_SRC R :session :file th_compareSA.png :results graphics :exports both
-  th_directSA <- hist(df_directSA$tree.height, breaks=seq(4,10,length.out=20))
-  th_mcmcSA <- hist(df_mcmcSA$tree.height, breaks=seq(4,10,length.out=20))
+  th_directSA <- hist(df_directSA$tree.height, breaks=seq(4,10,length.out=50))
+  th_mcmcSA <- hist(df_mcmcSA$tree.height, breaks=seq(4,10,length.out=50))
 
-  plot(th_directSA$mids, th_directSA$density, 'o', col='red', ylim=c(0,0.25),
+  plot(th_directSA$mids, th_directSA$density, 'o', col='red', ylim=c(0,0.5),
        main="Tree height comparison", xlab="Tree Height", ylab="Density")
   lines(th_mcmcSA$mids, th_mcmcSA$density, 'o', col='blue')
 
@@ -110,10 +112,10 @@ agreement between the two sampling approaches.
 ** Tree Length
    
 #+BEGIN_SRC R :session :file tl_compareSA.png :results graphics :exports both
-  tl_directSA <- hist(df_directSA$tree.treeLength, breaks=seq(0,40,length.out=20))
-  tl_mcmcSA <- hist(df_mcmcSA$tree.treeLength, breaks=seq(0,40,length.out=20))
+  tl_directSA <- hist(df_directSA$tree.treeLength, breaks=seq(0,40,length.out=50))
+  tl_mcmcSA <- hist(df_mcmcSA$tree.treeLength, breaks=seq(0,40,length.out=50))
 
-  plot(tl_directSA$mids, tl_directSA$density, 'o', col='red',
+  plot(tl_directSA$mids, tl_directSA$density, 'o', col='red', ylim=c(0,0.06),
        main="Tree length comparison", xlab="Tree Length", ylab="Density")
   lines(tl_mcmcSA$mids, tl_mcmcSA$density, 'o', col='blue')
 
