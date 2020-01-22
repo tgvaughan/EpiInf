@@ -62,36 +62,33 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
             "conditionedSamplingTimes",
             "Times at which to force psi-sampling events");
 
+    public Input<Double> conditionedSamplingRemovalProbInput = new Input<>(
+            "conditionedSamplingRemovalProb",
+            "Probability that conditioned sampling events are removals.");
     
     EpidemicModel model;
-    int nSteps;
-    RealParameter conditionedSamplingTimes;
+    int nSteps, minSampleCount;
+    double[] conditionedSamplingTimes;
+    double conditionedSamplingRemovalProb;
 
     public SimulatedTrajectory() { }
 
-    public SimulatedTrajectory(EpidemicModel model, double origin, int nSteps) {
+    public SimulatedTrajectory(EpidemicModel model, double origin, int nSteps, int minSampleCount,
+                               double[] conditionedSamplingTimes,
+                               double conditionedSamplingRemovalProb) {
         this.model = model;
         this.origin = origin;
         this.nSteps = nSteps;
+        this.minSampleCount = minSampleCount;
 
-        do {
-            eventList = new ArrayList<>();
-            stateList = new ArrayList<>();
+        this.conditionedSamplingTimes = conditionedSamplingTimes;
+        this.conditionedSamplingRemovalProb = conditionedSamplingRemovalProb;
 
-            if (nSteps > 0)
-                while (!simulateTL());
-            else
-                while (!simulate());
+        simulationLoop();
+    }
 
-        } while (eventList.stream().filter(EpidemicEvent::isSample).count()<minSampleCountInput.get());
-
-        if (fileNameInput.get() != null) {
-            try (PrintStream ps = new PrintStream(fileNameInput.get())) {
-                dumpTrajectory(ps);
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(SimulatedTrajectory.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
+    public SimulatedTrajectory(EpidemicModel model, double origin, int nSteps, int minSampleCount) {
+        this(model, origin, nSteps, minSampleCount, null, 0);
     }
     
     @Override
@@ -101,17 +98,12 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
         model = modelInput.get();
         origin = modelInput.get().getOrigin();
         nSteps = nStepsInput.get();
-        conditionedSamplingTimes = conditionedSamplingTimesInput.get();
+        minSampleCount = minSampleCountInput.get();
 
-        do {
-            eventList = new ArrayList<>();
-            stateList = new ArrayList<>();
+        conditionedSamplingTimes = conditionedSamplingTimesInput.get().getDoubleValues();
+        conditionedSamplingRemovalProb = conditionedSamplingRemovalProbInput.get();
 
-            if (nSteps > 0)
-                simulateTL();
-            else
-                simulate();
-        } while (eventList.stream().filter(EpidemicEvent::isSample).count()<minSampleCountInput.get());
+        simulationLoop();
 
         if (fileNameInput.get() != null) {
             try (PrintStream ps = new PrintStream(fileNameInput.get())) {
@@ -120,6 +112,19 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
                 Logger.getLogger(SimulatedTrajectory.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+    }
+
+    private void simulationLoop() {
+
+        boolean success;
+        do {
+            eventList = new ArrayList<>();
+            stateList = new ArrayList<>();
+
+            success = nSteps > 0
+                    ? simulateTL()
+                    : simulate();
+        } while (!success || eventList.stream().filter(EpidemicEvent::isSample).count()<minSampleCount);
     }
 
 
@@ -131,7 +136,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
 
         List<Double> remainingConditionedSamplingTimes = new ArrayList<>();
         if (conditionedSamplingTimes != null) {
-            for (double sampTime : conditionedSamplingTimes.getDoubleValues())
+            for (double sampTime : conditionedSamplingTimes)
                 remainingConditionedSamplingTimes.add(sampTime);
         }
 
@@ -172,9 +177,10 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
 
             if (nextModelEventOrSamplingTime <= endTime && thisState.time > nextModelEventOrSamplingTime) {
                 if (nextModelEventOrSamplingTime == nextConditionedSamplingTime) {
-                    if (Randomizer.nextDouble() < model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
-                            / (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
-                               + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]))
+                    if (thisState.I <= 0.0)
+                        return false;
+
+                    if (conditionedSamplingRemovalProb == 1.0 || Randomizer.nextDouble() < conditionedSamplingRemovalProb)
                         nextEvent.type = EpidemicEvent.PSI_SAMPLE_REMOVE;
                     else
                         nextEvent.type = EpidemicEvent.PSI_SAMPLE_NOREMOVE;
@@ -183,9 +189,6 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
                     model.incrementState(thisState, nextEvent);
                     eventList.add(nextEvent);
                     stateList.add(thisState.copy());
-
-                    if (!thisState.isValid())
-                        return false;
 
                     remainingConditionedSamplingTimes.remove(0);
 
@@ -248,6 +251,12 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
      */
     public boolean simulateTL() {
 
+        List<Double> remainingConditionedSamplingTimes = new ArrayList<>();
+        if (conditionedSamplingTimes != null) {
+            for (double sampTime : conditionedSamplingTimes)
+                remainingConditionedSamplingTimes.add(sampTime);
+        }
+
         double endTime;
         endTime = model.getOrigin();
 
@@ -265,7 +274,12 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
             model.calculatePropensities(thisState);
 
             double nextModelEventTime = model.getNextModelEventTime(thisState);
-            double trueDt = Math.min(dt, nextModelEventTime - thisState.time);
+            double nextConditionedSamplingTime = remainingConditionedSamplingTimes.isEmpty()
+                    ? Double.POSITIVE_INFINITY
+                    : remainingConditionedSamplingTimes.get(0);
+            double nextModelEventOrSamplingTime = Math.min(nextModelEventTime, nextConditionedSamplingTime);
+
+            double trueDt = Math.min(dt, nextModelEventOrSamplingTime - thisState.time);
 
             EpidemicEvent infectEvent = new EpidemicEvent();
             infectEvent.type = EpidemicEvent.INFECTION;
@@ -300,25 +314,46 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
 
 
             if (trueDt < dt) {
-                ModelEvent event = model.getNextModelEvent(thisState);
 
-                if (event.type == ModelEvent.Type.RHO_SAMPLING) {
+                if (nextModelEventOrSamplingTime == nextConditionedSamplingTime) {
+                    if (thisState.I <= 0.0)
+                        return false;
 
-                    EpidemicEvent rhoSampEvent = new EpidemicEvent();
-                    rhoSampEvent.type = EpidemicEvent.RHO_SAMPLE;
-                    rhoSampEvent.time = event.time;
+                    EpidemicEvent samplingEvent = new EpidemicEvent();
 
-                    // Got to be a better way of sampling from a binomial distribution
-                    rhoSampEvent.multiplicity = 0;
-                    for (int i = 0; i < thisState.I; i++) {
-                        if (Randomizer.nextDouble() < event.rho)
-                            rhoSampEvent.multiplicity += 1;
+                    if (conditionedSamplingRemovalProb == 1.0 || Randomizer.nextDouble() < conditionedSamplingRemovalProb)
+                        samplingEvent.type = EpidemicEvent.PSI_SAMPLE_REMOVE;
+                    else
+                        samplingEvent.type = EpidemicEvent.PSI_SAMPLE_NOREMOVE;
+
+                    samplingEvent.time = nextConditionedSamplingTime;
+                    model.incrementState(thisState, samplingEvent);
+                    eventList.add(samplingEvent);
+                    stateList.add(thisState.copy());
+
+                    remainingConditionedSamplingTimes.remove(0);
+
+                } else {
+                    ModelEvent event = model.getNextModelEvent(thisState);
+
+                    if (event.type == ModelEvent.Type.RHO_SAMPLING) {
+
+                        EpidemicEvent rhoSampEvent = new EpidemicEvent();
+                        rhoSampEvent.type = EpidemicEvent.RHO_SAMPLE;
+                        rhoSampEvent.time = event.time;
+
+                        // Got to be a better way of sampling from a binomial distribution
+                        rhoSampEvent.multiplicity = 0;
+                        for (int i = 0; i < thisState.I; i++) {
+                            if (Randomizer.nextDouble() < event.rho)
+                                rhoSampEvent.multiplicity += 1;
+                        }
+
+                        model.incrementState(thisState, rhoSampEvent);
                     }
 
-                    model.incrementState(thisState, rhoSampEvent);
+                    thisState.modelIntervalIdx += 1;
                 }
-
-                thisState.modelIntervalIdx += 1;
             }
 
             // Rough error correction - doesn't conserve number.
@@ -348,7 +383,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
                 "infectionRate", new RealParameter("0.01"),
                 "recoveryRate", new RealParameter("0.1"),
                 "S0", new IntegerParameter("199"));
-        SimulatedTrajectory traj = new SimulatedTrajectory(model, 10, 1000);
+        SimulatedTrajectory traj = new SimulatedTrajectory(model, 10, 1000, 0);
 
         System.out.println(traj);
 

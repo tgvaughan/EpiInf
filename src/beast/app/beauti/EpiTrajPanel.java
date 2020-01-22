@@ -90,7 +90,7 @@ public class EpiTrajPanel extends JPanel {
                 List<Number> theseTimes = times.get(i);
                 List<Number> thesePrevs = prevalences.get(i);
 
-                SimulatedTrajectory traj = new SimulatedTrajectory(epidemicModel, origin, nSamples);
+                SimulatedTrajectory traj = new SimulatedTrajectory(epidemicModel, origin, nSamples, 0);
 
                 theseTimes.clear();
                 thesePrevs.clear();
