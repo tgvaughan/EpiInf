@@ -615,7 +615,7 @@ public class SMCTreeDensity extends EpiTreePrior {
                         model.calculatePropensities(particleState);
 
                         if (nextObservedEvent.type == ObservedEvent.Type.SAMPLED_ANCESTOR) {
-                            conditionalLogP += Math.log(1.0 / particleState.I);
+                            conditionalLogP += Math.log((1.0 - model.currentRemovalProb) / particleState.I);
                         } else {
                             boolean isRemoval = Randomizer.nextDouble() < model.currentRemovalProb;
 
