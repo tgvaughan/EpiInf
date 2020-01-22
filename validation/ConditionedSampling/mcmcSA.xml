@@ -1,0 +1,78 @@
+<beast version="2.0" namespace="beast.core
+    :beast.core.parameter
+    :beast.core.util
+    :beast.evolution.alignment
+    :beast.evolution.tree
+    :beast.evolution.tree.coalescent
+    :beast.evolution.likelihood
+    :beast.evolution.operators
+    :epiinf
+    :epiinf.models
+    :epiinf.distribs
+    :epiinf.util
+    :feast.expressions
+    :feast.mapping">
+
+  <data id="alignment" spec="Alignment">
+    <sequence spec="Sequence" taxon="t0" value="?"/>
+    <sequence spec="Sequence" taxon="t1" value="?"/>
+    <sequence spec="Sequence" taxon="t2" value="?"/>
+    <sequence spec="Sequence" taxon="t3" value="?"/>
+    <sequence spec="Sequence" taxon="t4" value="?"/>
+  </data>
+    
+
+  <run spec="MCMC" id="mcmc" chainLength="100000000">
+
+    <state>
+      <stateNode id="tree" spec="RandomTree" taxa="@alignment">
+        <populationModel spec="ConstantPopulation">
+          <popSize spec="RealParameter" value="0.1"/>
+        </populationModel>
+        <trait spec="TraitSet" traitname="date-backward">
+          <taxa spec="TaxonSet" alignment="@alignment"/>
+          t0=0.0,
+          t1=1.0,
+          t2=2.0,
+          t3=3.0,
+          t4=4.0
+        </trait>
+      </stateNode>
+    </state>
+
+    <distribution id="posterior" spec="CompoundDistribution">
+      <distribution spec="SMCTreeDensity" id="treePrior" tree="@tree"
+                    nParticles="100"
+                    useTauLeaping="false">
+        <finalTreeSampleOffset spec="RealParameter" value="0.0"/>
+        <model id="model" spec="BirthDeathModel" usePsiSamplingProportion="false">
+          <infectionRate spec="RealParameter" value="1.05"/>
+          <recoveryRate spec="RealParameter" value="1.0"/>
+          <removalProb spec="RealParameter" value="0.5"/>
+          <origin id="origin" spec="RealParameter" value="10.0"/>
+        </model>
+      </distribution>
+    </distribution>
+
+    <!-- Tree operators -->
+
+    <operator spec="SAScaleOperator" scaleFactor="0.5" tree="@tree" weight="20.0"/>
+    <operator spec="SAScaleOperator" rootOnly="true" scaleFactor="0.95" tree="@tree" weight="20.0"/>
+    <operator spec="SAUniform" tree="@tree" weight="20.0"/>
+    <operator spec="SAWilsonBalding" tree="@tree" weight="20.0"/>
+    <operator spec="SAExchange" isNarrow="false" tree="@tree" weight="20.0"/>
+    <operator spec="SAExchange" tree="@tree" weight="20.0"/>
+
+    <logger id="screenlog" spec="Logger" logEvery="1000">
+      <log idref="posterior"/>
+    </logger>
+
+    <logger logEvery="1000" fileName="$(filebase).trees">
+      <log idref="tree"/>
+    </logger>
+
+    <logger id="filelog" spec="Logger" logEvery="100" fileName="$(filebase).log">
+      <log spec="TreeStatLogger" tree="@tree"/>
+    </logger>
+  </run>
+</beast>
