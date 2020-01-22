@@ -10,8 +10,7 @@
 
   <run spec="GPSimulator" nSims="100000">
 
-    <simulationObject id="traj" spec="SimulatedTrajectory"
-                      conditionedSamplingRemovalProb="1">
+    <simulationObject id="traj" spec="SimulatedTrajectory">
       <conditionedSamplingTimes spec="RealParameter">
         6.0 7.0 8.0 9.0 10.0
       </conditionedSamplingTimes>
@@ -30,10 +29,6 @@
 
     <logger spec="Logger" logEvery="1" fileName="$(filebase).trees">
       <log idref="tree"/>
-    </logger>
-
-    <logger spec="Logger" logEvery="1" fileName="$(filebase).traj">
-      <log idref="traj"/>
     </logger>
 
     <logger spec="Logger" logEvery="1" fileName="$(filebase).log">

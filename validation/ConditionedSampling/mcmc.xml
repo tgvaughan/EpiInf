@@ -22,7 +22,7 @@
   </data>
     
 
-  <run spec="MCMC" id="mcmc" chainLength="1000000000">
+  <run spec="MCMC" id="mcmc" chainLength="100000000">
 
     <state>
       <stateNode id="tree" spec="RandomTree" taxa="@alignment">

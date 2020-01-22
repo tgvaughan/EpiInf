@@ -62,33 +62,26 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
             "conditionedSamplingTimes",
             "Times at which to force psi-sampling events");
 
-    public Input<Double> conditionedSamplingRemovalProbInput = new Input<>(
-            "conditionedSamplingRemovalProb",
-            "Probability that conditioned sampling events are removals.");
-    
     EpidemicModel model;
     int nSteps, minSampleCount;
     double[] conditionedSamplingTimes;
-    double conditionedSamplingRemovalProb;
 
     public SimulatedTrajectory() { }
 
     public SimulatedTrajectory(EpidemicModel model, double origin, int nSteps, int minSampleCount,
-                               double[] conditionedSamplingTimes,
-                               double conditionedSamplingRemovalProb) {
+                               double[] conditionedSamplingTimes) {
         this.model = model;
         this.origin = origin;
         this.nSteps = nSteps;
         this.minSampleCount = minSampleCount;
 
         this.conditionedSamplingTimes = conditionedSamplingTimes;
-        this.conditionedSamplingRemovalProb = conditionedSamplingRemovalProb;
 
         simulationLoop();
     }
 
     public SimulatedTrajectory(EpidemicModel model, double origin, int nSteps, int minSampleCount) {
-        this(model, origin, nSteps, minSampleCount, null, 0);
+        this(model, origin, nSteps, minSampleCount, null);
     }
     
     @Override
@@ -101,7 +94,6 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
         minSampleCount = minSampleCountInput.get();
 
         conditionedSamplingTimes = conditionedSamplingTimesInput.get().getDoubleValues();
-        conditionedSamplingRemovalProb = conditionedSamplingRemovalProbInput.get();
 
         simulationLoop();
 
@@ -180,7 +172,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
                     if (thisState.I <= 0.0)
                         return false;
 
-                    if (conditionedSamplingRemovalProb == 1.0 || Randomizer.nextDouble() < conditionedSamplingRemovalProb)
+                    if (model.currentRemovalProb == 1.0 || Randomizer.nextDouble() < model.currentRemovalProb)
                         nextEvent.type = EpidemicEvent.PSI_SAMPLE_REMOVE;
                     else
                         nextEvent.type = EpidemicEvent.PSI_SAMPLE_NOREMOVE;
@@ -321,7 +313,7 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
 
                     EpidemicEvent samplingEvent = new EpidemicEvent();
 
-                    if (conditionedSamplingRemovalProb == 1.0 || Randomizer.nextDouble() < conditionedSamplingRemovalProb)
+                    if (model.currentRemovalProb == 1.0 || Randomizer.nextDouble() < model.currentRemovalProb)
                         samplingEvent.type = EpidemicEvent.PSI_SAMPLE_REMOVE;
                     else
                         samplingEvent.type = EpidemicEvent.PSI_SAMPLE_NOREMOVE;
