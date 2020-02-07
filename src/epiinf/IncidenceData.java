@@ -109,6 +109,8 @@ public class IncidenceData extends BEASTObject {
 
         List<Double> times = new ArrayList<>();
 
+        double maxTime = Double.NEGATIVE_INFINITY;
+
         for (int i=0; i<valueStrings.length/2; i++) {
             double time;
             if (dateFormatInput.get() != null) {
@@ -119,6 +121,9 @@ public class IncidenceData extends BEASTObject {
             }
             int count = Integer.parseInt(valueStrings[2*i + 1]);
 
+            if (time > maxTime)
+                maxTime = time;
+
             for (int j=0; j<count; j++)
                 times.add(time);
         }
@@ -126,12 +131,9 @@ public class IncidenceData extends BEASTObject {
         if (valuesAreAgesInput.get()) {
             ages = times;
         } else {
-            double maxTime = times.stream()
-                    .mapToDouble(t -> t)
-                    .max()
-                    .getAsDouble();
+            double finalMaxTime = maxTime;
             ages = times.stream()
-                    .map(t -> maxTime - t + finalSampleOffsetInput.get().getValue())
+                    .map(t -> finalMaxTime - t + finalSampleOffsetInput.get().getValue())
                     .collect(Collectors.toList());
         }
     }

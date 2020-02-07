@@ -39,7 +39,7 @@ public abstract class EpiTreePrior extends TreeDistribution {
     public Input<Function> finalTreeSampleOffsetInput = new Input<>(
             "finalTreeSampleOffset",
             "Difference in time between final TREE sample and end " +
-                    "of observation process", Input.Validate.REQUIRED);
+                    "of observation process.  (Defaults to zero.)");
 
     protected EpidemicModel model;
     protected ObservedEventsList observedEventsList;
