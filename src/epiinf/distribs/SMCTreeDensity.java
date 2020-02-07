@@ -574,6 +574,11 @@ public class SMCTreeDensity extends EpiTreePrior {
                     for (int i=0; i<nextObservedEvent.multiplicity; i++) {
                         model.calculatePropensities(particleState);
 
+                        if (particleState.I == 0) {
+                            conditionalLogP = Double.NEGATIVE_INFINITY;
+                            break;
+                        }
+
                         if (nextObservedEvent.type == ObservedEvent.Type.SAMPLED_ANCESTOR) {
                             conditionalLogP += Math.log( model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE] / particleState.I);
                         } else {
@@ -639,6 +644,9 @@ public class SMCTreeDensity extends EpiTreePrior {
         }
 
 
+        if (Double.isNaN(conditionalLogP)) {
+            System.out.println("Particle weight is NaN - should not happen!");
+        }
 
         return conditionalLogP;
     }
