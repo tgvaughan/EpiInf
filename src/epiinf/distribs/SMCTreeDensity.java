@@ -76,30 +76,14 @@ public class SMCTreeDensity extends EpiTreePrior {
             "incidenceParameter",
             "Ages of unsequenced samples.");
 
-    public Input<Boolean> useAdaptiveParticleCountInput = new Input<>(
-            "useAdaptiveParticleCount",
-            "Use EXPERIMENTAL adaptive particle count algorithm.",
-            false);
-
-    public Input<Double> targetLogLikelihoodVarInput = new Input<>(
-            "targetLogLikelihoodVar",
-            "Target log-likelihood variance in adaptive particle count algorithm.",
-            10.0);
-
-    public Input<Integer> nParticlesMaxInput = new Input<>(
-            "nParticlesMax", "Maximun number of particles to use in adaptive algorithm.", 10000);
-
-    public Input<Integer> particleCountTuningIntervalInput = new Input<>(
-            "particleCountTuningInterval",
-            "Interval (number of MCMC steps) between particle count tunings.", 100);
+    public Input<IncidenceData> incidenceDataInput = new Input<>(
+            "incidenceData",
+            "Incindence data (as a histogram).");
 
     int nParticles;
     boolean useTauLeaping;
     double epsilon, resampThresh, relStdThresh;
     int minLeapCount;
-
-    int nParticlesMax, nParticlesMin, particleCountTuningInterval;
-    double targetLogLiklihoodVar;
 
     // Keep these around so we don't have to create these arrays/lists
     // for every density evaluation.
@@ -125,27 +109,10 @@ public class SMCTreeDensity extends EpiTreePrior {
             throw new IllegalArgumentException("Must specify at least one of tree or incidence.");
 
         observedEventsList = new ObservedEventsList(treeInput.get(),
-                incidenceParamInput.get(), model, finalTreeSampleOffsetInput.get());
+                incidenceParamInput.get(), incidenceDataInput.get(),
+                model, finalTreeSampleOffsetInput.get());
 
         nParticles = nParticlesInput.get();
-
-        if (useAdaptiveParticleCountInput.get()) {
-            nParticlesMax = nParticlesMaxInput.get();
-            nParticlesMin = nParticles;
-
-            if (nParticlesMax <= nParticlesMin)
-                throw new IllegalArgumentException("Error in SMC adaptive particle count algorithm: nParticlesMax must exceed nParticles.");
-
-            targetLogLiklihoodVar = targetLogLikelihoodVarInput.get();
-            particleCountTuningInterval = particleCountTuningIntervalInput.get();
-        } else {
-            nParticlesMax = nParticles;
-        }
-
-        if (useAdaptiveParticleCountInput.get())
-            System.out.println("Using EXPERIMENTAL adaptive particle count algorithm with\n "
-                    + "nParticlesMin=" + nParticlesMin
-                    + " and nParticlesMax=" + nParticlesMax);
 
         useTauLeaping = useTauLeapingInput.get();
         epsilon = epsilonInput.get();
@@ -153,16 +120,16 @@ public class SMCTreeDensity extends EpiTreePrior {
         resampThresh = resampThreshInput.get();
         relStdThresh = relStdThreshInput.get();
 
-        particleWeights = new double[nParticlesMax];
-        logParticleWeights = new double[nParticlesMax];
-        particleStates = new EpidemicState[nParticlesMax];
-        particleStatesNew = new EpidemicState[nParticlesMax];
+        particleWeights = new double[nParticles];
+        logParticleWeights = new double[nParticles];
+        particleStates = new EpidemicState[nParticles];
+        particleStatesNew = new EpidemicState[nParticles];
 
         recordedTrajectoryStates = new ArrayList<>();
         particleTrajectories = new ArrayList<>();
         particleTrajectoriesNew = new ArrayList<>();
 
-        for (int p=0; p<nParticlesMax; p++) {
+        for (int p=0; p<nParticles; p++) {
             particleTrajectories.add(new ArrayList<>());
             particleTrajectoriesNew.add(new ArrayList<>());
 
@@ -171,65 +138,7 @@ public class SMCTreeDensity extends EpiTreePrior {
         }
     }
 
-    int calcsSinceLastTune = 0;
-    private void tuneParticleCount() {
-
-        calcsSinceLastTune = (calcsSinceLastTune+1)%particleCountTuningInterval;
-        if (calcsSinceLastTune != 0)
-            return;
-
-        double[] logPvalues = new double[10];
-
-        for (int i=0; i<logPvalues.length; i++) {
-            logP = 0.0;
-
-            recordedTrajectoryStates.clear();
-
-            // Early exit if first tree event occurs before origin.
-            if (observedEventsList.getEventList().get(0).time < 0) {
-                logPvalues[i] = Double.NEGATIVE_INFINITY;
-                continue;
-            }
-
-            // Initialize particles and trajectory storage
-            for (int p = 0; p < nParticles; p++) {
-                particleStates[p].assignFrom(model.getInitialState());
-                logParticleWeights[p] = 0.0;
-
-                particleTrajectories.get(p).clear();
-                particleTrajectoriesNew.get(p).add(model.getInitialState());
-            }
-
-            boolean earlyExit = false;
-            for (ObservedEvent observedEvent : observedEventsList.getEventList()) {
-                if (!propagateEnsemble(observedEvent)) {
-                    earlyExit = true;
-                    break;
-                }
-            }
-
-            if (earlyExit)
-                logPvalues[i] = Double.NEGATIVE_INFINITY;
-            else
-                logPvalues[i] = logP;
-        }
-
-        double var = DiscreteStatistics.variance(logPvalues);
-
-        int nParticlesOld = nParticles;
-
-        if (var > targetLogLiklihoodVar || Double.isNaN(var))
-            nParticles = Math.min(2*nParticles, nParticlesMax);
-        else
-            nParticles = Math.max(nParticles/2, nParticlesMin);
-
-        System.out.println("Variance: " + var + ", Particle count tuned: " + nParticlesOld + "->" + nParticles);
-    }
-
     public double calculateLogP() {
-
-        if (useAdaptiveParticleCountInput.get())
-            tuneParticleCount();
 
         logP = 0.0;
 

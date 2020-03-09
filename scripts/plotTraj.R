@@ -107,6 +107,7 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
                      xlim=NA, ylim=NA,
                      heightLim=NA,
                      showMean=TRUE,
+                     showMedian=FALSE,
                      showHPD=TRUE,
                      widthOuter=6,
                      widthInner=2,
@@ -170,16 +171,18 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
         maxHeight <- heightLim
 
     # Compute mean prevalence
-    if (showMean || showHPD) {
+    if (showMean || showMedian || showHPD) {
         cat(paste0("Computing moments ", target, "..."))
         
         targetTimes <- seq(maxHeight, 0, length.out=100)
         targetValues <- getInterpolatedValues(traj, targetTimes, targetFun, subSample)
 
         meanTarget <- colMeans(targetValues)
-        hpdTargetLow <- apply(targetValues, 2, function(x) {return(quantile(x, probs=0.025, na.rm=TRUE))})
-        hpdTargetHigh <- apply(targetValues, 2, function(x) {return(quantile(x, probs=0.975, na.rm=TRUE))})
-
+        medianTarget <- apply(targetValues, 2, median)
+        hpdTargetLow <- apply(targetValues, 2, function(x) {return(quantile(x, probs=0.025))})
+        hpdTargetHigh <- apply(targetValues, 2, function(x) {return(quantile(x, probs=0.975))})
+        ## hpdTargetLow <- apply(targetValues, 2, function(x) {return(hpd(x, prob=0.95)$lower)})
+        ## hpdTargetHigh <- apply(targetValues, 2, function(x) {return(hpd(x, prob=0.95)$upper)})
         cat("done.\n")
     }
 
@@ -243,12 +246,22 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
                   widthOuter=widthOuter, widthInner=widthInner)
     }
 
+    if (showMedian) {
+        linesBold(getTime(targetTimes), medianTarget,
+                  widthOuter=widthOuter, widthInner=widthInner)
+    }
+
     if (showHPD) {
         linesBold(getTime(targetTimes), hpdTargetLow, lty=2,
                   widthOuter=widthOuter, widthInner=widthInner)
         linesBold(getTime(targetTimes), hpdTargetHigh, lty=2,
                   widthOuter=widthOuter, widthInner=widthInner)
     }
+
+    cat("\n")
+    cat(paste("Final median prevalence:", medianTarget[length(medianTarget)]),"\n")
+    cat(paste("Final prevalence HPD lower bound:", hpdTargetLow[length(hpdTargetLow)]),"\n")
+    cat(paste("Final prevalence HPD high bound:", hpdTargetHigh[length(hpdTargetHigh)]),"\n")
     cat("done.\n")
 }
 
@@ -444,4 +457,32 @@ simTrajectories <- function(dataFrames,
     }
 
     return(traj)
+}
+
+
+hpd <- function(x, prob=0.95) {
+    y <- sort(x[!is.na(x)])
+    N <- length(y)
+    window <- round(N*prob)
+
+    lower <- y[1]
+    upper <- y[N]
+    delta <- upper-lower
+
+    
+    if (window < N || window == 0) {
+        for (i in 1:(N-window)) {
+            this_lower <- y[i]
+            this_upper <- y[i+window]
+            this_delta <- this_upper - this_lower
+
+            if (this_delta < delta) {
+                lower <- this_lower
+                upper <- this_upper
+                delta <- this_delta
+            }
+        }
+    }
+
+    return(list(lower=lower, upper=upper))
 }

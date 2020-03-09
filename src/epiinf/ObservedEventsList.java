@@ -37,6 +37,7 @@ public class ObservedEventsList {
 
     private TreeInterface tree;
     private Function incidenceAges;
+    private IncidenceData incidenceData;
     private Function finalTreeSampleOffset;
     private List<ObservedEvent> eventList, rhoEventsToAdd;
 
@@ -49,11 +50,14 @@ public class ObservedEventsList {
     
     private boolean dirty;
     
-    public ObservedEventsList(TreeInterface tree, Function incidenceAges,
+    public ObservedEventsList(TreeInterface tree,
+                              Function incidenceAges,
+                              IncidenceData incidenceData,
                               EpidemicModel model,
                               Function finalTreeSampleOffset) {
         this.tree = tree;
         this.incidenceAges = incidenceAges;
+        this.incidenceData = incidenceData;
         this.model = model;
         this.finalTreeSampleOffset = finalTreeSampleOffset;
 
@@ -101,6 +105,18 @@ public class ObservedEventsList {
                 ObservedEvent event = new ObservedEvent();
                 event.type = ObservedEvent.Type.UNSEQUENCED_SAMPLE;
                 event.time = getTimeFromAge(incidenceAges.getArrayValue(i));
+                eventList.add(event);
+            }
+        }
+
+        if (incidenceData != null) {
+            List<Double> uniqueAges = incidenceData.getUniqueAges();
+            List<Integer> ageCounts = incidenceData.getAgeCounts();
+            for (int i=0; i<uniqueAges.size(); i++) {
+                ObservedEvent event = new ObservedEvent();
+                event.type = ObservedEvent.Type.UNSEQUENCED_SAMPLE;
+                event.time = getTimeFromAge(uniqueAges.get(i));
+                event.multiplicity = ageCounts.get(i);
                 eventList.add(event);
             }
         }

@@ -19,7 +19,8 @@ package epiinf.operators;
 
 import beast.core.Input;
 import beast.core.Loggable;
-import beast.evolution.operators.TreeOperator;
+import beast.core.Operator;
+import beast.core.StateNode;
 
 import java.io.PrintStream;
 
@@ -29,9 +30,10 @@ import java.io.PrintStream;
  *
  * Created by Tim Vaughan <tgvaughan@gmail.com> on 24/04/17.
  */
-public class RecalculateDensity extends TreeOperator implements Loggable {
+public class RecalculateDensity extends Operator implements Loggable {
 
-    public Input<Double> iterationsInput = new Input<>("iterations", "Number of iterations this operator should be used for.", Input.Validate.REQUIRED);
+    public Input<StateNode> stateNodeInput = new Input("stateNode", "StateNode to reevaluate density of.", Input.Validate.REQUIRED);
+    public Input<Double> iterationsInput = new Input<>("iterations", "Number of iterations this operator should be used for.");
 
     boolean stillOn;
 
@@ -47,7 +49,7 @@ public class RecalculateDensity extends TreeOperator implements Loggable {
         if (!stillOn)
             return Double.NEGATIVE_INFINITY;
 
-        treeInput.get().startEditing(this);
+        stateNodeInput.get().startEditing(this);
         return Double.POSITIVE_INFINITY;
     }
 
@@ -57,7 +59,8 @@ public class RecalculateDensity extends TreeOperator implements Loggable {
 
     @Override
     public void log(long sample, PrintStream out) {
-        stillOn = sample < iterationsInput.get();
+        if (iterationsInput.get() != null)
+            stillOn = sample < iterationsInput.get();
     }
 
     @Override

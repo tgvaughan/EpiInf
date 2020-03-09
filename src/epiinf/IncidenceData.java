@@ -26,10 +26,7 @@ import java.io.*;
 import java.text.spi.DateFormatProvider;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.IllegalFormatException;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -66,6 +63,10 @@ public class IncidenceData extends BEASTObject {
             false);
 
     private List<Double> ages = new ArrayList<>();
+
+    private List<Double> uniqueAges = new ArrayList<>();
+    private List<Integer> ageCounts = new ArrayList<>();
+
 
     public IncidenceData() { }
 
@@ -136,10 +137,23 @@ public class IncidenceData extends BEASTObject {
                     .map(t -> finalMaxTime - t + finalSampleOffsetInput.get().getValue())
                     .collect(Collectors.toList());
         }
+
+        uniqueAges = ages.stream().sorted().distinct().collect(Collectors.toList());
+        for (final double age : uniqueAges) {
+            ageCounts.add((int) ages.stream().filter(a -> a == age).count());
+        }
     }
 
     public List<Double> getAges() {
         return ages;
+    }
+
+    public List<Double> getUniqueAges() {
+        return uniqueAges;
+    }
+
+    public List<Integer> getAgeCounts() {
+        return ageCounts;
     }
 
     public double getError() {
