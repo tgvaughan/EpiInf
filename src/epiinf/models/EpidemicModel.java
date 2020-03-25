@@ -598,4 +598,7 @@ public abstract class EpidemicModel extends CalculationNode {
 
     }
 
+    public void makeDirty() {
+        ratesDirty = true;
+    }
 }

@@ -20,7 +20,7 @@ package epiinf;
 import beast.core.BEASTObject;
 import beast.core.Input;
 import beast.core.Loggable;
-import epiinf.distribs.EpiTreePrior;
+import epiinf.distribs.SMCTreeDensity;
 import epiinf.models.EpidemicModel;
 
 import java.io.PrintStream;
@@ -30,11 +30,15 @@ import java.io.PrintStream;
  */
 public class TrajectoryLogger extends BEASTObject implements Loggable{
 
-    public Input<EpiTreePrior> treeDensityInput = new Input<>("treeDensity",
+    public Input<SMCTreeDensity> treeDensityInput = new Input<>("treeDensity",
             "SMC Tree density from which to log trajectories.",
             Input.Validate.REQUIRED);
 
-    EpiTreePrior treeDensity;
+    public Input<Boolean> logMostRecentTrajectoryInput = new Input<>("logMostRecentTrajectory",
+            "Force density recalculation and logs most recent trajectory. Do not use in a standard " +
+                    "PMMH analysis!  Defaults to false.", false);
+
+    SMCTreeDensity treeDensity;
     EpidemicModel model;
 
     public TrajectoryLogger() { }
@@ -55,9 +59,16 @@ public class TrajectoryLogger extends BEASTObject implements Loggable{
 
     @Override
     public void log(long nSample, PrintStream out) {
-        EpidemicTrajectory traj = treeDensity.getConditionedTrajectory();
 
-        if (traj.getStateList().isEmpty()) {
+        EpidemicTrajectory traj;
+        if (logMostRecentTrajectoryInput.get()) {
+            treeDensity.calculateLogP();
+            traj = treeDensity.getMostRecentTrajectory();
+        } else {
+            traj = treeDensity.getConditionedTrajectory();
+        }
+
+        if (traj == null || traj.getStateList().isEmpty()) {
             out.print("NA\t");
             return;
         }

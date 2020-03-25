@@ -23,12 +23,16 @@ import beast.core.Function;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
+import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
 import beast.math.statistic.DiscreteStatistics;
 import beast.util.Randomizer;
 import epiinf.*;
+import epiinf.models.EpidemicModel;
 import epiinf.util.ReplacementSampler;
+import org.apache.commons.math.distribution.BinomialDistribution;
+import org.apache.commons.math.distribution.BinomialDistributionImpl;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -42,8 +46,17 @@ import java.util.stream.Collectors;
 @Description("Use SMC to estimate density of tree conditional on model "
     + "parameters.")
 @Citation("Timothy Vaughan, Gabriel Leventhal, David Welch, Alexei Drummond, Tanja Stadler,\n" +
-        "\"Directly estimating epidemic curves from genomic data\", preprint DOI:10.1101/142570")
-public class SMCTreeDensity extends EpiTreePrior {
+        "\"Estimating epidemic incidence and prevalence curves from genomic data\",\n" +
+        "Molecular Biology and Evolution, 36(8):1804-1816 (2019).")
+public class SMCTreeDensity extends TreeDistribution {
+
+    public Input<EpidemicModel> modelInput = new Input<>(
+            "model", "Epidemic model.", Input.Validate.REQUIRED);
+
+    public Input<Function> finalTreeSampleOffsetInput = new Input<>(
+            "finalTreeSampleOffset",
+            "Difference in time between final TREE sample and end " +
+                    "of observation process.  (Defaults to zero.)");
 
     public Input<Integer> nParticlesInput = new Input<>(
             "nParticles", "Number of particles to use in SMC calculation.",
@@ -79,6 +92,10 @@ public class SMCTreeDensity extends EpiTreePrior {
     public Input<IncidenceData> incidenceDataInput = new Input<>(
             "incidenceData",
             "Incindence data (as a histogram).");
+
+
+    protected EpidemicModel model;
+    protected ObservedEventsList observedEventsList;
 
     int nParticles;
     boolean useTauLeaping;
@@ -480,40 +497,63 @@ public class SMCTreeDensity extends EpiTreePrior {
             } else {
                 if (model.psiSamplingVariableInput.get() != null) {
 
-                    for (int i=0; i<nextObservedEvent.multiplicity; i++) {
-                        model.calculatePropensities(particleState);
+                    if (nextObservedEvent.type == ObservedEvent.Type.UNSEQUENCED_SAMPLE) {
+
+                        // Only works when removal disabled!!
+                        // TODO: Implement logic so that this branch only fires when applicable. Broken otherwise!!!
 
                         if (particleState.I == 0) {
                             conditionalLogP = Double.NEGATIVE_INFINITY;
-                            break;
-                        }
-
-                        if (nextObservedEvent.type == ObservedEvent.Type.SAMPLED_ANCESTOR) {
-                            conditionalLogP += Math.log( model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE] / particleState.I);
                         } else {
-                            double psiSamplingProp = (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
-                                    + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
-
-                            conditionalLogP += Math.log(psiSamplingProp);
-
-                            boolean isRemoval = Randomizer.nextDouble() * psiSamplingProp
-                                    < model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
-
-                            if (isRemoval) {
-                                model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
-                            } else {
-                                if (nextObservedEvent.type == ObservedEvent.Type.LEAF)
-                                    conditionalLogP += Math.log(1.0 - (nextObservedEvent.lineages - 1) / particleState.I);
-                            }
+                            model.calculatePropensities(particleState);
+                            conditionalLogP += nextObservedEvent.multiplicity * Math.log(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
                         }
 
-                        // Account for probability of sequencing (if non-null)
-                        if (model.sequencingProbInput.get() != null) {
-                            double seqProb = model.sequencingProbInput.get().getArrayValue();
-                            if (nextObservedEvent.type == ObservedEvent.Type.UNSEQUENCED_SAMPLE)
-                                conditionalLogP += Math.log(1.0 - seqProb);
-                            else
-                                conditionalLogP += Math.log(seqProb);
+                    } else {
+                        for (int i = 0; i < nextObservedEvent.multiplicity; i++) {
+                            model.calculatePropensities(particleState);
+
+                            if (particleState.I == 0) {
+                                conditionalLogP = Double.NEGATIVE_INFINITY;
+                                break;
+                            }
+
+                            if (nextObservedEvent.type == ObservedEvent.Type.SAMPLED_ANCESTOR) {
+                                conditionalLogP += Math.log(model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE] / particleState.I);
+                            } else {
+                                double psiSamplingProp = (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE]
+                                        + model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE]);
+
+                                conditionalLogP += Math.log(psiSamplingProp);
+
+                                boolean isRemoval;
+                                if (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE] == psiSamplingProp) {
+                                    isRemoval = true;
+                                } else {
+                                    if (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE] == 0.0) {
+                                        isRemoval = false;
+                                    } else {
+                                        isRemoval = Randomizer.nextDouble() * psiSamplingProp
+                                                < model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE];
+                                    }
+                                }
+
+                                if (isRemoval) {
+                                    model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
+                                } else {
+                                    if (nextObservedEvent.type == ObservedEvent.Type.LEAF)
+                                        conditionalLogP += Math.log(1.0 - (nextObservedEvent.lineages - 1) / particleState.I);
+                                }
+                            }
+
+                            // Account for probability of sequencing (if non-null)
+                            if (model.sequencingProbInput.get() != null) {
+                                double seqProb = model.sequencingProbInput.get().getArrayValue();
+                                if (nextObservedEvent.type == ObservedEvent.Type.UNSEQUENCED_SAMPLE)
+                                    conditionalLogP += Math.log(1.0 - seqProb);
+                                else
+                                    conditionalLogP += Math.log(seqProb);
+                            }
                         }
                     }
 
@@ -560,9 +600,46 @@ public class SMCTreeDensity extends EpiTreePrior {
         return conditionalLogP;
     }
 
-    @Override
+    /**
+     * @return Trajectory conditioned on tree, for logging during PMMH analysis.
+     */
     public EpidemicTrajectory getConditionedTrajectory() {
         return storedTrajectory;
+    }
+
+    /**
+     * @return Most recent trajectory, for logging during trajectory mapping.
+     */
+    public EpidemicTrajectory getMostRecentTrajectory() {
+        observedEventsList.makeDirty();
+        model.makeDirty();
+        return new EpidemicTrajectory(null,
+                new ArrayList<>(recordedTrajectoryStates),
+                observedEventsList.getOrigin());
+    }
+
+    /**
+     * @return Epidemic model
+     */
+    public EpidemicModel getModel() {
+        return modelInput.get();
+    }
+
+
+    /*
+     * StateNode implementation
+     */
+
+    @Override
+    protected boolean requiresRecalculation() {
+        observedEventsList.makeDirty();
+        return true;
+    }
+
+    @Override
+    public void restore() {
+        observedEventsList.makeDirty();
+        super.restore();
     }
 
     @Override
@@ -573,4 +650,12 @@ public class SMCTreeDensity extends EpiTreePrior {
         storedTrajectory = new EpidemicTrajectory(null, stateListCopy, observedEventsList.getOrigin());
     }
 
+    /*
+     * Distribution implementation
+     */
+
+    @Override
+    public boolean isStochastic() {
+        return true;
+    }
 }

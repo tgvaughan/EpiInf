@@ -20,7 +20,7 @@ package epiinf;
 import beast.core.BEASTObject;
 import beast.core.Input;
 import beast.core.Loggable;
-import epiinf.distribs.EpiTreePrior;
+import epiinf.distribs.SMCTreeDensity;
 import epiinf.models.EpidemicModel;
 
 import java.io.PrintStream;
@@ -30,11 +30,11 @@ import java.io.PrintStream;
  */
 public class IncidenceLogger extends BEASTObject implements Loggable{
 
-    public Input<EpiTreePrior> treeDensityInput = new Input<>("treeDensity",
+    public Input<SMCTreeDensity> treeDensityInput = new Input<>("treeDensity",
             "SMC Tree density from which to log trajectories.",
             Input.Validate.REQUIRED);
 
-    EpiTreePrior treeDensity;
+    SMCTreeDensity treeDensity;
     EpidemicModel model;
 
     public IncidenceLogger() { }
