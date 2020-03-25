@@ -497,10 +497,15 @@ public class SMCTreeDensity extends TreeDistribution {
             } else {
                 if (model.psiSamplingVariableInput.get() != null) {
 
-                    if (nextObservedEvent.type == ObservedEvent.Type.UNSEQUENCED_SAMPLE) {
+                    // This awkward conditioning is to avoid unnecessary recalculation of
+                    // reaction propensities.
+                    if (nextObservedEvent.type == ObservedEvent.Type.UNSEQUENCED_SAMPLE)
+                        model.calculatePropensities(particleState);
+
+                    if (nextObservedEvent.type == ObservedEvent.Type.UNSEQUENCED_SAMPLE
+                            && model.currentRemovalProb == 0.0) {
 
                         // Only works when removal disabled!!
-                        // TODO: Implement logic so that this branch only fires when applicable. Broken otherwise!!!
 
                         if (particleState.I == 0) {
                             conditionalLogP = Double.NEGATIVE_INFINITY;
