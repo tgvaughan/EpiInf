@@ -616,8 +616,9 @@ public class SMCTreeDensity extends TreeDistribution {
      * @return Most recent trajectory, for logging during trajectory mapping.
      */
     public EpidemicTrajectory getMostRecentTrajectory() {
-        observedEventsList.makeDirty();
         model.makeDirty();
+        observedEventsList.makeDirty();
+        calculateLogP();
         return new EpidemicTrajectory(null,
                 new ArrayList<>(recordedTrajectoryStates),
                 observedEventsList.getOrigin());

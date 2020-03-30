@@ -62,7 +62,6 @@ public class TrajectoryLogger extends BEASTObject implements Loggable{
 
         EpidemicTrajectory traj;
         if (logMostRecentTrajectoryInput.get()) {
-            treeDensity.calculateLogP();
             traj = treeDensity.getMostRecentTrajectory();
         } else {
             traj = treeDensity.getConditionedTrajectory();
