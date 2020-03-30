@@ -172,8 +172,9 @@ public class SMCTreeDensity extends TreeDistribution {
             particleStates[p].assignFrom(model.getInitialState());
             logParticleWeights[p] = 0.0;
 
+            particleTrajectoriesNew.get(p).clear();
             particleTrajectories.get(p).clear();
-            particleTrajectoriesNew.get(p).add(model.getInitialState());
+            particleTrajectories.get(p).add(model.getInitialState());
         }
 
         for (ObservedEvent observedEvent : observedEventsList.getEventList()) {
