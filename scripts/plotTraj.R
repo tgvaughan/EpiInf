@@ -113,6 +113,7 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
                      widthInner=2,
                      presentTime=NA,
                      timesAreCalendarYears=FALSE,
+                     useCumulativeTrajectories
                      target='prevalence',
                      targetFun=NULL,
                      subSample=NA,
@@ -263,6 +264,148 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
     cat(paste("Final prevalence HPD lower bound:", hpdTargetLow[length(hpdTargetLow)]),"\n")
     cat(paste("Final prevalence HPD high bound:", hpdTargetHigh[length(hpdTargetHigh)]),"\n")
     cat("done.\n")
+}
+
+## Warning: assumes trajectores end at same time and that the number
+## of trajectories in both files is identical.
+plotMergedTraj <- function(fileName1, fileName2, colidx=2, burninFrac=0.1,
+                           subSample=NA,
+                           presentTime=NA,
+                           timesAreCalendarYears=FALSE,
+                           showMean=TRUE,
+                           showMedian=FALSE,
+                           showHPD=TRUE,
+                           xlim=NA, ylim=NA,
+                           target='prevalence',
+                           targetFun=NULL,
+                           col=rgb(1,0,0,0.3), add=FALSE,
+                           xlab=if (is.na(presentTime)) "Age" else "Time",
+                           ylab=capitalize(target),
+                           main='Trajectory distribution',
+                           ...) {
+
+    cat("Loading data...")
+    dataFrame1 <- loadData(fileName1, burninFrac)
+    dataFrame2 <- loadData(fileName2, burninFrac)
+    cat("done.\n")
+
+    # Parse trajectories
+    cat("Parsing trajectories...")
+    traj1 <- parseTrajectories(dataFrame1, colidx)
+    traj2 <- parseTrajectories(dataFrame2, colidx)
+    cat("done.\n")
+
+    if (is.na(subSample))
+        subSample <- length(traj1)
+
+
+    # Define target function for plotting
+    if (is.null(targetFun)) {
+        targetFun <- switch(target,
+                            prevalence = function(t) { return(t$I) },
+                            scaled_prevalence = function(t) { return(t$I/t$S[1]*1e5) },
+                            incidence = function(t) { return(t$incidence/t$S*incidencePeriod) },
+                            Re = function(t) { return(t$Re) })
+    }
+
+    # Identify plot boundaries
+    maxHeight <- 0
+    minValue <- +Inf
+    maxValue <- -Inf
+    for (i in seq(1,length(traj1), length.out=subSample)) {
+        maxHeight <- max(maxHeight, traj1[[i]]$t, traj2[[i]]$t)
+        val1 <- targetFun(traj1[[i]])
+        val1 <- val1[which(is.finite(val1))]
+        val2 <- targetFun(traj2[[i]])
+        val2 <- val2[which(is.finite(val2))]
+        maxValue <- max(maxValue, val1+val2)
+        minValue <- min(minValue, val1+val2)
+    }
+
+    # Interpolate and sum values
+    cat("Interpolating values...")
+    targetTimes <- seq(maxHeight, 0, length.out=100)
+    targetValues1 <- getInterpolatedValues(traj1, targetTimes, targetFun, subSample)
+    targetValues2 <- getInterpolatedValues(traj2, targetTimes, targetFun, subSample)
+
+    targetValues <- targetValues1 + targetValues2
+    cat("done.\n")
+
+
+    # Compute mean prevalence
+    if (showMean || showMedian || showHPD) {
+        cat(paste0("Computing moments ", target, "..."))
+        
+        meanTarget <- colMeans(targetValues)
+        medianTarget <- apply(targetValues, 2, median)
+        hpdTargetLow <- apply(targetValues, 2, function(x) {return(quantile(x, probs=0.025))})
+        hpdTargetHigh <- apply(targetValues, 2, function(x) {return(quantile(x, probs=0.975))})
+        ## hpdTargetLow <- apply(targetValues, 2, function(x) {return(hpd(x, prob=0.95)$lower)})
+        ## hpdTargetHigh <- apply(targetValues, 2, function(x) {return(hpd(x, prob=0.95)$upper)})
+        cat("done.\n")
+    }
+
+    getTime <- function(times) {
+        if (is.na(presentTime))
+            return(times)
+        else {
+            if (timesAreCalendarYears) {
+                presentYear <- floor(presentTime)
+                return(as.Date(365*(presentTime - times - presentYear),
+                               origin=as.Date(paste(presentYear,"-01-01", sep=""))))
+            } else {
+                return(presentTime - times)
+            }
+        }
+    }
+    
+                                        # Create plot if necessary
+    if (!add) {
+        if (length(ylim)==1 && is.na(ylim)) {
+            if (target == 'Re')
+                ylim = c(minValue, maxValue)
+            else
+                ylim = c(0, maxValue)
+        }
+
+        if (length(xlim)==1 && is.na(xlim))
+            xlim=sort(getTime(c(0, maxHeight)))
+
+
+        plot(getTime(targetTimes), targetValues[1,],
+             col=NA, xlim=xlim, ylim=ylim,
+             xlab=xlab, ylab=ylab, main=main, ...)
+    }
+
+    ## Filter out arguments incompatible with lines()
+    lineArgs = list(...)
+    lineArgs <- lineArgs[names(lineArgs) != "log"]
+
+    cat("Plotting...")
+    for (i in 1:(dim(targetValues)[1])) {
+        do.call("lines", c(list(getTime(targetTimes),
+                                targetValues[i,],
+                                col=col),
+                           lineArgs))
+    }
+
+    if (showMean) {
+        linesBold(getTime(targetTimes), meanTarget,
+                  widthOuter=widthOuter, widthInner=widthInner)
+    }
+
+    if (showMedian) {
+        linesBold(getTime(targetTimes), medianTarget,
+                  widthOuter=widthOuter, widthInner=widthInner)
+    }
+
+    if (showHPD) {
+        linesBold(getTime(targetTimes), hpdTargetLow, lty=2,
+                  widthOuter=widthOuter, widthInner=widthInner)
+        linesBold(getTime(targetTimes), hpdTargetHigh, lty=2,
+                  widthOuter=widthOuter, widthInner=widthInner)
+    }
+
 }
 
 simSIR <- function(origin, beta, gamma, N, useTL=FALSE, nLeaps=500) {
