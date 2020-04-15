@@ -113,7 +113,6 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
                      widthInner=2,
                      presentTime=NA,
                      timesAreCalendarYears=FALSE,
-                     useCumulativeTrajectories
                      target='prevalence',
                      targetFun=NULL,
                      subSample=NA,
