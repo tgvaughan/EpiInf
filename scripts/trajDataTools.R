@@ -1,3 +1,6 @@
+## Scripts useful for plotting and manipulating trajectory data
+## using ggplot and friends.
+
 library(dplyr)
 library(readr)
 library(stringr)
