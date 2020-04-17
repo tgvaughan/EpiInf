@@ -30,7 +30,7 @@ public class BirthDeathModel extends EpidemicModel {
     
     @Override
     public EpidemicState getInitialState() {
-        return new EpidemicState(0, 1, 0);
+        return new EpidemicState(0, 1, 0, 1);
     }
 
     @Override
@@ -48,6 +48,7 @@ public class BirthDeathModel extends EpidemicModel {
         switch(event.type) {
             case EpidemicEvent.INFECTION:
                 state.I += event.multiplicity;
+                state.cumulativeInfections += event.multiplicity;
                 break;
             case EpidemicEvent.RECOVERY:
             case EpidemicEvent.RHO_SAMPLE:

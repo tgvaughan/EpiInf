@@ -23,7 +23,7 @@ package epiinf;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
 public class EpidemicState {
-    public double S, I, R;
+    public double S, I, R, cumulativeInfections;
     public double time;
     public int modelIntervalIdx, observedEventIdx;
 
@@ -34,15 +34,20 @@ public class EpidemicState {
 
     public EpidemicState() { }
     
-    public EpidemicState(double S, double I, double R) {
+    public EpidemicState(double S, double I, double R, double cumulativeInfections) {
         this.S = S;
         this.I = I;
         this.R = R;
+        this.cumulativeInfections = cumulativeInfections;
         this.time = 0;
         this.modelIntervalIdx = 0;
         this.observedEventIdx = 0;
 
         this.algorithm = Algorithm.NA;
+    }
+
+    public EpidemicState(double S, double I, double R) {
+        this(S, I, R, 0);
     }
 
     /**
@@ -59,6 +64,7 @@ public class EpidemicState {
         stateCopy.S = S;
         stateCopy.I = I;
         stateCopy.R = R;
+        stateCopy.cumulativeInfections = cumulativeInfections;
         stateCopy.time = time;
         stateCopy.modelIntervalIdx = modelIntervalIdx;
         stateCopy.observedEventIdx = observedEventIdx;
@@ -72,6 +78,7 @@ public class EpidemicState {
         S = otherState.S;
         I = otherState.I;
         R = otherState.R;
+        cumulativeInfections = otherState.cumulativeInfections;
         time = otherState.time;
         modelIntervalIdx = otherState.modelIntervalIdx;
         observedEventIdx = otherState.observedEventIdx;
@@ -81,7 +88,7 @@ public class EpidemicState {
 
     @Override
     public String toString() {
-        return "S: " + S + ", I: " + I + ", R: " + R;
+        return "S: " + S + ", I: " + I + ", R: " + R + ", CI: " + cumulativeInfections;
     }
     
     /**
@@ -91,7 +98,7 @@ public class EpidemicState {
      * @return R input file header
      */
     public static String getHeader() {
-        return "S I R";
+        return "S I R cumulativeInfections";
     }
     
     /**
@@ -100,6 +107,6 @@ public class EpidemicState {
      * @return R input file record.
      */
     public String getRecord() {
-        return (long)S + " " + (long)I + " " + (long)R;
+        return (long)S + " " + (long)I + " " + (long)R + " " + (long)cumulativeInfections;
     }
 }

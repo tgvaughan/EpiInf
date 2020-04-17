@@ -90,6 +90,8 @@ public class TrajectoryLogger extends BEASTObject implements Loggable{
             double incidence = model.propensities[EpidemicEvent.INFECTION];
 
             out.print(":" + incidence + ":" + reproductiveNumber);
+
+            out.print(":" + state.cumulativeInfections);
         }
 
         out.print("\t");

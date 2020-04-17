@@ -40,6 +40,9 @@ parseTrajectoryString <- function(trajString) {
               incidence = as.numeric(strValues[,6]),
               Re = as.numeric(strValues[,7]))
 
+  if (dim(strValues)[2]>7)
+      res$cumulativeInfections = as.numeric(strValues[,8])
+
   return(res)
 }
 
@@ -119,7 +122,8 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
                      incidencePeriod=1,
                      xlab=if (is.na(presentTime)) "Age" else "Time", ylab=capitalize(target), main='Trajectory distribution', ...) {
 
-    if (!(tolower(target) %in% c("prevalence", "scaled_prevalence", "incidence", "re"))) {
+    if (!(tolower(target) %in% c("prevalence", "scaled_prevalence", "incidence",
+                                 "re", "cumulative_infections"))) {
         cat("Error: target must be one of 'prevalence', 'scaled_prevalence', 'incidence' or 'Re'")
         return()
     }
@@ -143,16 +147,19 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
         cat("done.\n")
     }
 
+    print(names(traj[[1]]))
+
     if (is.na(subSample))
         subSample <- length(traj)
 
     # Define target function for plotting
     if (is.null(targetFun)) {
-        targetFun <- switch(target,
+        targetFun <- switch(tolower(target),
                             prevalence = function(t) { return(t$I) },
                             scaled_prevalence = function(t) { return(t$I/t$S[1]*1e5) },
                             incidence = function(t) { return(t$incidence/t$S*incidencePeriod) },
-                            Re = function(t) { return(t$Re) })
+                            re = function(t) { return(t$Re) },
+                            cumulative_infections = function(t) {return(t$cumulativeInfections)})
     }
 
     # Identify plot boundaries
@@ -259,9 +266,9 @@ plotTraj <- function(fileNames=list(), dataFrames=NULL, traj=NULL, colidx=2, bur
     }
 
     cat("\n")
-    cat(paste("Final median prevalence:", medianTarget[length(medianTarget)]),"\n")
-    cat(paste("Final prevalence HPD lower bound:", hpdTargetLow[length(hpdTargetLow)]),"\n")
-    cat(paste("Final prevalence HPD high bound:", hpdTargetHigh[length(hpdTargetHigh)]),"\n")
+    cat(paste("Final median target:", medianTarget[length(medianTarget)]),"\n")
+    cat(paste("Final target HPD lower bound:", hpdTargetLow[length(hpdTargetLow)]),"\n")
+    cat(paste("Final target HPD high bound:", hpdTargetHigh[length(hpdTargetHigh)]),"\n")
     cat("done.\n")
 }
 
@@ -304,7 +311,8 @@ plotMergedTraj <- function(fileName1, fileName2, colidx=2, burninFrac=0.1,
                             prevalence = function(t) { return(t$I) },
                             scaled_prevalence = function(t) { return(t$I/t$S[1]*1e5) },
                             incidence = function(t) { return(t$incidence/t$S*incidencePeriod) },
-                            Re = function(t) { return(t$Re) })
+                            Re = function(t) { return(t$Re) },
+                            cumulative_infections = function(t) {return(t$cumulativeInfections)})
     }
 
     # Identify plot boundaries

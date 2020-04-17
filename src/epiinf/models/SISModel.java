@@ -36,7 +36,7 @@ public class SISModel extends EpidemicModel {
 
     @Override
     public EpidemicState getInitialState() {
-        return new EpidemicState(Math.round(S0Input.get().getValue()), 1, 0);
+        return new EpidemicState(Math.round(S0Input.get().getValue()), 1, 0, 1);
     }
 
     @Override
@@ -55,6 +55,7 @@ public class SISModel extends EpidemicModel {
             case EpidemicEvent.INFECTION:
                 state.S -= event.multiplicity;
                 state.I += event.multiplicity;
+                state.cumulativeInfections += event.multiplicity;
                 break;
             case EpidemicEvent.RECOVERY:
             case EpidemicEvent.RHO_SAMPLE:
