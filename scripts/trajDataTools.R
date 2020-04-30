@@ -9,9 +9,9 @@ parseTrajectory <- function(trajStr) {
   strValues <- str_split(str_split(trajStr, ",")[[1]], ":", simplify = TRUE)
   res <- list(age = as.numeric(strValues[,1]),
               S = as.numeric(strValues[,2]),
-              I = as.numeric(strValues[,2]),
-              R = as.numeric(strValues[,2]),
-              leap = strValues[,2] == "TL",
+              I = as.numeric(strValues[,3]),
+              R = as.numeric(strValues[,4]),
+              leap = strValues[,5] == "TL",
               incidence = as.numeric(strValues[,6]),
               Re = as.numeric(strValues[,7]))
 
@@ -21,27 +21,30 @@ parseTrajectory <- function(trajStr) {
   return(res)
 }
 
-loadTrajectories <- function(filename, burninFrac=0.1) {
-    cat(paste("Loading", filename,"..."))
-    df_in <- read_tsv(filename, col_types="ic")
-
-    N <- dim(df_in)[1]
-    df_in <- df_in[-(1:ceiling(burninFrac*N)),]
-    
+loadTrajectories <- function(filenames, burninFrac=0.1) {
     df <- NULL
-    for (row in 1:(dim(df_in)[1])) {
-        trajStr <- df_in[row,2]
-        trajStates <- parseTrajectory(trajStr)
-        df <- bind_rows(df,
-                        tibble(traj=row,
-                               age=trajStates$age,
-                               S=trajStates$S,
-                               I=trajStates$I,
-                               R=trajStates$R,
-                               leap=trajStates$leap,
-                               incidence=trajStates$incidence,
-                               Re=trajStates$Re,
-                               cumulativeInfections=trajStates$cumulativeInfections))
+
+    for (filename in filenames) {
+        cat(paste("Loading", filename,"..."))
+        df_in <- read_tsv(filename, col_types="ic")
+
+        N <- dim(df_in)[1]
+        df_in <- df_in[-(1:ceiling(burninFrac*N)),]
+        
+        for (row in 1:(dim(df_in)[1])) {
+            trajStr <- df_in[row,2]
+            trajStates <- parseTrajectory(trajStr)
+            df <- bind_rows(df,
+                            tibble(traj=row,
+                                   age=trajStates$age,
+                                   S=trajStates$S,
+                                   I=trajStates$I,
+                                   R=trajStates$R,
+                                   leap=trajStates$leap,
+                                   incidence=trajStates$incidence,
+                                   Re=trajStates$Re,
+                                   cumulativeInfections=trajStates$cumulativeInfections))
+        }
     }
     
     cat("done.\n")
