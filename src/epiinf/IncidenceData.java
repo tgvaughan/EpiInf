@@ -100,9 +100,12 @@ public class IncidenceData extends BEASTObject {
             }
         }
 
-        if (string == null)
-            throw new IllegalArgumentException("Must supply either fileName " +
-                    "or value input.");
+        if (string == null) {
+//            throw new IllegalArgumentException("Must supply either fileName " +
+//                    "or value input.");
+            return;
+        }
+
         String[] valueStrings = string.toString().trim().split("\\s+");
 
         if (valueStrings.length % 2 != 0)

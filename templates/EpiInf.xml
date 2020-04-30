@@ -124,6 +124,11 @@
                     <rhoSamplingProb id="rhoSamplingProb.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.0" estimate="false"/>
                     <origin id="epiOrigin.t:$(n)" spec="beast.core.parameter.RealParameter" value="10.0" estimate="true"/>
                 </model>
+                <incidenceData id="incidenceData.t:$(n)" spec="epiinf.IncidenceData" valuesAreAges="true">
+                    <finalSampleOffset id="finalIncidenceSampleOffset.t:$(n)"
+                        spec="beast.core.parameter.RealParameter"
+                        value="0.0" estimate="false"/>
+                </incidenceData>
             </distribution>
 
             <distribution id="epiOriginPrior.t:$(n)" spec="beast.math.distributions.Prior">
@@ -235,12 +240,14 @@
 
         </subtemplate>
 
-<!--        <subtemplate id='IncidenceParameter' class='beast.core.parameter.RealParameter' mainid='incidenceParam.t:$(n)'>
+        <!--
+        <subtemplate id='IncidenceData' class='epiinf.IncidenceData' mainid='incidenceData.t:$(n)'>
             <![CDATA[
-                <incidenceParameter id="incidenceParam.t:$(n)" spec="beast.core.parameter.RealParameter" value="0.0" estimate="true"/>
+            <incidenceData id="incidenceData.t:$(n)" spec="epiinf.IncidenceData">
+            </incidenceData>
             ]]>
 
-            <connect srcID="incidenceParam.t:$(n)" targetID="EpiTreePrior.t:$(n)" inputName="incidenceParameter"
+            <connect srcID="incidenceData.t:$(n)" targetID="EpiTreePrior.t:$(n)" inputName="incidenceData"
                      if="inposterior(EpiTreePrior.t:$(n))"/>
         </subtemplate>
         -->
