@@ -1,4 +1,4 @@
-<addon name="EpiInf" version="7.5.0">
+<addon name="EpiInf" version="7.5.1">
   <depends on="BEAST" atleast="2.5.0" atmost="2.6.9"/>
   <depends on="SA" atleast="2.0.0"/>
 </addon>
