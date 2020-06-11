@@ -93,7 +93,8 @@ public class SimulatedTrajectory extends EpidemicTrajectory {
         nSteps = nStepsInput.get();
         minSampleCount = minSampleCountInput.get();
 
-        conditionedSamplingTimes = conditionedSamplingTimesInput.get().getDoubleValues();
+        if (conditionedSamplingTimesInput.get() != null)
+            conditionedSamplingTimes = conditionedSamplingTimesInput.get().getDoubleValues();
 
         simulationLoop();
 
