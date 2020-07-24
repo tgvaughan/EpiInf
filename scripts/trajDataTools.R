@@ -67,8 +67,9 @@ gridTrajectories <- function(trajdf, ages) {
         age_summary <- trajdf %>%
             group_by(traj) %>%
             summarize(
-                I=my_max(cumulativeInfections[age>grid_age]),
-                cumulativeInfections=my_max(cumulativeInfections[age>grid_age]))
+                I=my_max(I[age>grid_age]),
+                cumulativeInfections=my_max(cumulativeInfections[age>grid_age]),
+                .groups = "drop_last")
 
         age_summary$age <- grid_age
         df_grid <- bind_rows(df_grid, age_summary)
