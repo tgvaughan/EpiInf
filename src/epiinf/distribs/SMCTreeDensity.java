@@ -26,19 +26,13 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.tree.TreeDistribution;
 import beast.math.Binomial;
 import beast.math.GammaFunction;
-import beast.math.statistic.DiscreteStatistics;
 import beast.util.Randomizer;
 import epiinf.*;
 import epiinf.models.EpidemicModel;
 import epiinf.util.ReplacementSampler;
-import org.apache.commons.math.distribution.BinomialDistribution;
-import org.apache.commons.math.distribution.BinomialDistributionImpl;
 
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>

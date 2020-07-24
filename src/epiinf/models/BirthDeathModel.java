@@ -29,7 +29,7 @@ import epiinf.EpidemicState;
 public class BirthDeathModel extends EpidemicModel {
     
     @Override
-    public EpidemicState getInitialState() {
+    protected EpidemicState getModelInitialState() {
         return new EpidemicState(0, 1, 0, 1);
     }
 

@@ -35,7 +35,7 @@ public class SISModel extends EpidemicModel {
             "S0", "Initial size of susceptible population.", Validate.REQUIRED);
 
     @Override
-    public EpidemicState getInitialState() {
+    protected EpidemicState getModelInitialState() {
         return new EpidemicState(Math.round(S0Input.get().getValue()), 1, 0, 1);
     }
 

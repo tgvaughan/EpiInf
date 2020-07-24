@@ -139,6 +139,7 @@ public abstract class EpidemicModel extends CalculationNode {
     protected List<ModelEvent> modelEventList = new ArrayList<>();
     protected List<Double[]> rateCache = new ArrayList<>();
     protected double[] removalProbCache = null;
+    protected int initialModelEventIndex;
 
     protected boolean ratesDirty;
     protected double tolerance;
@@ -177,7 +178,15 @@ public abstract class EpidemicModel extends CalculationNode {
     /**
      * @return initial state of epidemic
      */
-    public abstract EpidemicState getInitialState();
+    public EpidemicState getInitialState() {
+        update();
+        EpidemicState state = getModelInitialState();
+        state.modelIntervalIdx = initialModelEventIndex;
+
+        return state;
+    }
+
+    protected abstract EpidemicState getModelInitialState();
 
     public final void calculatePropensities(EpidemicState state) {
         update();
@@ -269,7 +278,7 @@ public abstract class EpidemicModel extends CalculationNode {
      * @param time time to place
      * @return index into corresponding interval
      */
-    protected int binarySearch(Function rateShiftTimeParam,
+    int binarySearch(Function rateShiftTimeParam,
                                       boolean paramTimesBackwards, double time) {
 
         int N = rateShiftTimeParam.getDimension()+1;
@@ -281,7 +290,7 @@ public abstract class EpidemicModel extends CalculationNode {
             if (imid==N-1 || getForwardTime(rateShiftTimeParam, imid, paramTimesBackwards)>time) {
                 if (imid==0 || getForwardTime(rateShiftTimeParam, imid-1, paramTimesBackwards)<=time)
                     if (paramTimesBackwards)
-                        return N-1 - imin;
+                        return N-1 - imid;
                     else
                         return imid;
                 else
@@ -411,12 +420,12 @@ public abstract class EpidemicModel extends CalculationNode {
 
         // Store initial transformed rates
 
-        transformRates(rateCache.get(0), currentRates);
-        removalProbCache[0] = currentRates.get(ModelEvent.RateVariableType.REMOVAL_PROB);
+        transformRates(rateCache.get(initialModelEventIndex), currentRates);
+        removalProbCache[initialModelEventIndex] = currentRates.get(ModelEvent.RateVariableType.REMOVAL_PROB);
 
         // Iterate over model events, caching transformed rates along the way
 
-        for (int i=0; i<modelEventList.size(); i++) {
+        for (int i=initialModelEventIndex; i<modelEventList.size(); i++) {
             ModelEvent modelEvent = modelEventList.get(i);
 
             if (modelEvent.time < 0.0)
@@ -476,6 +485,11 @@ public abstract class EpidemicModel extends CalculationNode {
                 ModelEvent.RateVariableType.REMOVAL_PROB);
 
         Collections.sort(modelEventList);
+
+        // Set initial model event index - used to configure initial state
+        for (initialModelEventIndex = 0;
+             initialModelEventIndex<modelEventList.size() && modelEventList.get(initialModelEventIndex).time<0;
+             initialModelEventIndex += 1);
     }
 
     public void addRateShiftEvents(Function rateShiftParam,
