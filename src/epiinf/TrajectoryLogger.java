@@ -18,6 +18,7 @@
 package epiinf;
 
 import beast.core.BEASTObject;
+import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.Loggable;
 import epiinf.distribs.SMCTreeDensity;
@@ -28,7 +29,7 @@ import java.io.PrintStream;
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class TrajectoryLogger extends BEASTObject implements Loggable{
+public class TrajectoryLogger extends CalculationNode implements Loggable {
 
     public Input<SMCTreeDensity> treeDensityInput = new Input<>("treeDensity",
             "SMC Tree density from which to log trajectories.",
