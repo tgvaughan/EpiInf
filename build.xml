@@ -178,7 +178,7 @@
                 <pathelement path="${build-test}" />
                 <fileset dir="${build-lib}" includes="*.jar"/>
             </classpath>
-            <batchtest fork="yes" todir="${test-reports}">
+            <batchtest fork="yes" todir="${test-reports}" maxmemory="4G">
                 <fileset dir="${test}">
                     <include name="**/*.java"/>
                 </fileset>
