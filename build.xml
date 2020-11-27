@@ -171,14 +171,14 @@
 
     <!-- Run unit tests -->
     <target name="test" depends="compile-test, install-dependencies">
-        <junit printsummary="yes" failureproperty="testFailed" showoutput="true">
+        <junit printsummary="yes" failureproperty="testFailed" showoutput="true" maxmemory="4G">
             <classpath>
                 <pathelement path="${classpath}"/>
                 <pathelement path="${build}" />
                 <pathelement path="${build-test}" />
                 <fileset dir="${build-lib}" includes="*.jar"/>
             </classpath>
-            <batchtest fork="yes" todir="${test-reports}" maxmemory="4G">
+            <batchtest fork="yes" todir="${test-reports}">
                 <fileset dir="${test}">
                     <include name="**/*.java"/>
                 </fileset>
