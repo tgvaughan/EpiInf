@@ -3,7 +3,7 @@
   <depends on="BEAST.app" atleast="2.7.0" atmost="2.7.9"/>
 
   <depends on="SA" atleast="2.1.0"/>
-  <!--depends on="feast" atleast="9.0.0"/-->
+  <depends on="feast" atleast="9.0.0"/>
 
     <service type="beast.base.core.BEASTInterface">
         <provider classname="epiinf.distribs.IncidencePrior"/>

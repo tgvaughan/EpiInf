@@ -30,6 +30,7 @@ import epiinf.models.BirthDeathModel;
 import epiinf.models.EpidemicModel;
 import epiinf.models.SIRModel;
 import epiinf.models.SISModel;
+import javafx.application.Platform;
 import javafx.embed.swing.SwingNode;
 
 import javax.swing.*;
@@ -114,8 +115,13 @@ public class EpiModelInputEditor extends InputEditor.Base {
     public void init(Input<?> input, BEASTInterface beastObject, int itemNr,
                      ExpandOption bExpandOption, boolean bAddButtons) {
 
-    	this.pane = FXUtils.newHBox();
-        getChildren().add(pane);
+    	if (this.pane != null) {
+    		// get here when refreshing
+    		pane.getChildren().clear();
+    	} else {    	
+    		this.pane = FXUtils.newHBox();
+    		getChildren().add(pane);
+    	}
             	
         // Set up fields
         m_bAddButtons = bAddButtons;
@@ -316,19 +322,13 @@ public class EpiModelInputEditor extends InputEditor.Base {
         panel.add(box);
 
         // Prevalence trajectory plot
-//        box = Box.createHorizontalBox();
         epiTrajPanel = new EpiTrajPanel(epidemicModel, 5);
         epiTrajPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
         panel.add(epiTrajPanel);
 
         SwingNode n = new SwingNode();
         n.setContent(panel);
-        n.minWidth(800);
-        n.minHeight(800);
         pane.getChildren().add(n);
-//
-//        add(panel);
-
         loadFromModel();
 
         // Event handlers
@@ -592,6 +592,9 @@ public class EpiModelInputEditor extends InputEditor.Base {
         modelSaveInProgress = false;
 
         refreshPanel();
+        Platform.runLater(() -> 
+        	init(m_input, m_beastObject, itemNr, ExpandOption.TRUE, m_bAddButtons)
+        );
     }
 
     /**

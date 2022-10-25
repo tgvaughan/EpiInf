@@ -2,11 +2,13 @@ package epiinf.app.beauti;
 
 import beastfx.app.inputeditor.BeautiDoc;
 import beastfx.app.inputeditor.InputEditor;
+import beastfx.app.inputeditor.InputEditor.ExpandOption;
 import beastfx.app.util.FXUtils;
 import beast.base.core.BEASTInterface;
 import beast.base.core.Input;
 import beast.base.inference.parameter.RealParameter;
 import epiinf.IncidenceData;
+import javafx.application.Platform;
 import javafx.embed.swing.SwingNode;
 
 import javax.swing.*;
@@ -48,9 +50,13 @@ public class IncidenceDataInputEditor extends InputEditor.Base {
         this.itemNr = itemNr;
 
         incidenceData = (IncidenceData) input.get();
-
-        pane = FXUtils.newHBox();
-        addInputLabel();
+        if (pane == null) {
+        	pane = FXUtils.newHBox();
+    		getChildren().add(pane);
+        } else {
+        	pane.getChildren().clear();
+        }
+    	addInputLabel();
 
         Box verticalBox = Box.createVerticalBox();
         verticalBox.setBorder(new EtchedBorder());
@@ -141,7 +147,6 @@ public class IncidenceDataInputEditor extends InputEditor.Base {
         SwingNode n = new SwingNode();
         n.setContent(verticalBox);
         pane.getChildren().add(n);
-        getChildren().add(pane);
 
         loadFromModel();
     }
@@ -192,6 +197,9 @@ public class IncidenceDataInputEditor extends InputEditor.Base {
             incidenceData.dateFormatInput.setValue(null, incidenceData);
 
         refreshPanel();
+        Platform.runLater(() -> 
+        	init(m_input, m_beastObject, itemNr, ExpandOption.TRUE, m_bAddButtons)
+        );
     }
 
     /**
