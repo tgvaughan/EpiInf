@@ -17,9 +17,9 @@
 
 package epiinf;
 
-import beast.core.Input;
-import beast.core.Input.Validate;
-import beast.core.parameter.RealParameter;
+import beast.base.core.Input;
+import beast.base.core.Input.Validate;
+import beast.base.inference.parameter.RealParameter;
 import epiinf.models.EpidemicModel;
 
 /**
@@ -27,7 +27,7 @@ import epiinf.models.EpidemicModel;
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class TrajectorySimulator extends beast.core.Runnable {
+public class TrajectorySimulator extends beast.base.inference.Runnable {
 
     public Input<EpidemicModel> modelInput = new Input<>(
             "model", "Epidemic model.", Validate.REQUIRED);

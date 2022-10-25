@@ -14,7 +14,7 @@ package epiinf.util;
  *
  *                 http://www.keithschwarz.com/darts-dice-coins/
  */
-import beast.util.Randomizer;
+import beast.base.util.Randomizer;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

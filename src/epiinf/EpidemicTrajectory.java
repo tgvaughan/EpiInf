@@ -17,9 +17,9 @@
 
 package epiinf;
 
-import beast.core.BEASTObject;
-import beast.core.Description;
-import beast.core.Loggable;
+import beast.base.core.BEASTObject;
+import beast.base.core.Description;
+import beast.base.core.Loggable;
 
 import java.io.PrintStream;
 import java.util.ArrayList;

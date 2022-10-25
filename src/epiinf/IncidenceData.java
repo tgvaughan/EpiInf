@@ -17,10 +17,10 @@
 
 package epiinf;
 
-import beast.core.BEASTObject;
-import beast.core.Input;
-import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Tree;
+import beast.base.core.BEASTObject;
+import beast.base.core.Input;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.evolution.tree.Tree;
 
 import java.io.*;
 import java.text.spi.DateFormatProvider;

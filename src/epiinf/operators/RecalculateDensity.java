@@ -17,10 +17,10 @@
 
 package epiinf.operators;
 
-import beast.core.Input;
-import beast.core.Loggable;
-import beast.core.Operator;
-import beast.core.StateNode;
+import beast.base.core.Input;
+import beast.base.core.Loggable;
+import beast.base.inference.Operator;
+import beast.base.inference.StateNode;
 
 import java.io.PrintStream;
 

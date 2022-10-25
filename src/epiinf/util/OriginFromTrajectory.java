@@ -17,8 +17,8 @@
 
 package epiinf.util;
 
-import beast.core.Input;
-import beast.core.parameter.RealParameter;
+import beast.base.core.Input;
+import beast.base.inference.parameter.RealParameter;
 import epiinf.EpidemicTrajectory;
 
 /**

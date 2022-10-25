@@ -17,10 +17,10 @@
 
 package epiinf.distribs;
 
-import beast.core.Distribution;
-import beast.core.Input;
-import beast.core.State;
-import beast.core.parameter.RealParameter;
+import beast.base.inference.Distribution;
+import beast.base.core.Input;
+import beast.base.inference.State;
+import beast.base.inference.parameter.RealParameter;
 import epiinf.IncidenceData;
 
 import java.util.ArrayList;

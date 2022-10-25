@@ -17,9 +17,9 @@
 
 package epiinf.distribs;
 
-import beast.core.parameter.RealParameter;
-import beast.util.Randomizer;
-import beast.util.TreeParser;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.util.Randomizer;
+import beast.base.evolution.tree.TreeParser;
 import epiinf.models.EpidemicModel;
 import epiinf.models.SIRModel;
 import epiinf.models.SISModel;

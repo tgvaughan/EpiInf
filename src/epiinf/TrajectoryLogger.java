@@ -17,10 +17,10 @@
 
 package epiinf;
 
-import beast.core.BEASTObject;
-import beast.core.CalculationNode;
-import beast.core.Input;
-import beast.core.Loggable;
+import beast.base.core.BEASTObject;
+import beast.base.inference.CalculationNode;
+import beast.base.core.Input;
+import beast.base.core.Loggable;
 import epiinf.distribs.SMCTreeDensity;
 import epiinf.models.EpidemicModel;
 

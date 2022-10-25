@@ -17,10 +17,10 @@
 
 package epiinf;
 
-import beast.core.Description;
-import beast.core.Function;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
+import beast.base.core.Description;
+import beast.base.core.Function;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.TreeInterface;
 import epiinf.models.EpidemicModel;
 
 import java.io.PrintStream;

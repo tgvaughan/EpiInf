@@ -17,12 +17,12 @@
 
 package epiinf.util;
 
-import beast.core.Input;
-import beast.evolution.alignment.Taxon;
-import beast.evolution.alignment.TaxonSet;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.TraitSet;
-import beast.evolution.tree.Tree;
+import beast.base.core.Input;
+import beast.base.evolution.alignment.Taxon;
+import beast.base.evolution.alignment.TaxonSet;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.TraitSet;
+import beast.base.evolution.tree.Tree;
 
 import java.util.ArrayList;
 import java.util.List;

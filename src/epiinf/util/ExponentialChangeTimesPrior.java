@@ -17,11 +17,11 @@
 
 package epiinf.util;
 
-import beast.core.Input;
-import beast.core.State;
-import beast.core.parameter.RealParameter;
-import beast.math.distributions.ParametricDistribution;
-import org.apache.commons.math.distribution.Distribution;
+import beast.base.core.Input;
+import beast.base.inference.State;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.inference.distribution.ParametricDistribution;
+import beast.base.inference.Distribution;
 
 import java.util.List;
 import java.util.Random;
@@ -29,7 +29,7 @@ import java.util.Random;
 /**
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class ExponentialChangeTimesPrior extends beast.core.Distribution {
+public class ExponentialChangeTimesPrior extends beast.base.inference.Distribution {
 
     public Input<RealParameter> changeTimesInput = new Input<>("changeTimes",
             "Change times parameter.", Input.Validate.REQUIRED);

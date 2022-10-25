@@ -1,10 +1,13 @@
-package beast.app.beauti;
+package epiinf.app.beauti;
 
-import beast.app.draw.InputEditor;
-import beast.core.BEASTInterface;
-import beast.core.Input;
-import beast.core.parameter.RealParameter;
+import beastfx.app.inputeditor.BeautiDoc;
+import beastfx.app.inputeditor.InputEditor;
+import beastfx.app.util.FXUtils;
+import beast.base.core.BEASTInterface;
+import beast.base.core.Input;
+import beast.base.inference.parameter.RealParameter;
 import epiinf.IncidenceData;
+import javafx.embed.swing.SwingNode;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -15,7 +18,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 
 public class IncidenceDataInputEditor extends InputEditor.Base {
 
@@ -47,6 +49,7 @@ public class IncidenceDataInputEditor extends InputEditor.Base {
 
         incidenceData = (IncidenceData) input.get();
 
+        pane = FXUtils.newHBox();
         addInputLabel();
 
         Box verticalBox = Box.createVerticalBox();
@@ -85,7 +88,7 @@ public class IncidenceDataInputEditor extends InputEditor.Base {
         loadFromFileButton.addActionListener(e -> {
            JFileChooser fileChooser = new JFileChooser();
            fileChooser.setDialogTitle("Select file containing incidence data...");
-           int result = fileChooser.showDialog(this, "Load from file");
+           int result = fileChooser.showDialog(null, "Load from file");
            if (result == JFileChooser.APPROVE_OPTION) {
                try (BufferedReader reader = new BufferedReader(new FileReader(fileChooser.getSelectedFile()))) {
                    StringBuilder sb = new StringBuilder();
@@ -135,7 +138,10 @@ public class IncidenceDataInputEditor extends InputEditor.Base {
         horizontalBox.add(makeHorizontalFiller());
         verticalBox.add(horizontalBox);
 
-        add(verticalBox);
+        SwingNode n = new SwingNode();
+        n.setContent(verticalBox);
+        pane.getChildren().add(n);
+        getChildren().add(pane);
 
         loadFromModel();
     }

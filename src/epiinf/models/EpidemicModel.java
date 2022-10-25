@@ -17,11 +17,11 @@
 
 package epiinf.models;
 
-import beast.core.CalculationNode;
-import beast.core.Function;
-import beast.core.Input;
-import beast.core.parameter.IntegerParameter;
-import beast.core.parameter.RealParameter;
+import beast.base.inference.CalculationNode;
+import beast.base.core.Function;
+import beast.base.core.Input;
+import beast.base.inference.parameter.IntegerParameter;
+import beast.base.inference.parameter.RealParameter;
 import epiinf.EpidemicEvent;
 import epiinf.EpidemicState;
 import epiinf.ModelEvent;

@@ -16,12 +16,12 @@
  */
 package epiinf.util;
 
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
-import beast.math.Binomial;
-import beast.math.GammaFunction;
-import beast.math.distributions.Gamma;
-import beast.util.Randomizer;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
+import beast.base.util.Binomial;
+import beast.base.util.GammaFunction;
+import beast.base.inference.distribution.Gamma;
+import beast.base.util.Randomizer;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;

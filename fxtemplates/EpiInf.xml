@@ -26,23 +26,23 @@
 
 
     <mergewith point='misc'>
-        <fragment id='EpiModelParameter' spec="beast.app.beauti.Fragment">
+        <fragment id='EpiModelParameter' spec="beastfx.app.beauti.Fragment">
             <![CDATA[
             <operator id='$(p)Scaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@$(p).t:$(n)" weight="1"/>
-            <distribution id="$(p)Prior.t:$(n)" spec="beast.math.distributions.Prior">
+            <distribution id="$(p)Prior.t:$(n)" spec="beast.base.inference.distribution.Prior">
                 <x idref="$(p).t:$(n)"/>
-                <distr spec="beast.math.distributions.OneOnX"/>
+                <distr spec="beast.base.inference.distribution.OneOnX"/>
             </distribution>
             <distribution id="$(p)ChangeTimesPrior.t:$(n)" spec="epiinf.util.ExponentialChangeTimesPrior">
                 <changeTimes idref="$(p)ChangeTimes.t:$(n)"/>
-                <meanIntervalLength spec="beast.core.parameter.RealParameter" value="1.0" id="$(p)ChangeInterval.t:$(n)" estimate="false"/>
+                <meanIntervalLength spec="beast.base.inference.parameter.RealParameter" value="1.0" id="$(p)ChangeInterval.t:$(n)" estimate="false"/>
             </distribution>
-            <distribution id="$(p)ChangeIntervalPrior.t:$(n)" spec="beast.math.distributions.Prior">
+            <distribution id="$(p)ChangeIntervalPrior.t:$(n)" spec="beast.base.inference.distribution.Prior">
                 <x idref="$(p)ChangeInterval.t:$(n)"/>
-                <distr spec="beast.math.distributions.OneOnX"/>
+                <distr spec="beast.base.inference.distribution.OneOnX"/>
             </distribution>
             <operator id='$(p)ChangeTimesScaler.t:$(n)' spec='epiinf.util.ChangeTimesOperator' scaleFactor="0.8" weight="4">
-                <changeTimes id="$(p)ChangeTimes.t:$(n)" spec="beast.core.parameter.RealParameter" value="0.0" estimate="false"/>
+                <changeTimes id="$(p)ChangeTimes.t:$(n)" spec="beast.base.inference.parameter.RealParameter" value="0.0" estimate="false"/>
             </operator>
             <operator id="$(p)ChangeIntervalScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.8" parameter="@$(p)ChangeInterval.t:$(n)" weight="4"/>
             ]]>
@@ -78,7 +78,7 @@
     </mergewith>
 
     <mergewith point='misc'>
-        <fragment id='SATreeOperators' spec="beast.app.beauti.Fragment">
+        <fragment id='SATreeOperators' spec="beastfx.app.beauti.Fragment">
             <![CDATA[
             <operator id='$(m)SATreeScaler.t:$(n)' spec='beast.evolution.operators.SAScaleOperator' scaleFactor=".95" weight="20" tree="@Tree.t:$(n)"/>
             <operator id='$(m)SATreeRootScaler.t:$(n)' spec='beast.evolution.operators.SAScaleOperator' scaleFactor=".95" weight="1" tree="@Tree.t:$(n)" rootOnly='true'/>
@@ -87,7 +87,7 @@
             <operator id='$(m)SAWide.t:$(n)' spec='beast.evolution.operators.SAExchange' isNarrow="false" weight="20" tree="@Tree.t:$(n)"/>
             <operator id='$(m)SANarrow.t:$(n)' spec='beast.evolution.operators.SAExchange' weight="20" tree="@Tree.t:$(n)"/>
             <operator id='$(m)LeafToSA.t:$(n)' spec='beast.evolution.operators.LeafToSampledAncestorJump' weight="20" tree="@Tree.t:$(n)"/>
-            <operator id='$(m)UpDown.t:$(n)' spec='beast.evolution.operators.UpDownOperator' scaleFactor=".75" weight="20" down="@Tree.t:$(n)"/>
+            <operator id='$(m)UpDown.t:$(n)' spec='beast.base.inference.operator.UpDownOperator' scaleFactor=".75" weight="20" down="@Tree.t:$(n)"/>
             ]]>
 
             <connect srcID='$(m)SATreeScaler.t:$(n)'              targetID='mcmc' inputName='operator' if='inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true'/>
@@ -114,41 +114,42 @@
             <![CDATA[
             <distribution id="EpiTreePrior.t:$(n)" spec="epiinf.distribs.SMCTreeDensity" nParticles="100">
                 <tree idref="Tree.t:$(n)"/>
-                <finalTreeSampleOffset id="finalTreeSampleOffset.t:$(n)" spec="beast.core.parameter.RealParameter" value="0.0" estimate="false"/>
-                <model id="model.t:$(n)" spec="epiinf.models.SISModel" rhoSamplingTime="0.0" rhoSamplingTimesBackward="true">
-                    <S0 id="S0.t:$(n)" spec="beast.core.parameter.RealParameter" value="199" lower="0" estimate="true"/>
-                    <infectionRate id="infectionRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.01" estimate="true"/>
-                    <recoveryRate id="recoveryRate.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.1" estimate="true"/>
-                    <psiSamplingVariable id="psiSamplingVariable.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.1" estimate="true"/>
-                    <removalProb id="removalProb.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0.0" upper="1.0" value="1.0" estimate="true"/>
-                    <rhoSamplingProb id="rhoSamplingProb.t:$(n)" spec="beast.core.parameter.RealParameter" lower="0" value="0.0" estimate="false"/>
-                    <origin id="epiOrigin.t:$(n)" spec="beast.core.parameter.RealParameter" value="10.0" estimate="true"/>
+                <finalTreeSampleOffset id="finalTreeSampleOffset.t:$(n)" spec="beast.base.inference.parameter.RealParameter" value="0.0" estimate="false"/>
+                <model id="model.t:$(n)" spec="epiinf.models.SISModel" rhoSamplingTimesBackward="true">
+                	<rhoSamplingTime id="rhoSamplingTime.t:$(n)" spec="beast.base.inference.parameter.RealParameter" value="0.0"/>
+                    <S0 id="S0.t:$(n)" spec="beast.base.inference.parameter.RealParameter" value="199" lower="0" estimate="true"/>
+                    <infectionRate id="infectionRate.t:$(n)" spec="beast.base.inference.parameter.RealParameter" lower="0" value="0.01" estimate="true"/>
+                    <recoveryRate id="recoveryRate.t:$(n)" spec="beast.base.inference.parameter.RealParameter" lower="0" value="0.1" estimate="true"/>
+                    <psiSamplingVariable id="psiSamplingVariable.t:$(n)" spec="beast.base.inference.parameter.RealParameter" lower="0" value="0.1" estimate="true"/>
+                    <removalProb id="removalProb.t:$(n)" spec="beast.base.inference.parameter.RealParameter" lower="0.0" upper="1.0" value="1.0" estimate="true"/>
+                    <rhoSamplingProb id="rhoSamplingProb.t:$(n)" spec="beast.base.inference.parameter.RealParameter" lower="0" value="0.0" estimate="false"/>
+                    <origin id="epiOrigin.t:$(n)" spec="beast.base.inference.parameter.RealParameter" value="10.0" estimate="true"/>
                 </model>
                 <incidenceData id="incidenceData.t:$(n)" spec="epiinf.IncidenceData" valuesAreAges="true">
                     <finalSampleOffset id="finalIncidenceSampleOffset.t:$(n)"
-                        spec="beast.core.parameter.RealParameter"
+                        spec="beast.base.inference.parameter.RealParameter"
                         value="0.0" estimate="false"/>
                 </incidenceData>
             </distribution>
 
-            <distribution id="epiOriginPrior.t:$(n)" spec="beast.math.distributions.Prior">
+            <distribution id="epiOriginPrior.t:$(n)" spec="beast.base.inference.distribution.Prior">
                 <x idref="epiOrigin.t:$(n)"/>
-                <distr spec="beast.math.distributions.OneOnX"/>
+                <distr spec="beast.base.inference.distribution.OneOnX"/>
             </distribution>
 
-            <distribution id="finalTreeSampleOffsetPrior.t:$(n)" spec="beast.math.distributions.Prior">
+            <distribution id="finalTreeSampleOffsetPrior.t:$(n)" spec="beast.base.inference.distribution.Prior">
                 <x idref="finalTreeSampleOffset.t:$(n)"/>
-                <distr spec="beast.math.distributions.OneOnX"/>
+                <distr spec="beast.base.inference.distribution.OneOnX"/>
             </distribution>
 
-            <distribution id="S0Prior.t:$(n)" spec="beast.math.distributions.Prior">
+            <distribution id="S0Prior.t:$(n)" spec="beast.base.inference.distribution.Prior">
                 <x idref="S0.t:$(n)"/>
-                <distr spec="beast.math.distributions.OneOnX"/>
+                <distr spec="beast.base.inference.distribution.OneOnX"/>
             </distribution>
 
-            <distribution id="rhoSamplingProbPrior.t:$(n)" spec="beast.math.distributions.Prior">
+            <distribution id="rhoSamplingProbPrior.t:$(n)" spec="beast.base.inference.distribution.Prior">
                 <x idref="rhoSamplingProb.t:$(n)"/>
-                <distr spec="beast.math.distributions.Uniform"/>
+                <distr spec="beast.base.inference.distribution.Uniform"/>
             </distribution>
 
             <operator id='epiOriginScaler.t:$(n)' spec='ScaleOperator' scaleFactor="0.8" parameter="@epiOrigin.t:$(n)" weight="1"/>

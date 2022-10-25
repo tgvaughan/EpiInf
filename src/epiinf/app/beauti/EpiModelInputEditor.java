@@ -15,18 +15,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package beast.app.beauti;
+package epiinf.app.beauti;
 
-import beast.app.draw.BEASTObjectPanel;
-import beast.app.draw.InputEditor;
-import beast.core.BEASTInterface;
-import beast.core.Input;
-import beast.core.parameter.IntegerParameter;
-import beast.core.parameter.RealParameter;
+
+import beastfx.app.inputeditor.BEASTObjectPanel;
+import beastfx.app.inputeditor.BeautiDoc;
+import beastfx.app.inputeditor.InputEditor;
+import beastfx.app.util.FXUtils;
+import beast.base.core.BEASTInterface;
+import beast.base.core.Input;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.parser.PartitionContext;
 import epiinf.models.BirthDeathModel;
 import epiinf.models.EpidemicModel;
 import epiinf.models.SIRModel;
 import epiinf.models.SISModel;
+import javafx.embed.swing.SwingNode;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -110,6 +114,9 @@ public class EpiModelInputEditor extends InputEditor.Base {
     public void init(Input<?> input, BEASTInterface beastObject, int itemNr,
                      ExpandOption bExpandOption, boolean bAddButtons) {
 
+    	this.pane = FXUtils.newHBox();
+        getChildren().add(pane);
+            	
         // Set up fields
         m_bAddButtons = bAddButtons;
         m_input = input;
@@ -119,6 +126,7 @@ public class EpiModelInputEditor extends InputEditor.Base {
 
         // Adds label to the left of input editor
         addInputLabel();
+        
 
         // Create and lay out GUI components
         JPanel panel = new JPanel();
@@ -313,7 +321,13 @@ public class EpiModelInputEditor extends InputEditor.Base {
         epiTrajPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
         panel.add(epiTrajPanel);
 
-        add(panel);
+        SwingNode n = new SwingNode();
+        n.setContent(panel);
+        n.minWidth(800);
+        n.minHeight(800);
+        pane.getChildren().add(n);
+//
+//        add(panel);
 
         loadFromModel();
 

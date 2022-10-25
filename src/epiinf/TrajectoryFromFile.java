@@ -1,7 +1,7 @@
 package epiinf;
 
-import beast.core.Input;
-import beast.core.util.Log;
+import beast.base.core.Input;
+import beast.base.core.Log;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;

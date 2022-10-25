@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package beast.app.beauti;
+package epiinf.app.beauti;
 
 import epiinf.EpidemicState;
 import epiinf.ModelEvent;

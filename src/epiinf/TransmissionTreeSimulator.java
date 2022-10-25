@@ -17,16 +17,16 @@
 
 package epiinf;
 
-import beast.core.Input;
-import beast.core.Input.Validate;
-import beast.core.parameter.RealParameter;
+import beast.base.core.Input;
+import beast.base.core.Input.Validate;
+import beast.base.inference.parameter.RealParameter;
 import epiinf.models.EpidemicModel;
 
 /**
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
  */
-public class TransmissionTreeSimulator extends beast.core.Runnable {
+public class TransmissionTreeSimulator extends beast.base.inference.Runnable {
 
     public Input<EpidemicTrajectory> trajInput = new Input<>(
             "epidemicTrajectory",

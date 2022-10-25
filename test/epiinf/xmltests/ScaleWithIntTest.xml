@@ -1,4 +1,4 @@
-<beast version='2.0' namespace='beast.core:beast.core.parameter:beast.evolution.operators:feast:feast.expressions:epiinf.operators'>
+<beast version='2.0' namespace='beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.inference.parameter:beast.base.evolution.operator:beast.base.inference.operator:feast:feast.expressions:epiinf.operators'>
 
     <run spec="MCMC" id="mcmc" chainLength="10000000">
         <state>
@@ -7,15 +7,15 @@
             <input name='stateNode' spec='RealParameter' dimension="3" value="0.5 0.5 0.5" id="y" lower="0.0" upper="1.0"/>
         </state>
 
-        <distribution spec="beast.core.util.CompoundDistribution">
-            <distribution spec="beast.math.distributions.Prior" x="@x">
-                <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="1.0"/>
+        <distribution spec="beast.base.inference.CompoundDistribution">
+            <distribution spec="beast.base.inference.distribution.Prior" x="@x">
+                <distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="1.0"/>
             </distribution>
-            <distribution spec="beast.math.distributions.Prior" x="@y">
-                <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="1.0"/>
+            <distribution spec="beast.base.inference.distribution.Prior" x="@y">
+                <distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="1.0"/>
             </distribution>
-            <distribution spec="beast.math.distributions.Prior" x="@n">
-                <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="100.0"/>
+            <distribution spec="beast.base.inference.distribution.Prior" x="@n">
+                <distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="100.0"/>
             </distribution>
         </distribution>
 

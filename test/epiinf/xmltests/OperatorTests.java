@@ -17,9 +17,9 @@
 
 package epiinf.xmltests;
 
-import beast.core.Logger;
-import beast.util.Randomizer;
-import beast.util.XMLParser;
+import beast.base.inference.Logger;
+import beast.base.util.Randomizer;
+import beast.base.parser.XMLParser;
 import org.junit.Test;
 import test.beast.beast2vs1.trace.Expectation;
 import test.beast.beast2vs1.trace.LogAnalyser;
@@ -42,7 +42,7 @@ public class OperatorTests {
         Randomizer.setSeed(1);
 
         XMLParser parser = new XMLParser();
-        beast.core.Runnable runnable = parser.parseFile(
+        beast.base.inference.Runnable runnable = parser.parseFile(
                 new File("test/epiinf/xmltests/ScaleWithIntTest.xml"));
         Logger.FILE_MODE = Logger.LogFileMode.overwrite;
         runnable.run();
@@ -75,7 +75,7 @@ public class OperatorTests {
         Randomizer.setSeed(1);
 
         XMLParser parser = new XMLParser();
-        beast.core.Runnable runnable = parser.parseFile(
+        beast.base.inference.Runnable runnable = parser.parseFile(
                 new File("test/epiinf/xmltests/GeomRandomWalkTest.xml"));
         Logger.FILE_MODE = Logger.LogFileMode.overwrite;
         runnable.run();
