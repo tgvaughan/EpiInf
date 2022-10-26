@@ -1,0 +1,216 @@
+<!-- Build EpiInf. JUnit test is available for this build. -->
+<project basedir="." default="build_jar_all_EpiInf" name="BUILD_BEAST_EpiInf">
+  <description>
+      Build EpiInf.
+      JUnit test is available for this build.
+      $Id: build_BEAST_II.xml $
+  </description>
+
+  <!-- set global properties for this build -->
+  <property name="srcEpiInf" location="../EpiInf/src" />
+  <property name="buildEpiInf" location="../EpiInf/build" />
+  <property name="libEpiInf" location="../EpiInf/lib" />
+  <property name="release_dir" value="release" />
+  <property name="distEpiInf" location="${buildEpiInf}/dist" />
+  <property name="beast2path" location="../beast2" />
+  <property name="srcBeast2" location="${beast2path}/src" />
+  <property name="beast2classpath" location="${beast2path}/build" />
+  <property name="Add_on_dir" value="${release_dir}/add-on" />
+  <property name="apppath" location="../BeastFX" />
+  <property name="feastpath" location="../feast" />
+  <property name="feastclasspath" location="${feastpath}/build" />
+
+  <import file="${beast2path}/build.xml" />
+
+
+  <property name="main_class_BEAST" value="beast.app.BeastMCMC" />
+  <property name="report" value="${buildEpiInf}/junitreport"/>
+
+  <path id="classpath">
+    <pathelement path="${buildEpiInf}"/>
+    <fileset dir="${beast2path}/lib/junit/" includes="junit-platform-console-standalone-1.8.2.jar"/>
+    <fileset dir="${libEpiInf}" includes="xchart-3.0.0.jar"/>
+    <fileset dir="${beast2path}/lib" includes="beagle.jar"/>
+    <fileset dir="${beast2path}/lib" includes="colt.jar"/>
+    <fileset dir="${beast2path}/lib" includes="antlr-runtime-4.10.1.jar"/>
+    <fileset dir="${beast2path}/lib" includes="commons-math3-3.6.1.jar"/>
+    <pathelement path="${beast2classpath}"/>
+    <pathelement path="${apppath}/build"/>
+    <pathelement path="${feastclasspath}"/>
+  </path>
+
+  <!-- start -->
+  <target name="initEpiInf">
+    <echo message="${ant.project.name}: ${ant.file}" />
+           <available file="./version.xml" property="versionAvailable"/>
+        <fail unless="versionAvailable">
+              ** Required file version.xml does not exist. **
+        </fail>
+
+        <!-- Read package name and version from xml file -->
+        <xmlproperty file="./version.xml" prefix="fromVersionFile" />
+        <property name="EpiInfVersion" value="${fromVersionFile.package(version)}" />
+  </target>
+
+  <target name="cleanEpiInf">
+      <delete dir="${buildEpiInf}" />
+  </target>
+
+  <!-- clean previous build, and then compile Java source code, and Juint test -->
+  <target name="build_all_EpiInf" depends="cleanEpiInf,compile-allEpiInf,junitEpiInf"
+        description="Clean and Build all run-time stuff">
+  </target>
+
+  <!-- clean previous build, compile Java source code, and Junit test, and make the beast.jar and beauti.jar -->
+  <target name="build_jar_all_EpiInf" depends="cleanEpiInf,initEpiInf,compile-allEpiInf,dist_all_EpiInf"
+        description="Clean and Build all run-time stuff">
+  </target>
+
+
+  <!-- No JUnit Test, clean previous build, compile Java source code, and make the EpiInf.jar and beauti.jar -->
+  <target name="build_jar_all_EpiInf_NoJUnitTest" depends="cleanEpiInf,compile-allEpiInf,dist_all_EpiInf"
+        description="Clean and Build all run-time stuff">
+  </target>
+
+  <!-- compile Java source code -->
+  <target name="compile-allEpiInf" depends="initEpiInf">
+
+
+      <!-- Capture the path as a delimited property using the refid attribute -->
+      <property name="myclasspath" refid="classpath"/>
+      <!-- Emit the property to the ant console -->
+      <echo message="Classpath = ${myclasspath}"/>
+
+    <mkdir dir="${buildEpiInf}" />
+
+    <!-- Compile the java code from ${srcEpiInf} into ${buildEpiInf} /bin -->
+    <javac srcdir="${srcEpiInf}" destdir="${buildEpiInf}" classpathref="classpath" 
+           fork="true"
+           memoryinitialsize="256m"
+           memorymaximumsize="1024m"
+         source="1.8"
+           target="1.8">
+      <include name="epiinf/**/**" />
+      <!-- compile JUnit test classes -->
+      <include name="test/beast/**" />
+    </javac>
+    <echo message="Successfully compiled." />
+  </target>
+
+  <!-- make the EpiInf.hjar and TreeAnnotator.jar -->
+  <target name="dist_all_EpiInf" depends="compile-allEpiInf" description="create EpiInf jar">
+    <!-- Create the distribution directory -->
+    <mkdir dir="${distEpiInf}" />
+
+    <jar jarfile="${distEpiInf}/EpiInf.src.jar">
+      <fileset dir="${srcEpiInf}">
+        <include name="epiinf/**/*.java" />
+        <include name="test/**/*.java" />
+        <include name="beast/**/*.png" />
+        <include name="beast/**/*.xsl" />
+      </fileset>
+        </jar>
+    <jar jarfile="${distEpiInf}/EpiInf.addon.jar">
+      <manifest>
+        <attribute name="Built-By" value="${user.name}" />
+      </manifest>
+      <fileset dir="${buildEpiInf}">
+        <include name="epiinf/**/*.class" />
+        <include name="**/*.properties" />
+      </fileset>
+    </jar>
+  </target>
+
+  <!-- run beast.jar -->
+  <target name="run_EpiInf">
+    <java jar="${distEpiInf}/EpiInf.jar" fork="true" />
+  </target>
+
+  
+  <!-- JUnit test -->
+  <target name="junitEpiInf">
+    <mkdir dir="${report}" />
+    <junit printsummary="yes" haltonfailure="yes"> <!--showoutput='yes'-->
+      <classpath>
+        <path refid="classpath" />
+        <path location="${buildEpiInf}" />
+      </classpath>
+
+      <formatter type="xml" />
+
+      <batchtest fork="yes" todir="${report}">
+        <fileset dir="${srcEpiInf}">
+                    <include name="test/**/*Test.java"/>
+                    <exclude name="test/beast/integration/**/*Test.java"/>
+        </fileset>
+        <fileset dir="${srcBeast2}">
+                    <include name="test/beast/integration/**/*Test.java"/>                                         
+                    <exclude name="test/beast/integration/**/ResumeTest.java"/>                                         
+                    <exclude name="test/beast/integration/**/ExampleXmlParsingTest.java"/>                                         
+        </fileset>
+      </batchtest>
+    </junit>
+    <echo message="JUnit test finished." />
+  </target>
+    
+    <target name="junitreport">
+    <junitreport todir="${report}">
+      <fileset dir="${report}" includes="*.xml"/>
+      <report format="frames" todir="${report}"/>
+    </junitreport>
+    <echo message="JUnit test report finished." />
+  </target>
+
+  <target name="addon"
+          depends="build_jar_all_EpiInf"
+          description="release BEAST 2 add-on version of EpiInf">
+
+    <delete dir="${Add_on_dir}" />
+    <!-- Create the release directory -->
+    <mkdir dir="${Add_on_dir}" />
+    <mkdir dir="${Add_on_dir}/lib" />
+    <mkdir dir="${Add_on_dir}/doc" />
+    <mkdir dir="${Add_on_dir}/scripts" />
+    <mkdir dir="${Add_on_dir}/examples" />
+    <mkdir dir="${Add_on_dir}/fxtemplates" />
+
+    <copy todir="${Add_on_dir}">
+      <fileset file="version.xml"/>
+    </copy>
+    <copy todir="${Add_on_dir}/examples">
+      <fileset dir="examples" includes="*">
+      </fileset>
+    </copy>
+    <copy todir="${Add_on_dir}/scripts">
+      <fileset dir="scripts" includes="*">
+      </fileset>
+    </copy>
+    <copy todir="${Add_on_dir}/doc">
+      <fileset dir="doc" includes="*">
+      </fileset>
+    </copy>
+
+    <copy todir="${Add_on_dir}/lib">
+      <fileset  file="${distEpiInf}/EpiInf.addon.jar" />
+      <fileset  file="lib/xchart-3.0.0.jar" />
+    </copy>
+    <copy todir="${Add_on_dir}">
+      <fileset file="${distEpiInf}/EpiInf.src.jar" />
+      <fileset file="lib/LICENSE.xchart"/>
+      <fileset file="./README.md"/>
+      <fileset file="./COPYING"/>
+    </copy>
+
+    <copy todir="${Add_on_dir}/fxtemplates">
+      <fileset file="fxtemplates/EpiInf.xml" />
+    </copy>
+
+    <jar jarfile="${distEpiInf}/EpiInf.addon.v${EpiInfVersion}.zip">
+      <fileset dir="${Add_on_dir}">
+        <include name="**/*" />
+      </fileset>
+        </jar>
+    <echo message="Add-on version ${EpiInfVersion} release is finished." />
+  </target>
+
+</project>
