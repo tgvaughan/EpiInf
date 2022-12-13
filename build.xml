@@ -232,7 +232,8 @@
 
     <!-- Run unit tests -->
     <target name="test" depends="compile-test">
-      <junit printsummary="yes" failureproperty="testFailed" showoutput="true" maxmemory="4G">
+      <junit printsummary="yes" failureproperty="testFailed" showoutput="true"
+             maxmemory="4G">
             <classpath>
                 <pathelement path="${classpath}"/>
                 <pathelement path="${build}" />
@@ -241,7 +242,7 @@
                 <fileset dir="${beast-source-root}/lib" includes="**/*.jar"/>
                 <pathelement path="${build-beast}" />
             </classpath>
-            <batchtest fork="yes" todir="${test-reports}">
+            <batchtest fork="true" todir="${test-reports}">
                 <fileset dir="${test}">
                     <include name="**/*Test.java"/>
                 </fileset>

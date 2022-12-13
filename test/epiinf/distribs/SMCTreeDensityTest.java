@@ -59,7 +59,7 @@ public class SMCTreeDensityTest {
                 "tree", tree,
                 "model", model,
                 "finalTreeSampleOffset", new RealParameter("0.0"),
-                "nParticles", 500000);
+                "nParticles", 50000);
 
         double logP = density.calculateLogP();
         double logPtrue = -5.85;
@@ -109,7 +109,7 @@ public class SMCTreeDensityTest {
                 "tree", tree,
                 "model", model,
                 "finalTreeSampleOffset", new RealParameter("0.0"),
-                "nParticles", 100000);
+                "nParticles", 10000);
 
         double logP = density.calculateLogP();
         double logPtrue = -34.87;
@@ -159,7 +159,7 @@ public class SMCTreeDensityTest {
                 "tree", tree,
                 "model", model,
                 "finalTreeSampleOffset", new RealParameter("0.0"),
-                "nParticles", 100000,
+                "nParticles", 10000,
                 "useTauLeaping", true);
 
         double logP = density.calculateLogP();
@@ -216,7 +216,7 @@ public class SMCTreeDensityTest {
                 "tree", tree,
                 "model", model,
                 "finalTreeSampleOffset", new RealParameter("0.0"),
-                "nParticles", 100000);
+                "nParticles", 10000);
 
         double logP = density.calculateLogP();
         double logPtrue = -17.95;
@@ -262,7 +262,7 @@ public class SMCTreeDensityTest {
                 "tree", tree,
                 "model", model,
                 "finalTreeSampleOffset", new RealParameter("0.0"),
-                "nParticles", 100000);
+                "nParticles", 10000);
 
         double logP = density.calculateLogP();
         double logPtrue = -28.20;
@@ -308,7 +308,7 @@ public class SMCTreeDensityTest {
                 "tree", tree,
                 "model", model,
                 "finalTreeSampleOffset", new RealParameter("0.0"),
-                "nParticles", 100000,
+                "nParticles", 10000,
                 "useTauLeaping", true);
 
         double logP = density.calculateLogP();
