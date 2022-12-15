@@ -2,7 +2,6 @@ EpiInf
 ======
 
 [![Build Status](https://github.com/tgvaughan/EpiInf/workflows/Unit%2Fintegration%20tests/badge.svg)](https://github.com/tgvaughan/EpiInf/actions?query=workflow%3A%22Unit%2Fintegration+tests%22)
-[![CodeFactor](https://www.codefactor.io/repository/github/tgvaughan/epiinf/badge)](https://www.codefactor.io/repository/github/tgvaughan/epiinf)
 
 EpiInf is a [BEAST 2](http://www.beast2.org/) package for
 performing inference of compartmental epidemiological model parameters using
