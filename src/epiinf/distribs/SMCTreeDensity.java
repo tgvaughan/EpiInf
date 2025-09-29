@@ -510,6 +510,15 @@ public class SMCTreeDensity extends TreeDistribution {
                         }
 
                     } else {
+                        // Keep track of lineage count changes between simultaneous samples.
+                        // Makes a difference when nextObservedEvent.multiplicity>1, since
+                        // in this case multiple sampling events are grouped together into
+                        // a single ObservedEvent object.
+                        // (This wouldn't be needed if psi-sample times never coincided, but
+                        // in practice this is necessary due to recording of times rounded to
+                        // nearest day/month.)
+                        int lineages = nextObservedEvent.lineages;
+
                         for (int i = 0; i < nextObservedEvent.multiplicity; i++) {
                             model.calculatePropensities(particleState);
 
@@ -527,7 +536,7 @@ public class SMCTreeDensity extends TreeDistribution {
                                 conditionalLogP += Math.log(psiSamplingProp);
 
                                 boolean isRemoval;
-                                if (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE] == psiSamplingProp) {
+                                if (model.propensities[EpidemicEvent.PSI_SAMPLE_NOREMOVE] == 0.0) {
                                     isRemoval = true;
                                 } else {
                                     if (model.propensities[EpidemicEvent.PSI_SAMPLE_REMOVE] == 0.0) {
@@ -542,7 +551,7 @@ public class SMCTreeDensity extends TreeDistribution {
                                     model.incrementState(particleState, EpidemicEvent.PsiSampleRemove);
                                 } else {
                                     if (nextObservedEvent.type == ObservedEvent.Type.LEAF)
-                                        conditionalLogP += Math.log(1.0 - (nextObservedEvent.lineages - 1) / particleState.I);
+                                        conditionalLogP += Math.log(1.0 - (lineages - 1) / particleState.I);
                                 }
                             }
 
@@ -554,6 +563,9 @@ public class SMCTreeDensity extends TreeDistribution {
                                 else
                                     conditionalLogP += Math.log(seqProb);
                             }
+
+                            if (nextObservedEvent.type == ObservedEvent.Type.LEAF)
+                                lineages -= 1;
                         }
                     }
 
